@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>[TEAM JINO] 개정법 안내 관리 | 노무그룹지노</title>
+<meta name="robots" content="noindex">
+<link rel="icon" href="logo.png">
+<link rel="stylesheet" href="style.css">
+<style>
+.adm table{width:100%;border-collapse:collapse;background:#fff;font-size:14.5px}
+.adm th,.adm td{border-bottom:1px solid var(--line);padding:9px 10px;text-align:left;vertical-align:top}
+.adm th{background:#f1f4f9;font-size:13px;color:var(--sub);font-weight:700;white-space:nowrap}
+.adm tr.click{cursor:pointer}.adm tr.click:hover td{background:#f8fafc}
+.tw{border:1px solid var(--line);border-radius:12px;overflow:auto;background:#fff}
+.pill{display:inline-block;font-size:12px;font-weight:700;border-radius:99px;padding:1px 9px;white-space:nowrap}
+.pill.ok{background:#ebfbee;color:#2b8a3e}.pill.off{background:#f1f3f5;color:#868e96}.pill.draft{background:#f3f0ff;color:#6741d9}.pill.pub{background:#e7f5ff;color:#1864ab}.pill.ask{background:#fff4e6;color:#d9480f}
+.pg{height:7px;width:90px;background:#e9ecef;border-radius:99px;overflow:hidden;display:inline-block;vertical-align:middle;margin-right:6px}.pg i{display:block;height:100%;background:var(--done)}
+.ov{position:fixed;inset:0;background:rgba(15,23,42,.45);z-index:50;display:flex;align-items:flex-start;justify-content:center;padding:30px 14px;overflow:auto}
+.md{background:#fff;border-radius:16px;max-width:860px;width:100%;padding:22px 24px;box-shadow:0 20px 60px rgba(0,0,0,.25)}
+.md h3{margin:0 0 14px;color:var(--navy);font-size:19px}
+.fg{display:grid;grid-template-columns:140px 1fr;gap:8px 12px;align-items:start;margin-bottom:10px}
+.fg>label{font-size:14px;font-weight:700;color:var(--navy2);padding-top:7px}
+.fg input[type=text],.fg input[type=date],.fg select,.fg textarea{width:100%;border:1px solid #ced4da;border-radius:8px;padding:7px 10px;font-family:inherit;font-size:15px}
+.fg textarea{min-height:74px;resize:vertical;line-height:1.55}
+.fg .ck{display:flex;flex-wrap:wrap;gap:12px;padding-top:6px;font-size:14px}
+.mact{display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap;margin-top:16px;border-top:1px solid var(--line);padding-top:14px}
+.btn.red{color:#c92a2a;border-color:#ffc9c9}
+.btn.grn{background:var(--done);border-color:var(--done);color:#fff}
+.iitem{border:1px solid var(--line);border-radius:12px;padding:12px 14px 4px;margin-bottom:10px;background:#fcfdff}
+.iitem .ih{display:flex;gap:8px;align-items:center;margin-bottom:8px;font-weight:700;color:var(--navy)}
+.iitem .ih .sp{flex:1}
+.toolbar{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:12px}
+.toolbar .sp{flex:1}
+.toolbar input[type=search]{border:1px solid #ced4da;border-radius:8px;padding:7px 10px;font-family:inherit;font-size:14px;min-width:200px}
+.note{font-size:13.5px;color:var(--sub);background:#f8f9fa;border-radius:10px;padding:10px 12px;margin-bottom:12px}
+.asks td{background:#fffaf2}
+@media(max-width:760px){.fg{grid-template-columns:1fr}.fg>label{padding-top:0}}
+</style>
+</head>
+<body class="adm">
+
+<section class="login" id="login">
+ <div class="in">
+  <img class="lg" src="logo.png" alt="노무그룹지노">
+  <div class="lcard">
+   <span class="mo">TEAM JINO</span>
+   <h1>개정법 안내 관리</h1>
+   <p><b>본인의</b> TEAM JINO 비밀번호를 넣어 주세요.<br>회원사 관리, 월별 소식 게시, 개정사항 수정을 할 수 있습니다.</p>
+   <form id="lform"><input type="password" id="pw" placeholder="비밀번호" autocomplete="current-password" autofocus>
+   <div style="height:12px"></div><button class="go" id="lgo" type="submit">열기</button></form>
+   <div class="lmsg" id="lmsg"></div>
+   <div class="lhelp">회원사 화면: <a href="./">jinolabor.github.io/law/</a></div>
+  </div>
+ </div>
+</section>
+
+<div id="app" hidden>
+ <header class="top"><div class="wrap topbar">
+  <img class="lg" src="logo.png" alt="노무그룹지노">
+  <h1>개정법 안내 관리 <span style="font-weight:500;font-size:14px;opacity:.8">· TEAM JINO</span></h1>
+  <span class="who" id="who"></span>
+  <button class="tbtn" id="btnPrint">🖨 인쇄·PDF</button>
+  <a class="tbtn" href="./" target="_blank" style="text-decoration:none">회원사 화면 ↗</a>
+  <button class="tbtn" id="btnLock">잠그기</button>
+ </div></header>
+ <nav class="tabs"><div class="wrap">
+  <button class="tab" data-t="dash">📋 현황<span class="cnt" id="cAsk"></span></button>
+  <button class="tab" data-t="mem">🏢 회원사 관리<span class="cnt" id="cMem"></span></button>
+  <button class="tab" data-t="iss">📰 월별 소식<span class="cnt" id="cIss"></span></button>
+  <button class="tab" data-t="items">📚 개정사항 항목<span class="cnt" id="cItems"></span></button>
+ </div></nav>
+ <main class="wrap">
+  <section id="v-dash"></section>
+  <section id="v-mem" hidden></section>
+  <section id="v-iss" hidden></section>
+  <section id="v-items" hidden></section>
+ </main>
+</div>
+<div id="ovRoot"></div>
+
+<script src="common.js"></script>
+<script>
+/* ---------- JINO 열쇠 (주소록·급여대행과 같은 구성원 비밀번호) ---------- */
+var KEY_URL='https://raw.githubusercontent.com/jinolabor/config-files/main/key.json', KEY_URLS=[KEY_URL,'https://raw.githubusercontent.com/dhkim0629-ops/config-files/main/key.json'];
+var TOKEN='',ME=null,AKEY=null,ITEMS=[],ISSUES=[],MEMBERS=[],ADDR=[],TAB='dash',Q='';
+var unb64=function(s){return Uint8Array.from(atob(s),function(c){return c.charCodeAt(0)})};
+async function fetchKeys(){var last=null;for(var i=0;i<KEY_URLS.length;i++){try{var r=await fetch(KEY_URLS[i]+'?t='+Date.now(),{cache:'no-store'});if(!r.ok)throw new Error('열쇠 파일을 불러오지 못했습니다');return await r.json()}catch(e){last=e}}throw last||new Error('열쇠 파일을 불러오지 못했습니다')}
+async function unwrap(pw,e){var base=await crypto.subtle.importKey('raw',new TextEncoder().encode(pw),'PBKDF2',false,['deriveKey']);
+  var wk=await crypto.subtle.deriveKey({name:'PBKDF2',salt:unb64(e.salt),iterations:e.iter||150000,hash:'SHA-256'},base,{name:'AES-GCM',length:256},false,['decrypt']);
+  return new Uint8Array(await crypto.subtle.decrypt({name:'AES-GCM',iv:unb64(e.iv)},wk,unb64(e.wk)))}
+async function mtoken(id,pw){var h=new Uint8Array(await crypto.subtle.digest('SHA-256',new TextEncoder().encode('jino-payroll-member|'+id+'|'+pw)));return btoa(String.fromCharCode.apply(null,h))}
+async function addrKey(k){var base=await crypto.subtle.importKey('raw',k,'HKDF',false,['deriveKey']);
+  return crypto.subtle.deriveKey({name:'HKDF',hash:'SHA-256',salt:new TextEncoder().encode('jino-addr'),info:new TextEncoder().encode('jino-addr-v1')},base,{name:'AES-GCM',length:256},false,['encrypt','decrypt'])}
+async function adec(iv,d){var pt=await crypto.subtle.decrypt({name:'AES-GCM',iv:unb64(iv)},AKEY,unb64(d));return JSON.parse(new TextDecoder().decode(pt))}
+async function api(fn,args){try{return await rpcCall(fn,Object.assign({p_token:TOKEN},args||{}))}catch(e){if(e.code==='denied')lock('사용이 중지된 비밀번호이거나 권한이 없습니다.');throw e}}
+function say(t,err){var m=$('#lmsg');m.textContent=t||'';m.className='lmsg'+(err?' err':'')}
+$('#lform').onsubmit=async function(ev){
+  ev.preventDefault();var pw=$('#pw').value.trim();if(!pw){say('비밀번호를 넣어 주세요.',true);return}
+  $('#lgo').disabled=true;say('확인하는 중…');
+  try{
+    var d=await fetchKeys(),list=(d&&d.entries)||[],hit=null;
+    for(var i=0;i<list.length&&!hit;i++){try{hit={id:list[i].id,k:await unwrap(pw,list[i])}}catch(e){}}
+    if(!hit){say('비밀번호가 맞지 않거나 사용이 중지된 비밀번호입니다.',true);return}
+    TOKEN=await mtoken(hit.id,pw);
+    var who=await rpcCall('addr_whoami',{p_token:TOKEN});
+    if(!who||who.status!=='active'){TOKEN='';say('구성원 명단에 없거나 사용이 중지되었습니다.',true);return}
+    ME=who;AKEY=await addrKey(hit.k);$('#pw').value='';
+    $('#who').textContent=ME.name+' 님';$('#login').hidden=true;$('#app').hidden=false;
+    await loadAll();
+  }catch(e){say('열지 못했습니다: '+(e&&e.message||e),true)}
+  finally{$('#lgo').disabled=false}
+};
+function lock(msg){TOKEN='';ME=null;AKEY=null;ADDR=[];$('#app').hidden=true;$('#login').hidden=false;closeOv();say(msg||'',!!msg);setTimeout(function(){$('#pw').focus()},50)}
+$('#btnLock').onclick=function(){lock('')};
+function adminPrint(mode){printDialog({who:'',mineItems:ITEMS.filter(function(o){return !o.cond}),allItems:ITEMS,checks:{},mineLabel:'모든 회사 공통',allFirst:true},mode)}
+$('#btnPrint').onclick=function(){adminPrint('sum')};
+setInterval(function(){if(ME&&document.hidden===false&&Date.now()-(window._act||Date.now())>60*60*1000)lock('1시간 동안 사용하지 않아 잠갔습니다.')},60000);
+document.addEventListener('pointerdown',function(){window._act=Date.now()});
+
+async function loadAll(){
+  var c=await api('law_admin_content');
+  ITEMS=(c.items||[]).map(prep).sort(function(a,b){return (a.dt?a.dt:9e15)-(b.dt?b.dt:9e15)||a.no-b.no});
+  ISSUES=c.issues||[];
+  MEMBERS=await api('law_members_list')||[];
+  try{var rows=await rpcCall('addr_list',{p_token:TOKEN});var out=[];
+    for(var i=0;i<rows.length;i++){var r=rows[i];if(r.deleted)continue;try{var co=await adec(r.iv,r.data);co.key=r.key;out.push(co)}catch(e){}}
+    ADDR=out.sort(function(a,b){return String(a.name).localeCompare(String(b.name),'ko')})}catch(e){ADDR=[]}
+  render();
+}
+function render(){
+  $('#cMem').textContent=MEMBERS.filter(function(m){return m.active}).length;
+  $('#cIss').textContent=ISSUES.length;$('#cItems').textContent=ITEMS.length;
+  var asks=allAsks();$('#cAsk').textContent=asks.length||'';
+  renderDash();renderMem();renderIss();renderItems();setTab(TAB);
+}
+function setTab(t){TAB=t;$$('.tab').forEach(function(b){b.classList.toggle('on',b.dataset.t===t)});['dash','mem','iss','items'].forEach(function(k){$('#v-'+k).hidden=k!==t})}
+$$('.tab').forEach(function(b){b.onclick=function(){setTab(b.dataset.t)}});
+
+/* ---------- 공통: 모달 ---------- */
+function openOv(html){$('#ovRoot').innerHTML='<div class="ov"><div class="md">'+html+'</div></div>';var ov=$('#ovRoot .ov');ov.addEventListener('mousedown',function(e){if(e.target===ov)closeOv()});return ov}
+function closeOv(){$('#ovRoot').innerHTML=''}
+function val(ov,sel){var el=$(sel,ov);return el?el.value:''}
+function ago(s){if(!s)return '-';var d=new Date(s),m=Math.round((Date.now()-d)/6e4);if(m<60)return m+'분 전';if(m<1440)return Math.round(m/60)+'시간 전';var dd=Math.round(m/1440);return dd<31?dd+'일 전':fmt(d)}
+
+/* ---------- 현황 ---------- */
+function itemLabel(key){
+  var m=/^item:(\d+)$/.exec(key);if(m){var o=ITEMS.find(function(x){return x.no===+m[1]});return o?o.law+' · '+o.summary.split('\n')[0]:'(삭제된 항목)'}
+  m=/^issue:(\d{4}-\d{2}):(\d+)$/.exec(key);if(m){var s=ISSUES.find(function(x){return x.id===m[1]});var it=s&&s.items&&s.items[+m[2]];return '['+(s?s.title:m[1])+'] '+(it?it.title:'(삭제된 소식)')}
+  return key;
+}
+function allAsks(){var L=[];MEMBERS.forEach(function(m){Object.keys(m.checks||{}).forEach(function(k){var c=m.checks[k];if(c.s==='ask')L.push({m:m,k:k,at:c.at})})});return L.sort(function(a,b){return String(b.at).localeCompare(String(a.at))})}
+function progress(m){var M=ITEMS.filter(function(o){return applies(o,m.profile)&&!o.ref});var ch=m.checks||{};var d=M.filter(function(o){var s=(ch['item:'+o.no]||{}).s;return s==='done'||s==='na'}).length;return {n:M.length,d:d,pct:M.length?Math.round(d/M.length*100):0}}
+function renderDash(){
+  var act=MEMBERS.filter(function(m){return m.active}),asks=allAsks();
+  var seen30=act.filter(function(m){return m.last_login&&(Date.now()-new Date(m.last_login))<30*864e5}).length;
+  var h='<div class="sum"><div class="k main"><span>이용 중인 회원사</span><b>'+act.length+'곳</b><span>최근 30일 접속 '+seen30+'곳</span></div>'+
+    '<div class="k" onclick="setTab(\'mem\')"><b>'+act.filter(function(m){return !m.last_login}).length+'</b><span>아직 접속 안 함</span></div>'+
+    '<div class="k"><b style="color:var(--ask)">'+asks.length+'</b><span>상담 요청</span></div>'+
+    '<div class="k" onclick="setTab(\'iss\')"><b style="color:var(--tbd)">'+ISSUES.filter(function(s){return s._status==='draft'}).length+'</b><span>검토 대기 초안</span></div></div>';
+  h+='<div class="pdfbox"><div class="pdfh">🖨 PDF로 저장하기 <small>개정사항 전체 '+ITEMS.length+'건 · 회원사 안내·상담용 자료</small></div><div class="pdfbtns">'+
+    '<button class="pdfb" data-pdf="sum"><b>📋 요약본 PDF</b><span>시행일·주요내용·회사 조치사항을 표로 정리 (조치 확인 체크칸 포함)</span></button>'+
+    '<button class="pdfb" data-pdf="det"><b>📄 상세본 PDF</b><span>개정 전·후 비교, 실무상 유의사항, 관련 서식까지 모두 포함</span></button></div>'+
+    '<p class="pdfn">버튼을 누르면 화면에서 먼저 <b>미리보기</b>가 열립니다. 확인 후 「인쇄 · PDF 저장」을 누르고 대상(프린터)을 <b>「PDF로 저장」</b>으로 고르세요.</p></div>';
+  h+='<div class="h2">💬 상담 요청 <small>회원사가 「상담 요청」을 누른 항목입니다. 연락 후 회원사 쪽 표시는 그대로 두셔도 됩니다.</small></div>';
+  h+=asks.length?'<div class="tw"><table><thead><tr><th>요청 일시</th><th>회원사</th><th>항목</th></tr></thead><tbody>'+asks.map(function(a){return '<tr class="asks"><td style="white-space:nowrap">'+ago(a.at)+'</td><td><b>'+esc(a.m.name)+'</b></td><td>'+esc(itemLabel(a.k))+'</td></tr>'}).join('')+'</tbody></table></div>':'<div class="empty">아직 상담 요청이 없습니다.</div>';
+  h+='<div class="h2">📈 회원사별 확인 현황 <small>해당 개정사항 중 「조치 완료·해당 없음」으로 표시한 비율</small></div>';
+  h+=act.length?'<div class="tw"><table><thead><tr><th>회원사</th><th>회사 정보</th><th>확인 진행률</th><th>상담 요청</th><th>마지막 접속</th></tr></thead><tbody>'+act.map(function(m){var p=progress(m);var ak=Object.values(m.checks||{}).filter(function(c){return c.s==='ask'}).length;
+      return '<tr class="click" data-mid="'+m.id+'"><td><b>'+esc(m.name)+'</b></td><td style="font-size:13px">'+esc(profileText(m.profile).join(' · '))+(m.profile_confirmed?'':' <span class="pill off">회사 미확인</span>')+'</td><td style="white-space:nowrap"><span class="pg"><i style="width:'+p.pct+'%"></i></span>'+p.d+'/'+p.n+'</td><td>'+(ak?'<span class="pill ask">'+ak+'건</span>':'-')+'</td><td style="white-space:nowrap">'+ago(m.last_login)+(m.login_count?' <span class="muted" style="font-size:12px">('+m.login_count+'회)</span>':'')+'</td></tr>'}).join('')+'</tbody></table></div>':'<div class="empty">등록된 회원사가 없습니다. 「회원사 관리」에서 추가해 주세요.</div>';
+  $('#v-dash').innerHTML=h;
+  $$('#v-dash [data-pdf]').forEach(function(b){b.onclick=function(){adminPrint(b.dataset.pdf)}});
+  $$('#v-dash [data-mid]').forEach(function(r){r.onclick=function(){memDetail(r.dataset.mid)}});
+}
+function memDetail(id){
+  var m=MEMBERS.find(function(x){return x.id===id});if(!m)return;var ch=m.checks||{};
+  var M=ITEMS.filter(function(o){return applies(o,m.profile)&&!o.ref});
+  var lab={done:'<span class="pill ok">조치 완료</span>',na:'<span class="pill off">해당 없음</span>',ask:'<span class="pill ask">상담 요청</span>'};
+  var ov=openOv('<h3>'+esc(m.name)+' · 확인 현황</h3><div class="note">'+esc(profileText(m.profile).join(' · '))+' — 해당 '+M.length+'건</div><div class="tw"><table><thead><tr><th>시행일</th><th>항목</th><th>상태</th></tr></thead><tbody>'+
+    M.map(function(o){var c=ch['item:'+o.no];return '<tr><td style="white-space:nowrap">'+(o.dt?fmt(o.dt):'미정')+'</td><td><span class="muted" style="font-size:12.5px">'+esc(o.law)+'</span><br>'+esc(o.summary.split('\n')[0])+'</td><td style="white-space:nowrap">'+(c?lab[c.s]:'<span class="muted">미확인</span>')+'</td></tr>'}).join('')+
+    '</tbody></table></div><div class="mact"><button class="btn" id="x">닫기</button></div>');
+  $('#x',ov).onclick=closeOv;
+}
+
+/* ---------- 회원사 관리 ---------- */
+function renderMem(){
+  var L=MEMBERS.filter(function(m){return !Q||m.name.indexOf(Q)>=0});
+  var h='<div class="note">회원사는 <b>사업자등록번호</b>로 로그인합니다. 번호는 서버에 암호화(해시)해서 저장하므로 화면에는 일부만 보입니다. 「주소록에서 추가」를 누르면 주소록의 자문중 회사를 골라 등록할 수 있습니다.</div>'+
+    '<div class="toolbar"><input type="search" id="mq" placeholder="회사명 검색" value="'+esc(Q)+'"><span class="sp"></span><button class="btn" id="addFree">직접 추가</button><button class="btn pri" id="addAddr">주소록에서 추가</button></div>';
+  h+=L.length?'<div class="tw"><table><thead><tr><th>회원사</th><th>사업자번호</th><th>회사 정보</th><th>사용</th><th>마지막 접속</th><th>메모</th></tr></thead><tbody>'+L.map(function(m){
+    return '<tr class="click" data-edit="'+m.id+'"><td><b>'+esc(m.name)+'</b>'+(m.addr_key?' <span class="muted" style="font-size:12px">주소록 연결</span>':'')+'</td><td style="white-space:nowrap" class="muted">'+esc(m.biz_mask)+'</td><td style="font-size:13px">'+esc(profileText(m.profile).join(' · '))+'</td><td>'+(m.active?'<span class="pill ok">사용 중</span>':'<span class="pill off">중지</span>')+'</td><td style="white-space:nowrap">'+ago(m.last_login)+'</td><td style="font-size:13px">'+esc(m.memo||'')+'</td></tr>'}).join('')+'</tbody></table></div>':'<div class="empty">등록된 회원사가 없습니다.</div>';
+  var v=$('#v-mem');v.innerHTML=h;
+  $('#mq').oninput=function(){Q=this.value.trim();renderMem();var q=$('#mq');q.focus();q.setSelectionRange(q.value.length,q.value.length)};
+  $('#addFree').onclick=function(){memEdit(null,{})};
+  $('#addAddr').onclick=pickAddr;
+  $$('[data-edit]',v).forEach(function(r){r.onclick=function(){memEdit(MEMBERS.find(function(x){return x.id===r.dataset.edit}))}});
+}
+function pickAddr(){
+  var used=new Set(MEMBERS.map(function(m){return m.addr_key}).filter(Boolean));
+  var L=ADDR.filter(function(c){return c.status==='자문중'});
+  if(!ADDR.length){toast('주소록을 불러오지 못했습니다. 「직접 추가」를 이용해 주세요.');return}
+  var ov=openOv('<h3>주소록에서 회원사 추가</h3><div class="note">자문중인 회사 '+L.length+'곳입니다. 이미 등록한 회사는 표시됩니다.</div><input type="search" id="aq" placeholder="회사명 검색" style="width:100%;border:1px solid #ced4da;border-radius:8px;padding:8px 10px;font-size:15px;margin-bottom:10px"><div class="tw" style="max-height:55vh"><table><tbody id="alist"></tbody></table></div><div class="mact"><button class="btn" id="x">닫기</button></div>');
+  function draw(q){$('#alist',ov).innerHTML=L.filter(function(c){return !q||String(c.name).indexOf(q)>=0}).map(function(c){var u=used.has(c.key);return '<tr class="'+(u?'':'click')+'" data-k="'+esc(c.key)+'"><td><b>'+esc(c.name)+'</b></td><td class="muted" style="font-size:13px">'+esc(c.industry||'')+' · '+esc(c.ceo||'')+'</td><td>'+(u?'<span class="pill ok">등록됨</span>':'<span class="pill pub">선택</span>')+'</td></tr>'}).join('');
+    $$('#alist tr.click',ov).forEach(function(r){r.onclick=function(){var c=L.find(function(x){return x.key===r.dataset.k});memEdit(null,{name:c.name,addr_key:c.key,profile:{construction:/^건설/.test(c.industry||'')}})}})}
+  draw('');$('#aq',ov).oninput=function(){draw(this.value.trim())};$('#x',ov).onclick=closeOv;
+}
+function memEdit(m,pre){
+  var isNew=!m;m=m||{name:pre.name||'',addr_key:pre.addr_key||null,profile:pre.profile||{},active:true,memo:''};var P=Object.assign({},m.profile);
+  var ov=openOv('<h3>'+(isNew?'회원사 등록':'회원사 정보 수정')+'</h3>'+
+    '<div class="fg"><label>회사명</label><input type="text" id="f-name" value="'+esc(m.name)+'"></div>'+
+    '<div class="fg"><label>사업자등록번호</label><div><input type="text" id="f-biz" inputmode="numeric" placeholder="'+(isNew?'000-00-00000':'바꿀 때만 입력 (현재 '+esc(m.biz_mask)+')')+'"><div class="muted" style="font-size:12.5px;margin-top:4px">회원사가 이 번호로 로그인합니다.</div></div></div>'+
+    '<div class="fg"><label>상시 근로자 수</label><select id="f-size"><option value="">선택</option>'+SIZES.map(function(s){return '<option value="'+s[0]+'"'+(P.size===s[0]?' selected':'')+'>'+s[1]+'</option>'}).join('')+'</select></div>'+
+    '<div class="fg"><label>해당 사항</label><div class="ck">'+FLAGS.map(function(f){return '<label><input type="checkbox" id="f-'+f[0]+'"'+(P[f[0]]?' checked':'')+'> '+f[1]+'</label>'}).join('')+'</div></div>'+
+    '<div class="fg"><label>메모</label><input type="text" id="f-memo" value="'+esc(m.memo||'')+'" placeholder="내부 메모 (회원사에게 보이지 않음)"></div>'+
+    (isNew?'':'<div class="fg"><label>사용</label><div class="ck"><label><input type="checkbox" id="f-active"'+(m.active?' checked':'')+'> 사용 중 (끄면 바로 로그인 차단)</label></div></div>')+
+    '<div class="note">회사 정보는 회원사가 처음 로그인할 때 확인·수정할 수 있습니다. 회원사가 고치면 그 내용이 우선합니다.</div>'+
+    '<div class="mact">'+(isNew?'':'<button class="btn red" id="del" style="margin-right:auto">삭제</button>')+'<button class="btn" id="x">취소</button><button class="btn pri" id="ok">저장</button></div>');
+  $('#f-biz',ov).oninput=function(){var d=this.value.replace(/\D/g,'').slice(0,10);this.value=d.length<=3?d:d.length<=5?d.slice(0,3)+'-'+d.slice(3):d.slice(0,3)+'-'+d.slice(3,5)+'-'+d.slice(5)};
+  $('#x',ov).onclick=closeOv;
+  if($('#del',ov))$('#del',ov).onclick=async function(){if(!confirm2(ov,'「'+m.name+'」을(를) 삭제하면 체크 기록도 함께 지워집니다. 삭제할까요?'))return;try{await api('law_member_delete',{p_id:m.id});closeOv();toast('삭제했습니다.');await loadAll()}catch(e){toast('삭제하지 못했습니다: '+e.message)}};
+  $('#ok',ov).onclick=async function(){
+    var biz=val(ov,'#f-biz').replace(/\D/g,'');
+    if(isNew&&biz.length!==10){toast('사업자등록번호 10자리를 입력해 주세요.');return}
+    if(biz&&biz.length!==10){toast('사업자등록번호는 10자리입니다.');return}
+    var prof={size:val(ov,'#f-size')};FLAGS.forEach(function(f){prof[f[0]]=$('#f-'+f[0],ov).checked});
+    this.disabled=true;
+    try{await api('law_member_put',{p_id:isNew?null:m.id,p_biz:biz||null,p_name:val(ov,'#f-name'),p_addr_key:m.addr_key||null,p_profile:prof,p_active:isNew?true:$('#f-active',ov).checked,p_memo:val(ov,'#f-memo')});
+      closeOv();toast('저장했습니다.');await loadAll()}
+    catch(e){toast('저장하지 못했습니다: '+e.message);this.disabled=false}
+  };
+}
+function confirm2(ov,msg){return window.confirm?(function(){try{return window.confirm(msg)}catch(e){return true}})():true}
+
+/* ---------- 월별 소식 ---------- */
+function renderIss(){
+  var h='<div class="note">매월 1일 Claude가 지난달 소식 초안을 만들어 둡니다. 내용을 확인·수정한 뒤 <b>「회원사에 게시」</b>를 누르면 회원사 화면에 나타납니다. 초안은 회원사에게 보이지 않습니다.</div>'+
+    '<div class="toolbar"><span class="sp"></span><button class="btn pri" id="newIss">새 월호 만들기</button></div>';
+  h+=ISSUES.length?'<div class="tw"><table><thead><tr><th>월호</th><th>상태</th><th>소식</th><th>요약</th><th>마지막 수정</th></tr></thead><tbody>'+ISSUES.map(function(s){
+    var ck=(s.items||[]).filter(function(i){return i.check}).length;
+    return '<tr class="click" data-iss="'+s.id+'"><td style="white-space:nowrap"><b>'+esc(s.title||s.id)+'</b></td><td>'+(s._status==='published'?'<span class="pill pub">게시됨</span>':'<span class="pill draft">초안</span>')+'</td><td style="white-space:nowrap">'+(s.items||[]).length+'건'+(ck?' <span class="pill ask">원문 확인 '+ck+'</span>':'')+'</td><td style="font-size:13.5px">'+esc(s.lead||'')+'</td><td style="white-space:nowrap;font-size:13px">'+esc(s._by||'')+'<br>'+ago(s._at)+'</td></tr>'}).join('')+'</tbody></table></div>':'<div class="empty">월호가 없습니다.</div>';
+  var v=$('#v-iss');v.innerHTML=h;
+  $('#newIss').onclick=function(){var d=new Date();issEdit(null,{id:ym(d),title:d.getFullYear()+'년 '+(d.getMonth()+1)+'월호',issued:d.toISOString().slice(0,10),period:'',lead:'',items:[]})};
+  $$('[data-iss]',v).forEach(function(r){r.onclick=function(){issEdit(ISSUES.find(function(x){return x.id===r.dataset.iss}))}});
+}
+function issItemForm(it,i){
+  return '<div class="iitem" data-i="'+i+'"><div class="ih">소식 '+(i+1)+'<span class="sp"></span><button class="btn sm" data-mv="-1">▲</button><button class="btn sm" data-mv="1">▼</button><button class="btn sm red" data-rm>삭제</button></div>'+
+   '<div class="fg"><label>종류 · 날짜</label><div style="display:flex;gap:8px"><select data-f="kind">'+KINDS.map(function(k){return '<option'+(it.kind===k?' selected':'')+'>'+k+'</option>'}).join('')+'</select><input type="date" data-f="date" value="'+esc(it.date||'')+'"></div></div>'+
+   '<div class="fg"><label>법령·고시명</label><input type="text" data-f="law" value="'+esc(it.law||'')+'"></div>'+
+   '<div class="fg"><label>제목</label><input type="text" data-f="title" value="'+esc(it.title||'')+'"></div>'+
+   '<div class="fg"><label>내용 (한 줄에 하나)</label><textarea data-f="body">'+esc(it.body||'')+'</textarea></div>'+
+   '<div class="fg"><label>회사 대응</label><textarea data-f="action" style="min-height:50px">'+esc(it.action||'')+'</textarea></div>'+
+   '<div class="fg"><label>원문 링크</label><input type="text" data-f="url" value="'+esc(it.url||'')+'" placeholder="https://"></div>'+
+   '<div class="fg"><label>해당 회사</label><div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap"><select data-f="cond"><option value="">모든 회사</option>'+CONDS.map(function(c){return '<option'+(it.cond===c?' selected':'')+'>'+c+'</option>'}).join('')+'</select><label style="font-size:14px"><input type="checkbox" data-f="check"'+(it.check?' checked':'')+'> 원문 재확인 필요 (TEAM JINO 메모)</label></div></div></div>';
+}
+function issEdit(s,pre){
+  var isNew=!s;s=JSON.parse(JSON.stringify(s||pre));var items=s.items||[];
+  var ov=openOv('<h3>'+(isNew?'새 월호':esc(s.title||s.id))+' '+(s._status==='published'?'<span class="pill pub">게시됨</span>':'<span class="pill draft">초안</span>')+'</h3>'+
+    '<div class="fg"><label>월호 (YYYY-MM)</label><input type="text" id="i-id" value="'+esc(s.id)+'"'+(isNew?'':' disabled')+'></div>'+
+    '<div class="fg"><label>제목</label><input type="text" id="i-title" value="'+esc(s.title||'')+'"></div>'+
+    '<div class="fg"><label>발행일 · 대상 기간</label><div style="display:flex;gap:8px"><input type="date" id="i-issued" value="'+esc(s.issued||'')+'"><input type="text" id="i-period" value="'+esc(s.period||'')+'" placeholder="2026.11.1. ~ 2026.11.30."></div></div>'+
+    '<div class="fg"><label>이달 요약 (2문장)</label><textarea id="i-lead">'+esc(s.lead||'')+'</textarea></div>'+
+    '<div id="i-items"></div><button class="btn" id="i-add">+ 소식 추가</button>'+
+    '<div class="mact">'+(isNew?'':'<button class="btn red" id="i-del" style="margin-right:auto">월호 삭제</button>')+'<button class="btn" id="x">닫기</button><button class="btn" id="i-save">'+(s._status==='published'?'저장 (게시 유지)':'초안 저장')+'</button>'+
+    (s._status==='published'?'<button class="btn" id="i-unpub">게시 취소</button>':'<button class="btn grn" id="i-pub">회원사에 게시</button>')+'</div>');
+  function collect(){$$('#i-items .iitem',ov).forEach(function(b){var i=+b.dataset.i,o=items[i];$$('[data-f]',b).forEach(function(el){o[el.dataset.f]=el.type==='checkbox'?el.checked:el.value})})}
+  function draw(){$('#i-items',ov).innerHTML=items.map(issItemForm).join('');
+    $$('#i-items .iitem',ov).forEach(function(b){var i=+b.dataset.i;
+      $('[data-rm]',b).onclick=function(){collect();items.splice(i,1);draw()};
+      $$('[data-mv]',b).forEach(function(x){x.onclick=function(){collect();var j=i+(+x.dataset.mv);if(j<0||j>=items.length)return;var t=items[i];items[i]=items[j];items[j]=t;draw()}})})}
+  draw();
+  $('#i-add',ov).onclick=function(){collect();items.push({kind:'입법예고',date:new Date().toISOString().slice(0,10),law:'',title:'',body:'',action:'',url:'',cats:[],cond:'',check:false});draw()};
+  $('#x',ov).onclick=closeOv;
+  async function save(status,msg){
+    collect();var id=val(ov,'#i-id').trim();if(!/^\d{4}-\d{2}$/.test(id)){toast('월호는 2026-12 형식으로 입력해 주세요.');return}
+    if(isNew&&ISSUES.some(function(x){return x.id===id})){toast('이미 있는 월호입니다.');return}
+    var payload={title:val(ov,'#i-title'),issued:val(ov,'#i-issued'),period:val(ov,'#i-period'),lead:val(ov,'#i-lead'),items:items};
+    try{await api('law_issue_put',{p_id:id,p_payload:payload,p_status:status});closeOv();toast(msg);await loadAll()}catch(e){toast('저장하지 못했습니다: '+e.message)}
+  }
+  $('#i-save',ov).onclick=function(){save(s._status||'draft','저장했습니다.')};
+  if($('#i-pub',ov))$('#i-pub',ov).onclick=function(){collect();var ck=items.filter(function(i){return i.check}).length;if(ck&&!window.confirm('「원문 재확인 필요」 표시가 '+ck+'건 있습니다. 그래도 게시할까요?'))return;save('published','회원사 화면에 게시했습니다.')};
+  if($('#i-unpub',ov))$('#i-unpub',ov).onclick=function(){save('draft','게시를 취소했습니다. 회원사 화면에서 내려갔습니다.')};
+  if($('#i-del',ov))$('#i-del',ov).onclick=async function(){if(!window.confirm('이 월호를 삭제할까요?'))return;try{await api('law_issue_put',{p_id:s.id,p_payload:{},p_status:'delete'});closeOv();toast('삭제했습니다.');await loadAll()}catch(e){toast('삭제하지 못했습니다')}};
+}
+
+/* ---------- 개정사항 항목 ---------- */
+function renderItems(){
+  var h='<div class="note">회원사 화면의 「우리 회사 할 일」과 「전체 개정사항」에 나오는 항목입니다. <b>해당 회사</b>를 지정하면 그 조건에 맞는 회원사에게만 할 일로 나타납니다.</div>'+
+    '<div class="toolbar"><span class="sp"></span><button class="btn pri" id="newItem">새 항목</button></div>';
+  h+='<div class="tw"><table><thead><tr><th>시행일</th><th>법령</th><th>주요 내용</th><th>회사가 할 일</th><th>해당 회사</th><th>수정</th></tr></thead><tbody>'+ITEMS.map(function(o){
+    return '<tr class="click" data-no="'+o.no+'"><td style="white-space:nowrap">'+(o.dt?fmt(o.dt):'미정')+'</td><td style="font-size:13.5px">'+esc(o.law)+'</td><td>'+esc(o.summary)+'</td><td style="font-size:13.5px">'+esc(o.action)+'</td><td style="white-space:nowrap;font-size:13px">'+esc(o.cond||'모든 회사')+(o.min_size?' · '+o.min_size+'인 이상':'')+'</td><td style="white-space:nowrap;font-size:12.5px" class="muted">'+esc(o._by||'')+'<br>'+ago(o._at)+'</td></tr>'}).join('')+'</tbody></table></div>';
+  var v=$('#v-items');v.innerHTML=h;
+  $('#newItem').onclick=function(){itemEdit(null)};
+  $$('[data-no]',v).forEach(function(r){r.onclick=function(){itemEdit(ITEMS.find(function(x){return x.no===+r.dataset.no}))}});
+}
+function itemEdit(o){
+  var isNew=!o;o=o||{law:'',date:'',summary:'',status:'공포완료',action:'',article:'',before:'',after:'',tips:'',forms:'',cats:[],cond:'',ref:false,rules:false};
+  function ta(k,lab,hgt){return '<div class="fg"><label>'+lab+'</label><textarea id="t-'+k+'" style="min-height:'+(hgt||74)+'px">'+esc(o[k]||'')+'</textarea></div>'}
+  var ov=openOv('<h3>'+(isNew?'새 개정사항':'개정사항 수정')+'</h3>'+
+    '<div class="fg"><label>법령</label><input type="text" id="t-law" value="'+esc(o.law)+'"></div>'+
+    '<div class="fg"><label>시행일 · 진행</label><div style="display:flex;gap:8px;flex-wrap:wrap"><input type="text" id="t-date" value="'+esc(o.date)+'" placeholder="2027-01-01 또는 미정" style="max-width:180px"><select id="t-status">'+['공포완료','국회 계류','입법예고','시행령 확정 전'].map(function(s){return '<option'+(o.status===s?' selected':'')+'>'+s+'</option>'}).join('')+'</select></div></div>'+
+    ta('summary','주요 내용',54)+ta('action','회사가 할 일',54)+ta('article','근거 조문',54)+ta('before','개정 전')+ta('after','개정 후')+ta('tips','실무상 유의사항')+ta('forms','관련 서식·자료',54)+
+    '<div class="fg"><label>분야</label><div class="ck">'+CATS.map(function(c){return '<label><input type="checkbox" data-cat="'+c+'"'+((o.cats||[]).indexOf(c)>=0?' checked':'')+'> '+c+'</label>'}).join('')+'</div></div>'+
+    '<div class="fg"><label>해당 회사</label><div style="display:flex;gap:8px;flex-wrap:wrap"><select id="t-cond"><option value="">모든 회사</option>'+CONDS.map(function(c){return '<option'+(o.cond===c?' selected':'')+'>'+c+'</option>'}).join('')+'</select><select id="t-min"><option value="">규모 제한 없음</option>'+[5,50,300].map(function(n){return '<option value="'+n+'"'+(+o.min_size===n?' selected':'')+'>'+n+'인 이상만</option>'}).join('')+'</select></div></div>'+
+    '<div class="fg"><label>표시</label><div class="ck"><label><input type="checkbox" id="t-rules"'+(o.rules?' checked':'')+'> 취업규칙 개정 필요</label><label><input type="checkbox" id="t-ref"'+(o.ref?' checked':'')+'> 참고 항목 (할 일에서 제외)</label></div></div>'+
+    '<div class="mact">'+(isNew?'':'<button class="btn red" id="del" style="margin-right:auto">삭제</button>')+'<button class="btn" id="x">취소</button><button class="btn pri" id="ok">저장</button></div>');
+  $('#x',ov).onclick=closeOv;
+  if($('#del',ov))$('#del',ov).onclick=async function(){if(!window.confirm('이 항목을 삭제할까요? 회원사 화면에서 사라집니다.'))return;try{await api('law_item_put',{p_no:o.no,p_payload:strip(o),p_deleted:true});closeOv();toast('삭제했습니다.');await loadAll()}catch(e){toast('삭제하지 못했습니다')}};
+  $('#ok',ov).onclick=async function(){
+    var p={};['law','summary','action','article','before','after','tips','forms'].forEach(function(k){p[k]=val(ov,'#t-'+k)});
+    p.date=val(ov,'#t-date').trim()||'미정';if(p.date!=='미정'&&!pd(p.date)){toast('시행일은 2027-01-01 형식 또는 「미정」으로 입력해 주세요.');return}
+    p.status=val(ov,'#t-status');p.cond=val(ov,'#t-cond');var mn=val(ov,'#t-min');if(mn)p.min_size=+mn;
+    p.cats=$$('[data-cat]',ov).filter(function(c){return c.checked}).map(function(c){return c.dataset.cat});
+    p.rules=$('#t-rules',ov).checked;p.ref=$('#t-ref',ov).checked;
+    if(!p.law||!p.summary){toast('법령과 주요 내용은 꼭 입력해 주세요.');return}
+    this.disabled=true;
+    try{await api('law_item_put',{p_no:isNew?null:o.no,p_payload:p,p_deleted:false});closeOv();toast('저장했습니다. 회원사 화면에 바로 반영됩니다.');await loadAll()}
+    catch(e){toast('저장하지 못했습니다: '+e.message);this.disabled=false}
+  };
+}
+function strip(o){var p={};['law','date','summary','status','action','article','before','after','tips','forms','cats','cond','ref','rules','min_size'].forEach(function(k){if(o[k]!==undefined)p[k]=o[k]});return p}
+</script>
+</body>
+</html>
