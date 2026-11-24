@@ -10,7 +10,7 @@
 | `forms/` | 스마트지노 문서작성 | dhkim0629-ops/config-files `forms/` |
 | `safety/` | 지노 중처법 이행관리 (안전보건 통합관리) | dhkim0629-ops/jino-safety |
 
-다른 프로그램: 보험료정산은 `jinolabor/settlement`, 페이롤은 `dhkim0629-ops/jino-payroll`(이전 예정 `jinolabor/payroll`).
+다른 프로그램: 보험료정산은 `jinolabor/settlement`, 페이롤은 `jinolabor/payroll` (https://jinolabor.github.io/payroll/).
 
 ## 고치기 전에 꼭
 1. **이 저장소의 최신 내용을 받은 뒤 고칩니다.** 예전 위치나 예전 대화, 내 컴퓨터에 남은 복사본으로 덮어쓰지 않습니다. 여러 대화에서 같은 저장소를 고칩니다.

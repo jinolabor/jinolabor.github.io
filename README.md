@@ -6,3 +6,4 @@
 - 문서작성: https://jinolabor.github.io/forms/
 - 중처법 이행관리: https://jinolabor.github.io/safety/
 - 보험료정산: https://jinolabor.github.io/settlement/
+- 페이롤: https://jinolabor.github.io/payroll/
