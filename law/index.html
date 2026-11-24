@@ -96,7 +96,7 @@ function logout(msg){
   TOKEN='';mem.del(TKEY);mem.sdel(TKEY);$('#app').hidden=true;$('#login').hidden=false;$('#biz').value='';say(msg||'',!!msg);
 }
 $('#btnOut').onclick=function(){logout('')};
-$('#btnPrint').onclick=function(){printDialog({who:ME.name+' 전용',mineItems:mine(),allItems:ITEMS,checks:CHECKS,mineLabel:'우리 회사 해당'})};
+$('#btnPrint').onclick=function(){printDialog({who:ME.name+' 전용',mineItems:mine(),allItems:ITEMS,checks:{},mineLabel:'우리 회사 해당'})};
 async function api(fn,args){
   try{return await rpcCall(fn,Object.assign({p_token:TOKEN},args||{}))}
   catch(e){if(e.code==='denied'){logout('로그인이 만료되었습니다. 다시 로그인해 주세요.')}throw e}
@@ -160,48 +160,34 @@ function goItem(no){var key='item:'+no;OPEN.add(key);F='all';setTab('todo');rend
 
 /* ---------- 할 일 카드 ---------- */
 function card(o,opt){
-  var key='item:'+o.no,st=CHECKS[key]||'',ap=applies(o,P);
-  return '<div class="todo st-'+(st||'none')+(OPEN.has(key)?' open':'')+'" data-key="'+key+'">'+
+  var key='item:'+o.no,ap=applies(o,P);
+  return '<div class="todo nobtn'+(OPEN.has(key)?' open':'')+'" data-key="'+key+'">'+
    '<div class="trow"><div class="dt"><div class="d">'+(o.dt?fmt(o.dt):'미정')+'</div><span class="dd '+o.s+'">'+esc(o.dd)+'</span></div>'+
    '<div class="tmain"><div class="tlaw">'+esc(o.law)+tagsHtml(o)+(!ap?'<span class="tag">우리 회사 해당 없음</span>':'')+'</div>'+
    '<div class="tsum">'+esc(o.summary)+'</div>'+
    (o.action?'<div class="tact"><b>회사가 할 일</b> · '+esc(o.action)+'</div>':'')+
    '<div class="tmore">▾ 눌러서 개정 전·후 비교 보기</div></div>'+
-   '<div class="tbtns">'+
-    '<button class="sbtn s-done'+(st==='done'?' on':'')+'" data-chk="done" data-key="'+key+'">✓ 조치 완료</button>'+
-    '<button class="sbtn s-na'+(st==='na'?' on':'')+'" data-chk="na" data-key="'+key+'">— 해당 없음</button>'+
-    '<button class="sbtn s-ask'+(st==='ask'?' on':'')+'" data-chk="ask" data-key="'+key+'">💬 상담 요청</button>'+
-   '</div></div>'+
+   '</div>'+
    '<div class="tdet">'+detailHtml(o)+'</div></div>';
 }
 
 /* ---------- 우리 회사 할 일 ---------- */
 function mine(){return ITEMS.filter(function(o){return applies(o,P)&&!o.ref})}
 function renderTodo(){
-  var M=mine(),st=function(o){return CHECKS['item:'+o.no]||''};
-  var done=M.filter(function(o){return st(o)==='done'}).length,na=M.filter(function(o){return st(o)==='na'}).length,ask=M.filter(function(o){return st(o)==='ask'}).length;
-  var open=M.filter(function(o){var s=st(o);return s!=='done'&&s!=='na'});
-  var pct=M.length?Math.round((done+na)/M.length*100):0;
-  $('#cntTodo').textContent=open.length;
+  var M=mine();
+  var G=[['late','⚠ 이미 시행 중',function(o){return o.s==='done'}],['soon','⏰ 60일 안에 시행',function(o){return o.s==='soon'}],['plan','🗓 이후 시행 예정',function(o){return o.s==='plan'}],['tbd','⏳ 시행일 미확정',function(o){return o.s==='tbd'}]];
+  var n=function(i){return M.filter(G[i][2]).length};
+  $('#cntTodo').textContent=M.length;
   var h='<div class="psum" style="margin-bottom:12px">우리 회사 기준: '+profileText(P).map(function(t){return '<span class="tg">'+esc(t)+'</span>'}).join('')+' <a href="#" id="editProf" style="font-size:13px">수정</a></div>';
-  h+='<div class="sum"><div class="k main"><span>우리 회사 해당 개정사항</span><b>'+M.length+'건</b><span>'+(done+na)+'건 확인 · 진행률 '+pct+'%</span><div class="bar"><i style="width:'+pct+'%"></i></div></div>'+
-     '<div class="k" data-f="open"><b style="color:var(--soon)">'+open.length+'</b><span>남은 할 일</span></div>'+
-     '<div class="k" data-f="done"><b style="color:var(--done)">'+done+'</b><span>조치 완료</span></div>'+
-     '<div class="k" data-f="ask"><b style="color:var(--ask)">'+ask+'</b><span>상담 요청</span></div></div>';
-  var FL=[['open','남은 할 일',open.length],['done','조치 완료',done],['na','해당 없음',na],['ask','상담 요청',ask],['all','전체',M.length]];
-  h+='<div class="chips" style="margin-bottom:6px">'+FL.map(function(f){return '<button class="chip'+(F===f[0]?' on':'')+'" data-f="'+f[0]+'">'+f[1]+'<span class="n">'+f[2]+'</span></button>'}).join('')+'</div>';
-  if(F==='open'){
-    var G=[['late','⚠ 이미 시행 중 — 아직 확인하지 않은 항목',function(o){return o.s==='done'}],['soon','⏰ 60일 안에 시행',function(o){return o.s==='soon'}],['plan','🗓 이후 시행 예정',function(o){return o.s==='plan'}],['tbd','⏳ 시행일 미확정',function(o){return o.s==='tbd'}]];
-    if(!open.length)h+='<div class="empty">🎉 우리 회사에 해당하는 개정사항을 모두 확인하셨습니다.</div>';
-    G.forEach(function(g){var L=open.filter(g[2]);if(!L.length)return;h+='<div class="grp '+g[0]+'">'+g[1]+' <span class="n">'+L.length+'건</span></div>'+L.map(function(o){return card(o)}).join('')});
-  }else{
-    var L=F==='all'?M:M.filter(function(o){return st(o)===F});
-    h+=L.length?'<div style="margin-top:12px">'+L.map(function(o){return card(o)}).join('')+'</div>':'<div class="empty" style="margin-top:12px">해당하는 항목이 없습니다.</div>';
-  }
+  h+='<div class="sum"><div class="k main"><span>우리 회사 해당 개정사항</span><b>'+M.length+'건</b><span>시행일 순으로 정리했습니다</span></div>'+
+     '<div class="k"><b style="color:#d9480f">'+n(0)+'</b><span>이미 시행 중</span></div>'+
+     '<div class="k"><b style="color:var(--soon)">'+n(1)+'</b><span>60일 안에 시행</span></div>'+
+     '<div class="k"><b style="color:var(--navy)">'+(n(2)+n(3))+'</b><span>이후 · 미확정</span></div></div>';
+  if(!M.length)h+='<div class="empty">우리 회사에 해당하는 개정사항이 없습니다.</div>';
+  G.forEach(function(g){var L=M.filter(g[2]);if(!L.length)return;h+='<div class="grp '+g[0]+'">'+g[1]+' <span class="n">'+L.length+'건</span></div>'+L.map(function(o){return card(o)}).join('')});
   var other=ITEMS.filter(function(o){return !applies(o,P)});
   if(other.length)h+='<details class="fold"><summary>우리 회사에 해당하지 않는 개정사항 '+other.length+'건 보기 (건설업·외국인 고용 등 조건부 항목)</summary>'+other.map(function(o){return card(o)}).join('')+'</details>';
   $('#v-todo').innerHTML=h;
-  $$('#v-todo [data-f]').forEach(function(b){b.onclick=function(){F=b.dataset.f;renderTodo()}});
   var ep=$('#editProf');if(ep)ep.onclick=function(e){e.preventDefault();PROF_OPEN=true;renderProf();window.scrollTo({top:0,behavior:'smooth'})};
 }
 
