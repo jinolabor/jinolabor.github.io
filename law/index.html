@@ -30,7 +30,7 @@
    <div class="lhelp">이용 문의 · 담당 노무사 또는 jinolabor@kakao.com</div>
   </div>
   <div class="feat">
-   <div><b>✅</b>우리 회사<br>할 일 체크리스트</div>
+   <div><b>📋</b>우리 회사<br>해당 개정사항</div>
    <div><b>📰</b>매월 노동법<br>업데이트</div>
    <div><b>⚖️</b>개정 전·후<br>조문 비교</div>
   </div>
@@ -49,15 +49,13 @@
   <button class="tbtn" id="btnOut">로그아웃</button>
  </div></header>
  <nav class="tabs"><div class="wrap">
-  <button class="tab" data-t="todo">✅ 우리 회사 할 일<span class="cnt" id="cntTodo"></span></button>
+  <button class="tab" data-t="todo">📋 개정사항<span class="cnt" id="cntTodo"></span></button>
   <button class="tab" data-t="month">📰 월별 업데이트<span class="new" id="newMonth" hidden>NEW</span></button>
-  <button class="tab" data-t="all">📚 전체 개정사항<span class="cnt" id="cntAll"></span></button>
  </div></nav>
  <main class="wrap">
   <div id="profBox"></div>
   <section id="v-todo"></section>
   <section id="v-month" hidden></section>
-  <section id="v-all" hidden></section>
  </main>
  <footer><div class="fb">
   <span class="ex">본 자료는 <b id="footName"></b> 전용으로 제공되며, 외부 배포를 삼가 주시기 바랍니다.</span><br>
@@ -118,8 +116,8 @@ async function boot(){
     renderAll();window.scrollTo(0,0);
   }catch(e){$('#loading').hidden=true;if(e.code!=='denied'){$('#login').hidden=false;say('자료를 불러오지 못했습니다. 잠시 후 다시 시도해 주세요.',true)}}
 }
-function renderAll(){renderProf();renderTodo();renderMonth();renderAll2();setTab(TAB)}
-function setTab(t){TAB=t;$$('.tab').forEach(function(b){b.classList.toggle('on',b.dataset.t===t)});['todo','month','all'].forEach(function(k){$('#v-'+k).hidden=k!==t})}
+function renderAll(){renderProf();renderTodo();renderMonth();setTab(TAB)}
+function setTab(t){TAB=t;$$('.tab').forEach(function(b){b.classList.toggle('on',b.dataset.t===t)});['todo','month'].forEach(function(k){$('#v-'+k).hidden=k!==t})}
 $$('.tab').forEach(function(b){b.onclick=function(){setTab(b.dataset.t);window.scrollTo({top:0,behavior:'smooth'})}});
 
 /* ---------- 회사 정보 ---------- */
@@ -146,17 +144,17 @@ function renderProf(){
 /* ---------- 체크 ---------- */
 async function setCheck(key,st){
   var old=CHECKS[key]||'';var nv=old===st?'':st;
-  if(nv)CHECKS[key]=nv;else delete CHECKS[key];renderTodo();renderMonth();renderAll2();
+  if(nv)CHECKS[key]=nv;else delete CHECKS[key];renderTodo();renderMonth();
   try{await api('law_check_set',{p_key:key,p_state:nv});
     toast(nv==='done'?'조치 완료로 표시했습니다.':nv==='na'?'해당 없음으로 표시했습니다.':nv==='ask'?'상담 요청을 남겼습니다. 담당 노무사가 연락드리겠습니다.':'표시를 지웠습니다.')}
-  catch(e){if(old)CHECKS[key]=old;else delete CHECKS[key];renderTodo();renderMonth();renderAll2();toast('저장하지 못했습니다.')}
+  catch(e){if(old)CHECKS[key]=old;else delete CHECKS[key];renderTodo();renderMonth();toast('저장하지 못했습니다.')}
 }
 document.addEventListener('click',function(e){
   var b=e.target.closest('[data-chk]');if(b){e.stopPropagation();setCheck(b.dataset.key,b.dataset.chk);return}
   var m=e.target.closest('.tmain');if(m){var t=m.closest('.todo');var k=t.dataset.key;t.classList.toggle('open');t.classList.contains('open')?OPEN.add(k):OPEN.delete(k);return}
   var go=e.target.closest('[data-goitem]');if(go){goItem(+go.dataset.goitem);return}
 });
-function goItem(no){var key='item:'+no;OPEN.add(key);F='all';setTab('todo');renderTodo();var el=$('#v-todo .todo[data-key="'+key+'"]');if(el)el.scrollIntoView({behavior:'smooth',block:'center'})}
+function goItem(no){var key='item:'+no;OPEN.add(key);var o=ITEMS.find(function(x){return x.no===no});if(o&&!(applies(o,P)&&!o.ref))ALLF.mine=false;ALLF.cat='';setTab('todo');renderTodo();var el=$('#v-todo .todo[data-key="'+key+'"]');if(el)el.scrollIntoView({behavior:'smooth',block:'center'})}
 
 /* ---------- 할 일 카드 ---------- */
 function card(o,opt){
@@ -174,20 +172,23 @@ function card(o,opt){
 /* ---------- 우리 회사 할 일 ---------- */
 function mine(){return ITEMS.filter(function(o){return applies(o,P)&&!o.ref})}
 function renderTodo(){
-  var M=mine();
+  var M=mine(),S=ALLF.mine?M:ITEMS;
+  var L=S.filter(function(o){return !ALLF.cat||(o.cats||[]).indexOf(ALLF.cat)>=0});
   var G=[['late','⚠ 이미 시행 중',function(o){return o.s==='done'}],['soon','⏰ 60일 안에 시행',function(o){return o.s==='soon'}],['plan','🗓 이후 시행 예정',function(o){return o.s==='plan'}],['tbd','⏳ 시행일 미확정',function(o){return o.s==='tbd'}]];
-  var n=function(i){return M.filter(G[i][2]).length};
+  var n=function(i){return L.filter(G[i][2]).length};
   $('#cntTodo').textContent=M.length;
   var h='<div class="psum" style="margin-bottom:12px">우리 회사 기준: '+profileText(P).map(function(t){return '<span class="tg">'+esc(t)+'</span>'}).join('')+' <a href="#" id="editProf" style="font-size:13px">수정</a></div>';
-  h+='<div class="sum"><div class="k main"><span>우리 회사 해당 개정사항</span><b>'+M.length+'건</b><span>시행일 순으로 정리했습니다</span></div>'+
+  h+='<div class="sum"><div class="k main"><span>'+(ALLF.mine?'우리 회사 해당 개정사항':'전체 개정사항')+(ALLF.cat?' · '+esc(ALLF.cat):'')+'</span><b>'+L.length+'건</b><span>시행일 순으로 정리했습니다</span></div>'+
      '<div class="k"><b style="color:#d9480f">'+n(0)+'</b><span>이미 시행 중</span></div>'+
      '<div class="k"><b style="color:var(--soon)">'+n(1)+'</b><span>60일 안에 시행</span></div>'+
      '<div class="k"><b style="color:var(--navy)">'+(n(2)+n(3))+'</b><span>이후 · 미확정</span></div></div>';
-  if(!M.length)h+='<div class="empty">우리 회사에 해당하는 개정사항이 없습니다.</div>';
-  G.forEach(function(g){var L=M.filter(g[2]);if(!L.length)return;h+='<div class="grp '+g[0]+'">'+g[1]+' <span class="n">'+L.length+'건</span></div>'+L.map(function(o){return card(o)}).join('')});
-  var other=ITEMS.filter(function(o){return !applies(o,P)});
-  if(other.length)h+='<details class="fold"><summary>우리 회사에 해당하지 않는 개정사항 '+other.length+'건 보기 (건설업·외국인 고용 등 조건부 항목)</summary>'+other.map(function(o){return card(o)}).join('')+'</details>';
+  h+='<div class="box" style="margin:12px 0 4px"><div class="chips" style="margin-bottom:10px"><button class="chip'+(ALLF.mine?' on':'')+'" data-mine="1">우리 회사 해당<span class="n">'+M.length+'</span></button><button class="chip'+(!ALLF.mine?' on':'')+'" data-mine="0">전체<span class="n">'+ITEMS.length+'</span></button></div>'+
+    '<div class="chips"><button class="chip'+(!ALLF.cat?' on':'')+'" data-cat="">전체 분야</button>'+CATS.map(function(c){var k=S.filter(function(o){return (o.cats||[]).indexOf(c)>=0}).length;return k?'<button class="chip'+(ALLF.cat===c?' on':'')+'" data-cat="'+esc(c)+'">'+esc(c)+'<span class="n">'+k+'</span></button>':''}).join('')+'</div></div>';
+  if(!L.length)h+='<div class="empty">조건에 맞는 개정사항이 없습니다.</div>';
+  G.forEach(function(g){var X=L.filter(g[2]);if(!X.length)return;h+='<div class="grp '+g[0]+'">'+g[1]+' <span class="n">'+X.length+'건</span></div>'+X.map(function(o){return card(o)}).join('')});
   $('#v-todo').innerHTML=h;
+  $$('#v-todo [data-mine]').forEach(function(b){b.onclick=function(){ALLF.mine=b.dataset.mine==='1';if(ALLF.cat&&!(ALLF.mine?M:ITEMS).some(function(o){return (o.cats||[]).indexOf(ALLF.cat)>=0}))ALLF.cat='';renderTodo()}});
+  $$('#v-todo [data-cat]').forEach(function(b){b.onclick=function(){ALLF.cat=b.dataset.cat;renderTodo()}});
   var ep=$('#editProf');if(ep)ep.onclick=function(e){e.preventDefault();PROF_OPEN=true;renderProf();window.scrollTo({top:0,behavior:'smooth'})};
 }
 
@@ -229,20 +230,6 @@ function monthRows(s){
 }
 
 /* ---------- 전체 개정사항 ---------- */
-function renderAll2(){
-  var v=$('#v-all');
-  var L=ITEMS.filter(function(o){return (!ALLF.mine||applies(o,P))&&(!ALLF.cat||(o.cats||[]).indexOf(ALLF.cat)>=0)});
-  $('#cntAll').textContent=ITEMS.length;
-  var h='<div class="box"><div class="chips" style="margin-bottom:10px"><button class="chip'+(ALLF.mine?' on':'')+'" data-mine="1">우리 회사 해당만</button><button class="chip'+(!ALLF.mine?' on':'')+'" data-mine="0">전체 '+ITEMS.length+'건</button></div>'+
-    '<div class="chips"><button class="chip'+(!ALLF.cat?' on':'')+'" data-cat="">전체 분야</button>'+CATS.map(function(c){var n=ITEMS.filter(function(o){return (o.cats||[]).indexOf(c)>=0&&(!ALLF.mine||applies(o,P))}).length;return n?'<button class="chip'+(ALLF.cat===c?' on':'')+'" data-cat="'+c+'">'+c+'<span class="n">'+n+'</span></button>':''}).join('')+'</div></div>';
-  var lastM='';
-  L.forEach(function(o){var k=o.dt?ym(o.dt):'미정';if(k!==lastM){lastM=k;h+='<div class="grp">'+(o.dt?o.dt.getFullYear()+'년 '+(o.dt.getMonth()+1)+'월':'시행일 미정')+'</div>'}h+=card(o)});
-  if(!L.length)h+='<div class="empty">조건에 맞는 항목이 없습니다.</div>';
-  v.innerHTML=h;
-  $$('[data-mine]',v).forEach(function(b){b.onclick=function(){ALLF.mine=b.dataset.mine==='1';renderAll2()}});
-  $$('[data-cat]',v).forEach(function(b){b.onclick=function(){ALLF.cat=b.dataset.cat;renderAll2()}});
-}
-
 /* ---------- 시작 ---------- */
 (function(){TOKEN=mem.get(TKEY)||mem.sget(TKEY)||'';if(TOKEN)boot();else $('#biz').focus()})();
 </script>

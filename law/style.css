@@ -77,8 +77,8 @@ main{padding:22px 0 50px}
 
 /* 진행 요약 */
 .sum{display:grid;grid-template-columns:1.4fr repeat(3,1fr);gap:10px;margin-bottom:16px}
-.sum .k{background:#fff;border:1px solid var(--line);border-radius:14px;padding:14px 16px;cursor:pointer;transition:.15s}
-.sum .k:hover{border-color:var(--navy)}
+.sum .k{background:#fff;border:1px solid var(--line);border-radius:14px;padding:14px 16px;cursor:default}
+.sum .k:hover{}
 .sum .k b{display:block;font-size:30px;font-weight:900;line-height:1.1}
 .sum .k span{font-size:14px;color:var(--sub)}
 .sum .main{cursor:default;background:var(--navy);color:#fff;border-color:var(--navy)}
@@ -170,7 +170,7 @@ footer .ex{color:#c92a2a}
 
 @media(max-width:760px){
  .feat{grid-template-columns:1fr}
- .sum{grid-template-columns:1fr 1fr}.sum .main{grid-column:1/-1}
+ .sum{grid-template-columns:repeat(3,1fr)}.sum .k:not(.main){padding:10px 12px}.sum .k:not(.main) b{font-size:24px}.sum .k:not(.main) span{font-size:12.5px}.sum .main{grid-column:1/-1}
  .trow{grid-template-columns:1fr;gap:8px}.dt{text-align:left;display:flex;gap:8px;align-items:center}.dd{margin:0}
  .tbtns{flex-direction:row;flex-wrap:wrap}.sbtn{flex:1;text-align:center}
  .tdet{padding:14px 16px}.ba{grid-template-columns:1fr}.arr{transform:rotate(90deg);padding:4px}.tips{grid-template-columns:1fr}
