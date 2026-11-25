@@ -76,6 +76,10 @@ textarea{min-height:80.5px;resize:vertical}
 .chip.end{border-color:#e3b3ae;background:var(--bad-soft);color:var(--bad)}
 .chip.warn{border-color:#e9c98f;background:var(--warn-soft);color:var(--warn)}
 .chip.info{border-color:#b9c6d6;background:#f2f5f9;color:#3e4f66}
+.cnt{display:inline-block;margin-left:5px;min-width:20px;padding:0 5px;border-radius:10px;background:#d93025;color:#fff;font-size:12px;line-height:20px;text-align:center}
+.chip.new{border-color:#e9c98f;background:#fff4d6;color:#8a5a00;font-weight:600;margin-left:6px}
+tr.unseen td{background:#fffbea}
+.chg-sum summary{cursor:pointer;color:var(--blue)}
 .chip.line{border-color:#9bbbe3;color:var(--blue)}
 
 .tablewrap{overflow-x:auto;border-top:2px solid var(--navy)}
@@ -138,7 +142,7 @@ td.note{min-width:110px;max-width:220px;white-space:pre-line;font-size:14.5px;co
   <span class="emblem">지노</span>
   <h1>거래처 주소록 관리대장</h1>
   <span class="sub">노무그룹지노 · 자문회사</span>
-  <span class="savebox" id="savebox"><span id="savetext"></span><b id="who" style="color:#fff"></b><button class="btn sm" id="btn-history">수정이력</button><button class="btn sm" id="btn-backup" hidden>백업</button><button class="btn sm" id="btn-admin" hidden>관리</button><button class="btn sm" id="btn-bizno" hidden>사업자번호 넣기</button><button class="btn sm" id="btn-import" hidden>주소록 가져오기</button><button class="btn sm" id="btn-refresh">새로고침</button><button class="btn primary sm" id="btn-lock">잠그기</button></span>
+  <span class="savebox" id="savebox"><span id="savetext"></span><b id="who" style="color:#fff"></b><button class="btn sm" id="btn-changes">최근 30일 변경<b id="chg-n" class="cnt" hidden></b></button><button class="btn sm" id="btn-history">수정이력</button><button class="btn sm" id="btn-backup" hidden>백업</button><button class="btn sm" id="btn-admin" hidden>관리</button><button class="btn sm" id="btn-bizno" hidden>사업자번호 넣기</button><button class="btn sm" id="btn-import" hidden>주소록 가져오기</button><button class="btn sm" id="btn-refresh">새로고침</button><button class="btn primary sm" id="btn-lock">잠그기</button></span>
 </div></header>
 <input type="file" id="bizno-file" accept=".xlsx,.xls,.csv" hidden>
 <input type="file" id="import-file" accept=".xlsx,.xls,.html,.htm" hidden>
@@ -245,6 +249,7 @@ $('#lform').onsubmit=async function(ev){
     $('#login').hidden=true;$('#who').textContent=ME.name+' 님';
     $('#btn-admin').hidden=!ME.is_master;$('#btn-backup').hidden=!ME.is_master;$('#btn-import').hidden=!ME.is_master;$('#btn-bizno').hidden=!ME.is_master;$('#btn-xlsx').hidden=!ME.can_export;
     status('불러오는 중…');await load();
+    showChanges(true);
     watchT=setInterval(async function(){try{var k=await fetchKeys();if(!(k.entries||[]).some(function(e){return e.id===hit.id}))lockOut('이 비밀번호는 더 이상 쓸 수 없습니다.')}catch(e){}},RECHECK);
   }catch(e){say('열지 못했습니다: '+(e&&e.message||e),true)}
   finally{$('#lgo').disabled=false}
@@ -255,13 +260,15 @@ $('#btn-lock').onclick=function(){lockOut('')};
 async function load(){
   if(busy||!ME)return;
   try{
-    var rows=await rpc('addr_list'),next={},fail=0;
+    var rows=await rpc('addr_list'),next={},fail=0,first=!loaded||!Object.keys(docs).length,others=[];
     for(var i=0;i<rows.length;i++){var d=rows[i];if(d.deleted)continue;var old=docs[d.key];
       if(old&&old.rev===d.rev){next[d.key]=old;continue}
-      try{var c=await dec(d.iv,d.data);c.id=d.key;next[d.key]={rev:d.rev,c:c,by:d.updated_by,at:d.updated_at}}catch(e){fail++}}
+      try{var c=await dec(d.iv,d.data);c.id=d.key;next[d.key]={rev:d.rev,c:c,by:d.updated_by,at:d.updated_at};if(!first&&!mine(d.updated_by))others.push(d.updated_by+' 님: '+c.name+(old?' 변경':' 추가'))}catch(e){fail++}}
+    if(!first)Object.keys(docs).forEach(function(k){var r=rows.find(function(x){return x.key===k});if(r&&r.deleted&&!mine(r.updated_by))others.push(r.updated_by+' 님: '+docs[k].c.name+' 삭제')});
     docs=next;data={companies:Object.keys(docs).map(function(k){return docs[k].c}),at:new Date().toISOString()};
     loaded=true;loadErr=fail&&!data.companies.length?'저장된 주소록을 열 수 없습니다(열쇠가 다릅니다). 대표님께 알려 주세요.':'';
     status('연결됨 · '+hm(new Date())+' 기준'+(fail?' · 열지 못한 '+fail+'건':''),!!fail);renderAll();
+    if(others.length){toast('다른 구성원이 방금 고쳤습니다 — '+others.slice(0,3).join(' / ')+(others.length>3?' 외 '+(others.length-3)+'건':''));refreshChgCount()}
   }catch(e){if(!ME)return;loaded=true;loadErr=(e&&e.message)||'';status('불러오지 못했습니다',true);renderAll()}
 }
 async function putDoc(key,body,deleted,msg){
@@ -476,7 +483,7 @@ function renderAll(){
     list.map(function(c,ix){
       var cs=c.contacts||[];var ps=cs.filter(activeContact).concat(cs.filter(function(p){return !activeContact(p)}));
       var cls=function(p){return activeContact(p)?'':' class="gone"'};
-      return '<tr class="click" data-edit="'+esc(c.id)+'"><td class="no mono">'+(ix+1)+'</td><td class="c">'+statusChip(c)+'</td><td class="nowrap"><b>'+esc(c.name)+'</b></td><td class="nowrap mono">'+esc(c.bizno||'')+'</td><td>'+(isConstruction(c)?'<span class="chip line">건설</span>':'<span class="chip info">비건설</span>')+'</td><td class="nowrap">'+esc(ownerKey(c.owner))+'</td><td class="note">'+esc(c.note)+'</td>'+
+      return '<tr class="click" data-edit="'+esc(c.id)+'"><td class="no mono">'+(ix+1)+'</td><td class="c">'+statusChip(c)+'</td><td class="nowrap"><b>'+esc(c.name)+'</b>'+recentChip(c.id)+'</td><td class="nowrap mono">'+esc(c.bizno||'')+'</td><td>'+(isConstruction(c)?'<span class="chip line">건설</span>':'<span class="chip info">비건설</span>')+'</td><td class="nowrap">'+esc(ownerKey(c.owner))+'</td><td class="note">'+esc(c.note)+'</td>'+
         '<td class="stack">'+ps.map(function(p){return '<div'+cls(p)+'><span class="nm">'+esc(p.name||'-')+'</span> <span style="color:var(--muted)">'+esc((p.title||'').replace(/\n/g,' '))+'</span>'+(activeContact(p)?'':' <span class="chip '+(p.status==='퇴사'?'end':'warn')+'">'+esc(p.status)+'</span>')+'</div>'}).join('')+'</td>'+
         '<td class="stack">'+ps.map(function(p){return '<div'+cls(p)+'>'+esc(emailsOf(p).join(', '))+'</div>'}).join('')+'</td>'+
         '<td class="stack mono">'+ps.map(function(p){return '<div'+cls(p)+'>'+esc((p.phone||'').replace(/\s*\n\s*/g,' '))+'</div>'}).join('')+'</td>'+
@@ -486,6 +493,49 @@ function renderAll(){
 ['#q','#f-status','#f-owner','#f-group','#f-ind'].forEach(function(s){$(s).addEventListener(s==='#q'?'input':'change',renderAll)});
 $('#list').addEventListener('click',function(e){var t=e.target.closest('[data-edit]');if(t)openCompany(data.companies.find(function(c){return c.id===t.dataset.edit}))});
 $('#btn-add').onclick=function(){openCompany(null)};
+/* ---------- 최근 30일 변경 알림 ---------- */
+var DAY=864e5;
+function mine(by){by=String(by||'');return !!ME&&(by===ME.name||by.indexOf(ME.name+' (')===0)}
+function md(iso){var d=new Date(iso);return (d.getMonth()+1)+'/'+d.getDate()}
+function recentChip(id){var d=docs[id];if(!d||!d.at||/가져오기/.test(d.by||''))return '';if(Date.now()-new Date(d.at)>30*DAY)return '';
+  return '<span class="chip new" title="'+esc(when(d.at)+' '+(d.by||'')+' 님')+'">'+(d.rev===1?'추가':'변경')+' '+md(d.at)+' '+esc(String(d.by||'').replace(/\s*\(.*\)$/,''))+'</span>'}
+function chgKind(r){return r.deleted&&!r.prev_deleted?'삭제':!r.prev_iv?'추가':r.prev_deleted&&!r.deleted?'되살림':'변경'}
+async function refreshChgCount(){try{var x=await Promise.all([rpc('addr_changes',{p_days:30}),rpc('addr_seen_get')]);var seen=x[1].seen_at?new Date(x[1].seen_at):0;
+  var n=x[0].filter(function(r){return !mine(r.updated_by)&&new Date(r.updated_at)>seen}).length;var b=$('#chg-n');b.hidden=!n;b.textContent=n>99?'99+':n;return {rows:x[0],seen:seen,now:x[1].now,n:n}}catch(e){return null}}
+async function showChanges(auto){
+  var info=await refreshChgCount();if(!info){if(!auto)toast('변경 내역을 불러오지 못했습니다.');return}
+  if(auto&&(!info.n||$('#modal-root').firstChild))return;
+  var ov=modal('<h2>최근 30일 주소록 변경 내역</h2>'+
+    '<p class="note-p">누가 어떤 회사를 추가·삭제·변경했는지 30일 동안 보여 줍니다. <b style="background:#fffbea">노란 줄</b>은 아직 확인하지 않은 다른 구성원의 변경입니다. 줄을 누르면 그 회사의 전체 이력과 되돌리기가 나옵니다.</p>'+
+    '<label style="display:flex;gap:8px;align-items:center;font-size:14px;margin-bottom:6px"><input type="checkbox" id="cg-mine" style="width:auto;min-height:0"> 내가 고친 것도 보기</label>'+
+    '<div id="cg-box" class="note-p">불러오는 중…</div>'+
+    '<div class="act"><button class="btn" id="cg-close">나중에 보기</button><button class="btn primary" id="cg-ok">확인했습니다</button></div>');
+  ov.querySelector('#cg-close').onclick=closeModal;
+  ov.querySelector('#cg-ok').onclick=async function(){this.disabled=true;try{await rpc('addr_seen_mark',{p_at:info.now});await refreshChgCount()}catch(e){}closeModal();toast('확인했습니다. 새 변경이 생기면 다시 알려 드립니다.')};
+  var items=[];
+  for(var i=0;i<info.rows.length;i++){var r=info.rows[i],b=await decSafe(r.iv,r.data);if(!b)continue;var a=r.prev_iv?await decSafe(r.prev_iv,r.prev_data):null;
+    items.push({key:r.key,at:r.updated_at,by:r.updated_by,kind:chgKind(r),name:b.name,det:diffList(a,b,r.deleted,r.prev_deleted),me:mine(r.updated_by),unseen:!mine(r.updated_by)&&new Date(r.updated_at)>info.seen})}
+  var KC={'추가':'ok','삭제':'end','변경':'warn','되살림':'info'};
+  function draw(){
+    var showMine=ov.querySelector('#cg-mine').checked,list=items.filter(function(x){return showMine||!x.me});
+    if(!list.length){ov.querySelector('#cg-box').textContent='최근 30일 동안 다른 구성원이 고친 내용이 없습니다.';return}
+    // 한 사람이 같은 날 같은 종류를 6건 넘게 했으면(가져오기 등) 한 줄로 묶음
+    var groups=[],gi={};
+    list.forEach(function(x){var g=x.by+'|'+fmtDate(x.at)+'|'+x.kind;if(gi[g]==null){gi[g]=groups.length;groups.push([])}groups[gi[g]].push(x)});
+    var html=[];
+    groups.forEach(function(g){
+      if(g.length>6){var un=g.some(function(x){return x.unseen});
+        html.push('<tr'+(un?' class="unseen"':'')+'><td class="mono nowrap">'+when(g[0].at)+'</td><td class="nowrap">'+esc(g[0].by)+'</td><td class="c"><span class="chip '+KC[g[0].kind]+'">'+g[0].kind+'</span></td><td colspan="2"><details class="chg-sum"><summary><b>'+g.length+'곳</b> 한꺼번에 '+g[0].kind+' (눌러서 목록 보기)</summary>'+g.map(function(x){return esc(x.name)}).join(', ')+'</details></td></tr>')}
+      else g.forEach(function(x){html.push('<tr class="click'+(x.unseen?' unseen':'')+'" data-hk="'+esc(x.key)+'" data-hn="'+esc(x.name)+'"><td class="mono nowrap">'+when(x.at)+'</td><td class="nowrap">'+esc(x.by)+'</td><td class="c"><span class="chip '+KC[x.kind]+'">'+x.kind+'</span></td><td class="nowrap"><b>'+esc(x.name)+'</b></td><td>'+(x.kind==='추가'?'새 거래처 등록':x.kind==='삭제'?'거래처 삭제':x.det.join('<br>'))+'</td></tr>')});
+    });
+    ov.querySelector('#cg-box').innerHTML='<table><thead><tr><th>일시</th><th>고친 사람</th><th>구분</th><th>회사</th><th>바뀐 내용</th></tr></thead><tbody>'+html.join('')+'</tbody></table>';
+  }
+  ov.querySelector('#cg-mine').onchange=draw;
+  ov.querySelector('#cg-box').addEventListener('click',function(e){var t=e.target.closest('[data-hk]');if(t)companyHistory(t.dataset.hk,t.dataset.hn)});
+  draw();
+}
+$('#btn-changes').onclick=function(){showChanges(false)};
+
 /* ---------- 수정이력 (TEAM JINO 누구나) ---------- */
 var FLD=[['name','회사명'],['bizno','사업자번호'],['status','상태'],['owner','우리 담당'],['mailGroup','메일 그룹'],['industry','업종'],['ceo','대표자'],['tel','회사 전화'],['fax','팩스'],['address','주소'],['note','비고'],['memo','메모']];
 function short(v){v=String(v==null?'':v).replace(/\s+/g,' ');return v.length>40?v.slice(0,40)+'…':v}
