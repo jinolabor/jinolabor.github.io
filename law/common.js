@@ -79,7 +79,8 @@ function formsHtml(t,plain){
     var body=url&&!plain&&okUrl(url)?(links++,'<a class="flink" href="'+esc(url)+'" target="_blank" rel="noopener">'+txt+'<i>↗</i></a>'):'<span>'+txt+'</span>';
     return '<li>'+(lab?'<b class="flab">'+esc(lab)+'</b>':'')+body+'</li>';
   }).join('');
-  return (h?'<ul class="fl">'+h+'</ul>':'')+(links?'':'<div class="talk">💬 '+TALK_NOTE+'</div>');
+  // 양식은 없거나 올리지 못한 경우가 있어, 링크가 있어도 업무톡 요청 안내는 항상 표시
+  return (h?'<ul class="fl">'+h+'</ul>':'')+'<div class="talk">💬 '+TALK_NOTE+'</div>';
 }
 function detailHtml(o){
   return (o.article?'<div class="art"><b>근거 조문</b><span>'+nbParen(esc(o.article)).replace(/\n/g,'<br>')+'</span></div>':'')+
