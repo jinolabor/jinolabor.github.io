@@ -310,15 +310,28 @@ $('#import-file').addEventListener('change',function(e){
     }catch(err){toast(err.message||'파일을 읽지 못했습니다.');return}
     if(!list.length){toast('가져올 회사가 없습니다.');return}
     var people=list.reduce(function(n,c){return n+(c.contacts||[]).length},0);
+    var have={};data.companies.forEach(function(c){have[normCo(c.name)+'|'+(c.status||'자문중')]=1});
+    var add=list.filter(function(c){return !have[normCo(c.name)+'|'+(c.status||'자문중')]});
+    var cnt=function(arr){var m={};arr.forEach(function(c){var k=c.status||'자문중';m[k]=(m[k]||0)+1});return Object.keys(m).map(function(k){return k+' '+m[k]}).join(', ')};
     var ov=modal('<h2>주소록 가져오기 (대표 전용)</h2>'+
-      '<p class="note-p"><b>'+esc(f.name)+'</b>에서 회사 <b>'+list.length+'</b>곳, 담당자 <b>'+people+'</b>명을 읽었습니다. 지금 주소록 전체를 이 내용으로 바꿉니다. 바꾸기 직전 상태는 자동으로 백업됩니다(백업 메뉴에서 되돌릴 수 있습니다).</p>'+
-      '<div class="act"><button class="btn" id="i-cancel">취소</button><button class="btn primary" id="i-ok">주소록 바꾸기</button></div>');
+      '<p class="note-p"><b>'+esc(f.name)+'</b>에서 회사 <b>'+list.length+'</b>곳, 담당자 <b>'+people+'</b>명을 읽었습니다.</p>'+
+      '<div class="subhead">① 없는 회사만 추가 (권장)</div><p class="note-p">지금 주소록에 없는 회사 <b>'+add.length+'</b>곳'+(add.length?' ('+esc(cnt(add))+')':'')+'만 더합니다. 이미 있는 회사(같은 이름·같은 상태)는 건드리지 않습니다.'+(add.length?'<br>'+add.slice(0,40).map(function(c){return esc(c.name)}).join(', ')+(add.length>40?' 외 '+(add.length-40)+'곳':''):'')+'</p>'+
+      '<div class="subhead">② 주소록 전체 바꾸기</div><p class="note-p">지금 주소록을 지우고 이 파일 내용으로 바꿉니다. 그동안 넣은 사업자번호·수정 내용도 파일 내용으로 바뀝니다. 바꾸기 직전 상태는 자동으로 백업됩니다.</p>'+
+      '<p class="note-p" id="i-prog" hidden></p>'+
+      '<div class="act"><span class="left"><button class="btn danger" id="i-all">전체 바꾸기</button></span><button class="btn" id="i-cancel">취소</button><button class="btn primary" id="i-add"'+(add.length?'':' disabled')+'>없는 회사 '+add.length+'곳 추가</button></div>');
     ov.querySelector('#i-cancel').onclick=closeModal;
-    ov.querySelector('#i-ok').onclick=async function(){
-      this.disabled=true;this.textContent='암호화해서 올리는 중…';busy=true;
+    ov.querySelector('#i-add').onclick=async function(){
+      var btn=this,prog=ov.querySelector('#i-prog');btn.disabled=true;ov.querySelector('#i-all').disabled=true;busy=true;prog.hidden=false;var okN=0,fail=0;
+      for(var i=0;i<add.length;i++){prog.textContent='추가하는 중… '+(i+1)+' / '+add.length;
+        try{var x=await enc(add[i]);var res=await rpc('addr_put',{p_key:newKey(),p_expected_rev:0,p_iv:x.iv,p_data:x.data,p_deleted:false});if(res&&res.ok)okN++;else fail++}catch(err){fail++}}
+      busy=false;closeModal();toast(okN+'곳을 추가했습니다.'+(fail?' 실패 '+fail+'곳 — 다시 해 주세요.':''));await load();
+    };
+    ov.querySelector('#i-all').onclick=async function(){
+      if(this.dataset.sure!=='1'){this.dataset.sure='1';this.textContent='정말 전체를 바꿀까요? 한 번 더 누르세요';return}
+      this.disabled=true;ov.querySelector('#i-add').disabled=true;this.textContent='암호화해서 올리는 중…';busy=true;
       try{var arr=[];for(var i=0;i<list.length;i++){var x=await enc(list[i]);arr.push({key:newKey(),iv:x.iv,data:x.data})}
-        var res=await rpc('addr_import',{p_docs:arr});busy=false;docs={};closeModal();toast(res.count+'개 회사를 가져왔습니다.');await load();
-      }catch(err){busy=false;this.disabled=false;this.textContent='주소록 바꾸기';toast('가져오지 못했습니다: '+(err.message||''))}
+        var res=await rpc('addr_import',{p_docs:arr});busy=false;docs={};closeModal();toast(res.count+'개 회사로 바꿨습니다.');await load();
+      }catch(err){busy=false;this.disabled=false;this.textContent='전체 바꾸기';toast('가져오지 못했습니다: '+(err.message||''))}
     };
   };
   if(isX)r.readAsArrayBuffer(f);else r.readAsText(f,'utf-8');
