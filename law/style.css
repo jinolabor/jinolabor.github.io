@@ -1,3 +1,4 @@
+@import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css');
 @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&display=swap');
 :root{--navy:#1F3864;--navy2:#2c4a7c;--ink:#1d2433;--sub:#5b6577;--line:#e3e7ee;--bg:#f4f6fa;--card:#fff;
 --done:#2f9e44;--soon:#d9480f;--plan:#1971c2;--tbd:#7048e8;--na:#868e96;--ask:#e67700}
@@ -244,3 +245,143 @@ body.ppopen{overflow:hidden}
 .pdfb span{font-size:13px;color:var(--sub)}
 .pdfn{margin:10px 0 0;font-size:13px;color:var(--sub)}
 @media(max-width:640px){.pdfbtns{grid-template-columns:1fr}}
+
+/* ===================================================================
+   공공기관 누리집 형식 (2026-11) — 넓은 화면, 왼쪽 메뉴, 각진 상자
+   =================================================================== */
+:root{--navy:#123a75;--navy2:#1d4f9a;--blue:#0b57c4;--ink:#1e2124;--sub:#555d68;--line:#d6dbe3;--bg:#f2f4f7}
+body{font-family:'Pretendard Variable',Pretendard,'Noto Sans KR','Malgun Gothic',sans-serif;letter-spacing:-.01em}
+.wrap{max-width:1440px;padding:0 28px}
+
+/* 상단 안내 띠 */
+.util{background:#0d2a55;color:#c9d4e6;font-size:13.5px}
+.utilin{display:flex;align-items:center;gap:8px;min-height:40px;flex-wrap:wrap}
+.ugov{font-weight:600}
+.usp{flex:1}
+.util .who{background:transparent;border:0;padding:0 10px 0 0;color:#fff;font-size:13.5px}
+.util .who b{color:#ffd77a}
+.util .tbtn{border-radius:2px;border-color:rgba(255,255,255,.35);padding:3px 10px;font-size:13px}
+
+/* 머리 (흰 바탕) */
+header.top{background:#fff;color:var(--ink);padding:18px 0;border-bottom:1px solid var(--line)}
+.topbar .lg{height:40px;background:transparent;border-radius:0;padding:0}
+.topbar .ttl{flex:1;min-width:220px;border-left:1px solid var(--line);padding-left:16px}
+.topbar h1{font-size:23px;font-weight:800;color:var(--navy);flex:none;min-width:0;letter-spacing:-.02em}
+.topbar .ttl p{margin:2px 0 0;font-size:14px;color:var(--sub)}
+
+/* 주 메뉴 (파란 띠) */
+nav.tabs{background:var(--navy);border-bottom:0;box-shadow:0 2px 6px rgba(0,0,0,.12)}
+nav.tabs .wrap{gap:0}
+.tab{color:#dbe4f3;font-size:17px;padding:15px 30px 13px;border-bottom:4px solid transparent;border-radius:0}
+.tab:hover{background:rgba(255,255,255,.08);color:#fff}
+.tab.on{color:#fff;background:rgba(255,255,255,.1);border-bottom-color:#ffc83d}
+.tab .cnt{background:rgba(255,255,255,.18);color:#fff;border-radius:2px}
+.tab .new{border-radius:2px}
+main{padding:26px 0 60px}
+
+/* 왼쪽 메뉴 + 본문 */
+.lay{display:grid;grid-template-columns:260px minmax(0,1fr);gap:28px;align-items:start}
+.lnb{position:sticky;top:66px;background:#fff;border:1px solid var(--line);border-top:3px solid var(--navy)}
+.lnbh{background:#f5f7fa;color:var(--navy);font-weight:800;font-size:17px;padding:14px 18px;border-bottom:1px solid var(--line)}
+.lnbh.sub{font-size:15px;border-top:1px solid var(--line)}
+.lnb ul{list-style:none;margin:0;padding:6px 0}
+.lnb li.none{padding:10px 18px;font-size:14px;color:var(--sub)}
+.lnb li button{display:flex;align-items:center;justify-content:space-between;gap:8px;width:100%;border:0;background:transparent;text-align:left;padding:11px 18px;font-size:15.5px;color:var(--ink);cursor:pointer;border-left:4px solid transparent}
+.lnb li button:hover{background:#eef3fb;color:var(--navy)}
+.lnb li button.on{background:#e6eefb;color:var(--navy);font-weight:800;border-left-color:var(--blue)}
+.lnb li em{font-style:normal;font-size:13px;font-weight:700;color:var(--sub);background:#eef1f5;border-radius:2px;padding:1px 8px;min-width:30px;text-align:center}
+.lnb li button.on em{background:var(--blue);color:#fff}
+.lnb li em.nw{background:#e03131;color:#fff}
+.lnb ul.jump li button{font-size:14.5px;color:var(--sub)}
+.lnb ul.jump li button::before{content:'›';margin-right:6px;color:var(--blue)}
+.lnb ul.jump li button span{flex:1}
+.lnbinfo{border-top:1px solid var(--line);padding:14px 18px;font-size:13.5px;color:var(--sub);line-height:1.55}
+.lnbinfo b{display:block;color:var(--navy);margin-bottom:2px}
+.cont{min-width:0}
+.crumb{font-size:13.5px;color:var(--sub);margin-bottom:6px}
+.crumb i{font-style:normal;margin:0 6px;color:#9aa3af}
+.ptitle{font-size:27px;font-weight:800;color:var(--ink);margin:0 0 18px;padding-bottom:14px;border-bottom:2px solid var(--ink);letter-spacing:-.03em}
+
+/* 요약 숫자 */
+.sum{grid-template-columns:1.3fr repeat(3,1fr);gap:0;border:1px solid var(--line);background:#fff;margin-bottom:22px}
+.sum .k{border:0;border-left:1px solid var(--line);border-radius:0;padding:16px 20px;display:flex;flex-direction:column;justify-content:center}
+.sum .k:first-child{border-left:0}
+.sum .k span{font-size:14.5px;color:var(--sub);font-weight:600}
+.sum .k b{font-size:32px;font-weight:800;color:var(--ink)}
+.sum .k b small{font-size:15px;font-weight:600;margin-left:2px;color:var(--sub)}
+.sum .k.late b{color:#c92a2a}.sum .k.soon b{color:#d9480f}.sum .k.plan b{color:var(--blue)}
+.sum .main{background:var(--navy);border-radius:0}
+.sum .main b,.sum .main b small{color:#fff}
+
+/* 묶음 제목·카드 */
+.grp{font-size:18px;font-weight:800;color:var(--ink);margin:26px 0 10px;padding-left:12px;border-left:4px solid var(--navy);line-height:1.2}
+.grp.late{color:#c92a2a;border-left-color:#c92a2a}
+.grp.soon{border-left-color:#d9480f}
+.grp.plan{border-left-color:var(--blue)}
+.grp.tbd{border-left-color:#868e96}
+.todo{border-radius:0;border-color:var(--line);margin-bottom:-1px}
+.todo:hover{background:#fafcff;position:relative;z-index:1;border-color:#9fb4d6}
+.todo.open{border-color:var(--navy2);position:relative;z-index:1}
+.trow{grid-template-columns:110px 1fr;padding:16px 20px}
+.tcat{display:inline-block;font-size:12.5px;font-weight:700;color:#fff;background:var(--navy2);border-radius:2px;padding:1px 7px;margin-right:7px;vertical-align:1px}
+.tlaw .tag{border-radius:2px}
+.tact{border-radius:2px}
+.dd{border-radius:2px}
+.box{border-radius:0}
+.empty{border-radius:0}
+.btn{border-radius:3px}
+.chip{border-radius:2px}
+.h2{font-size:20px;font-weight:800;color:var(--ink);padding-left:12px;border-left:4px solid var(--navy);line-height:1.2;margin:30px 0 12px}
+.h2:first-child{margin-top:0}
+
+/* 월별 업데이트 */
+.mhero{border-radius:0!important}
+.kpi{border-radius:0!important}
+.acc,.ai{border-radius:0!important}
+
+/* 바닥 */
+footer{max-width:none;margin:0;padding:26px 0 30px;background:#2b3138;color:#c3c9d1;font-size:13.5px}
+footer .fb{max-width:1440px;margin:0 auto;padding:0 28px;background:transparent;border:0;border-radius:0;line-height:1.8}
+footer .fb b{color:#fff}
+footer .ex{color:#ffc9c0}
+
+@media(max-width:900px){
+ .wrap{padding:0 16px}
+ .lay{grid-template-columns:1fr;gap:14px}
+ .lnb{position:static;border-top-width:3px}
+ .lnb ul{display:flex;flex-wrap:wrap;gap:6px;padding:10px 12px}
+ .lnb li button{border:1px solid var(--line);border-left:1px solid var(--line);padding:6px 10px;font-size:14px;gap:6px}
+ .lnb li button.on{border-color:var(--blue);border-left-color:var(--blue)}
+ .lnbh{padding:10px 14px;font-size:15px}
+ .lnbinfo{display:none}
+ .ptitle{font-size:22px}
+ .util .ugov{display:none}
+ .topbar .ttl{border-left:0;padding-left:0}
+ .topbar h1{font-size:19px}
+ .topbar .ttl p{display:none}
+ .tab{padding:13px 18px 11px;font-size:16px}
+ .sum{grid-template-columns:repeat(3,1fr)}
+ .sum .main{grid-column:1/-1}
+ .sum .k{padding:10px 12px;border-top:1px solid var(--line)}
+ .sum .k:nth-child(2){border-left:0}
+ .sum .main{border-top:0}
+ .sum .k b{font-size:24px}
+ .trow{grid-template-columns:1fr}
+}
+main.wrap{padding-top:30px;padding-bottom:64px}
+.sum .main span{color:rgba(255,255,255,.88)}
+.sum .main span:last-child{font-size:13px;font-weight:500;color:rgba(255,255,255,.7)}
+@media(max-width:900px){main.wrap{padding-top:16px}}
+/* 로그인 화면 — 공공기관 형식 */
+.login{background:#eef1f5;padding:0 18px 48px}
+.login::before{content:'노무그룹지노 자문 회원사 전용 서비스';display:block;margin:0 -18px 40px;background:#0d2a55;color:#c9d4e6;font-size:13.5px;font-weight:600;padding:10px 0;text-align:center}
+.login .lg{background:transparent;border-radius:0;padding:0;height:48px}
+.lcard{border-radius:4px;border:1px solid var(--line);border-top:4px solid var(--navy);box-shadow:0 4px 18px rgba(20,40,80,.08)}
+.mo{border-radius:2px}
+.lcard input[type=text],.lcard input[type=password]{border-radius:3px;border-width:1px;border-color:#b9c2cf}
+.lcard input:focus{border-color:var(--blue);box-shadow:0 0 0 3px rgba(11,87,196,.15)}
+.go{border-radius:3px}
+.feat div{background:#fff;border:1px solid var(--line);border-radius:3px;color:var(--ink)}
+.cp{color:var(--sub)}
+.login .lg{background:#fff;padding:8px 14px;border:1px solid var(--line);border-radius:2px;box-sizing:content-box}
+.login.adm::before{content:'노무그룹지노 TEAM JINO 관리 화면'}

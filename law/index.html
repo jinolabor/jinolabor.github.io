@@ -40,16 +40,20 @@
 
 <!-- 본문 -->
 <div id="app" hidden>
+ <div class="util"><div class="wrap utilin">
+  <span class="ugov">노무그룹지노 자문 회원사 전용 서비스</span>
+  <span class="usp"></span>
+  <span class="who"><b id="meName"></b> 님 전용</span>
+  <button class="tbtn" id="btnPrint">인쇄·PDF</button>
+  <button class="tbtn" id="btnOut">로그아웃</button>
+ </div></div>
  <header class="top"><div class="wrap topbar">
   <img class="lg" src="logo.png" alt="노무그룹지노">
-  <h1>2026~2027 노동관계법령 개정 안내</h1>
-  <span class="who">🔒 <b id="meName"></b> 전용</span>
-  <button class="tbtn" id="btnPrint">🖨 인쇄·PDF</button>
-  <button class="tbtn" id="btnOut">로그아웃</button>
+  <div class="ttl"><h1>2026~2027 노동관계법령 개정 안내</h1><p>시행일·회사 조치사항·개정 전후 비교를 한곳에서 확인하세요</p></div>
  </div></header>
  <nav class="tabs"><div class="wrap">
-  <button class="tab" data-t="todo">📋 개정사항<span class="cnt" id="cntTodo"></span></button>
-  <button class="tab" data-t="month">📰 월별 업데이트<span class="new" id="newMonth" hidden>NEW</span></button>
+  <button class="tab" data-t="todo">개정사항<span class="cnt" id="cntTodo"></span></button>
+  <button class="tab" data-t="month">월별 업데이트<span class="new" id="newMonth" hidden>NEW</span></button>
  </div></nav>
  <main class="wrap">
   <div id="profBox"></div>
@@ -159,7 +163,7 @@ function card(o,opt){
   var key='item:'+o.no;
   return '<div class="todo nobtn'+(OPEN.has(key)?' open':'')+'" data-key="'+key+'">'+
    '<div class="trow"><div class="dt"><div class="d">'+(o.dt?fmt(o.dt):'미정')+'</div><span class="dd '+o.s+'">'+esc(o.dd)+'</span></div>'+
-   '<div class="tmain"><div class="tlaw">'+esc(o.law)+tagsHtml(o)+'</div>'+
+   '<div class="tmain"><div class="tlaw">'+((o.cats||[])[0]?'<span class="tcat">'+esc(o.cats[0])+'</span>':'')+esc(o.law)+tagsHtml(o)+'</div>'+
    '<div class="tsum">'+esc(o.summary)+'</div>'+
    (o.action?'<div class="tact"><b>회사가 할 일</b> · '+esc(o.action)+'</div>':'')+
    '<div class="tmore">▾ 눌러서 개정 전·후 비교 보기</div></div>'+
@@ -169,42 +173,50 @@ function card(o,opt){
 
 /* ---------- 우리 회사 할 일 ---------- */
 function mine(){return ITEMS}
+var CAT_IC={'근로시간·휴가':'🕘','모성·육아':'👶','임금·퇴직':'💰','산업안전':'⛑️','4대보험·연금':'🏥','외국인 고용':'🌏','건설업':'🏗️','개인정보':'🔐','제도·기타':'📁'};
 function renderTodo(){
   var S=ITEMS;
   var L=S.filter(function(o){return !ALLF.cat||(o.cats||[]).indexOf(ALLF.cat)>=0});
-  var G=[['late','⚠ 이미 시행 중',function(o){return o.s==='done'}],['soon','⏰ 60일 안에 시행',function(o){return o.s==='soon'}],['plan','🗓 이후 시행 예정',function(o){return o.s==='plan'}],['tbd','⏳ 시행일 미확정',function(o){return o.s==='tbd'}]];
+  var G=[['late','이미 시행 중',function(o){return o.s==='done'}],['soon','60일 안에 시행',function(o){return o.s==='soon'}],['plan','이후 시행 예정',function(o){return o.s==='plan'}],['tbd','시행일 미확정',function(o){return o.s==='tbd'}]];
   var n=function(i){return L.filter(G[i][2]).length};
   $('#cntTodo').textContent=ITEMS.length;
-  var h='<div style="height:16px"></div>';
-  h+='<div class="sum"><div class="k main"><span>'+'2026~2027 개정사항'+(ALLF.cat?' · '+esc(ALLF.cat):'')+'</span><b>'+L.length+'건</b><span>시행일 순으로 정리했습니다</span></div>'+
-     '<div class="k"><b style="color:#d9480f">'+n(0)+'</b><span>이미 시행 중</span></div>'+
-     '<div class="k"><b style="color:var(--soon)">'+n(1)+'</b><span>60일 안에 시행</span></div>'+
-     '<div class="k"><b style="color:var(--navy)">'+(n(2)+n(3))+'</b><span>이후 · 미확정</span></div></div>';
-  h+='<div class="box" style="margin:12px 0 4px">'+
-    '<div class="chips"><button class="chip'+(!ALLF.cat?' on':'')+'" data-cat="">전체 분야</button>'+CATS.map(function(c){var k=S.filter(function(o){return (o.cats||[]).indexOf(c)>=0}).length;return k?'<button class="chip'+(ALLF.cat===c?' on':'')+'" data-cat="'+esc(c)+'">'+esc(c)+'<span class="n">'+k+'</span></button>':''}).join('')+'</div></div>';
-  if(!L.length)h+='<div class="empty">조건에 맞는 개정사항이 없습니다.</div>';
+  var side='<aside class="lnb"><div class="lnbh">분야별 보기</div><ul>'+
+    '<li><button class="'+(!ALLF.cat?'on':'')+'" data-cat=""><span>📚 전체</span><em>'+S.length+'</em></button></li>'+
+    CATS.map(function(c){var k=S.filter(function(o){return (o.cats||[]).indexOf(c)>=0}).length;return k?'<li><button class="'+(ALLF.cat===c?'on':'')+'" data-cat="'+esc(c)+'"><span>'+(CAT_IC[c]||'·')+' '+esc(c)+'</span><em>'+k+'</em></button></li>':''}).join('')+
+    '</ul><div class="lnbinfo"><b>문의</b>담당 노무사 또는<br>jinolabor@kakao.com</div></aside>';
+  var h='<div class="crumb">홈 <i>›</i> 개정사항'+(ALLF.cat?' <i>›</i> '+esc(ALLF.cat):'')+'</div>'+
+    '<h2 class="ptitle">'+(ALLF.cat?esc(ALLF.cat)+' 개정사항':'2026~2027 개정사항 전체')+'</h2>';
+  h+='<div class="sum"><div class="k main"><span>'+(ALLF.cat?esc(ALLF.cat):'전체 분야')+'</span><b>'+L.length+'<small>건</small></b><span>시행일 순으로 정리했습니다</span></div>'+
+     '<div class="k late"><span>이미 시행 중</span><b>'+n(0)+'<small>건</small></b></div>'+
+     '<div class="k soon"><span>60일 안에 시행</span><b>'+n(1)+'<small>건</small></b></div>'+
+     '<div class="k plan"><span>이후 · 미확정</span><b>'+(n(2)+n(3))+'<small>건</small></b></div></div>';
+  if(!L.length)h+='<div class="empty">해당 분야의 개정사항이 없습니다.</div>';
   G.forEach(function(g){var X=L.filter(g[2]);if(!X.length)return;h+='<div class="grp '+g[0]+'">'+g[1]+' <span class="n">'+X.length+'건</span></div>'+X.map(function(o){return card(o)}).join('')});
-  $('#v-todo').innerHTML=h;
-  $$('#v-todo [data-cat]').forEach(function(b){b.onclick=function(){ALLF.cat=b.dataset.cat;renderTodo()}});
+  $('#v-todo').innerHTML='<div class="lay">'+side+'<div class="cont">'+h+'</div></div>';
+  $$('#v-todo [data-cat]').forEach(function(b){b.onclick=function(){ALLF.cat=b.dataset.cat;renderTodo();var t=$('#v-todo .cont');if(t&&window.innerWidth<=900)t.scrollIntoView({behavior:'smooth',block:'start'})}});
 }
 
 /* ---------- 월별 업데이트 ---------- */
 function renderMonth(){
   var v=$('#v-month');
-  if(!ISSUES.length){v.innerHTML='<div class="empty">월별 업데이트는 매월 초에 게시됩니다. 게시되면 이곳에서 확인하실 수 있습니다.</div>'+monthRows(ym(TODAY));return}
+  var crumb=function(t){return '<div class="crumb">홈 <i>›</i> 월별 업데이트'+(t?' <i>›</i> '+esc(t):'')+'</div><h2 class="ptitle">월별 노동법 업데이트</h2>'};
+  var side=function(nx,id){return '<aside class="lnb"><div class="lnbh">발행 목록</div><ul>'+(ISSUES.length?ISSUES.map(function(x,i){return '<li><button class="'+(x.id===CUR_ISSUE?'on':'')+'" data-iss="'+esc(x.id)+'"><span>📰 '+esc(x.title||x.id)+'</span>'+(i===0?'<em class="nw">최신</em>':'')+'</button></li>'}).join(''):'<li class="none">아직 발행된 소식이 없습니다</li>')+'</ul>'+
+    (id?'<div class="lnbh sub">바로가기</div><ul class="jump"><li><button data-jump="mNew"><span>이달의 새 소식</span></button></li><li><button data-jump="mNow"><span>'+(+id.slice(5))+'월 시행 개정사항</span></button></li><li><button data-jump="mNext"><span>'+(+nx.slice(5))+'월 시행 예정</span></button></li></ul>':'')+
+    '<div class="lnbinfo"><b>발행 안내</b>매월 초 노무그룹지노가<br>검토 후 게시합니다</div></aside>'};
+  if(!ISSUES.length){v.innerHTML='<div class="lay">'+side()+'<div class="cont">'+crumb()+'<div class="empty">월별 업데이트는 매월 초에 게시됩니다. 게시되면 이곳에서 확인하실 수 있습니다.</div>'+monthRows(ym(TODAY))+'</div></div>';return}
   if(!CUR_ISSUE||!ISSUES.some(function(x){return x.id===CUR_ISSUE}))CUR_ISSUE=ISSUES[0].id;
   var m=ISSUES.find(function(x){return x.id===CUR_ISSUE});
   var items=(m.items||[]).map(function(it,i){return Object.assign({_i:i},it)});
   var my=items,others=[];
-  var h=ISSUES.length>1?'<div class="mtabs">'+ISSUES.map(function(x,i){return '<button class="chip'+(x.id===CUR_ISSUE?' on':'')+'" data-iss="'+esc(x.id)+'">'+esc(x.title||x.id)+(i===0?' · 최신':'')+'</button>'}).join('')+'</div>':'';
+  var h=crumb(m.title||m.id);
   var nx=nextYm(m.id);
   h+='<div class="mhero"><div><div class="mt">'+esc(m.title||m.id)+' · '+dot(m.issued)+' 발행</div><div class="lead">'+esc(m.lead||'')+'</div><div class="per">대상 기간 '+esc(m.period||'')+'</div></div>'+
      '<div class="kpis"><div class="kpi" data-jump="mNew"><b>'+my.length+'</b><span>이달의 새 소식</span></div><div class="kpi" data-jump="mNow"><b>'+rowsIn(m.id).length+'</b><span>'+(+m.id.slice(5))+'월 시행</span></div><div class="kpi" data-jump="mNext"><b>'+rowsIn(nx).length+'</b><span>'+(+nx.slice(5))+'월 시행 예정</span></div></div></div>';
-  h+='<div class="h2" id="mNew" style="margin-top:22px">🆕 이달의 새 소식 <small>'+my.length+'건 · 제목을 누르면 펼쳐집니다</small></div>';
+  h+='<div class="h2" id="mNew" style="margin-top:22px">이달의 새 소식 <small>'+my.length+'건 · 제목을 누르면 펼쳐집니다</small></div>';
   h+=my.length?'<div class="acc">'+my.map(function(it){return accItem(m,it)}).join('')+'</div>':'<div class="empty">이달에는 새 소식이 없습니다.</div>';
   if(others.length)h+='<details class="fold"><summary>우리 회사에 해당하지 않는 소식 '+others.length+'건 보기</summary><div class="acc">'+others.map(function(it){return accItem(m,it)}).join('')+'</div></details>';
   h+=monthRows(m.id);
-  v.innerHTML=h;
+  v.innerHTML='<div class="lay">'+side(nx,m.id)+'<div class="cont">'+h+'</div></div>';
   $$('[data-iss]',v).forEach(function(b){b.onclick=function(){CUR_ISSUE=b.dataset.iss;renderMonth()}});
   $$('.ah',v).forEach(function(b){b.onclick=function(){b.parentElement.classList.toggle('open')}});
   $$('[data-jump]',v).forEach(function(k){k.onclick=function(){var t=document.getElementById(k.dataset.jump);if(t)t.scrollIntoView({behavior:'smooth',block:'start'})}});
@@ -221,8 +233,8 @@ function rowsIn(s){return ITEMS.filter(function(o){return o.dt&&ym(o.dt)===s})}
 function monthRows(s){
   var nx=nextYm(s),a=rowsIn(s),b=rowsIn(nx);
   function rows(L){return L.map(function(o){return '<div class="todo" style="cursor:pointer" data-goitem="'+o.no+'"><div class="trow" style="grid-template-columns:96px 1fr auto"><div class="dt"><div class="d">'+fmt(o.dt)+'</div></div><div><div class="tlaw">'+esc(o.law)+'</div><div style="font-size:15.5px">'+esc(o.summary.split('\n')[0])+'</div></div><div class="muted" style="font-size:13px;white-space:nowrap">할 일 보기 →</div></div></div>'}).join('')}
-  return '<div class="h2" id="mNow">📌 '+(+s.slice(5))+'월에 시행되는 개정사항 <small>'+a.length+'건</small></div>'+(a.length?rows(a):'<div class="empty">이달 시행되는 개정사항이 없습니다.</div>')+
-    '<div class="h2" id="mNext">⏭ '+(+nx.slice(5))+'월 시행 예정 <small>'+b.length+'건 · 미리 준비하세요</small></div>'+(b.length?rows(b):'<div class="empty">다음 달 시행 예정인 개정사항이 없습니다.</div>');
+  return '<div class="h2" id="mNow">'+(+s.slice(5))+'월에 시행되는 개정사항 <small>'+a.length+'건</small></div>'+(a.length?rows(a):'<div class="empty">이달 시행되는 개정사항이 없습니다.</div>')+
+    '<div class="h2" id="mNext">'+(+nx.slice(5))+'월 시행 예정 <small>'+b.length+'건 · 미리 준비하세요</small></div>'+(b.length?rows(b):'<div class="empty">다음 달 시행 예정인 개정사항이 없습니다.</div>');
 }
 
 /* ---------- 전체 개정사항 ---------- */

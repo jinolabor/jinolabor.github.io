@@ -40,7 +40,7 @@
 </head>
 <body class="adm">
 
-<section class="login" id="login">
+<section class="login adm" id="login">
  <div class="in">
   <img class="lg" src="logo.png" alt="노무그룹지노">
   <div class="lcard">
@@ -56,13 +56,17 @@
 </section>
 
 <div id="app" hidden>
- <header class="top"><div class="wrap topbar">
-  <img class="lg" src="logo.png" alt="노무그룹지노">
-  <h1>개정법 안내 관리 <span style="font-weight:500;font-size:14px;opacity:.8">· TEAM JINO</span></h1>
+ <div class="util"><div class="wrap utilin">
+  <span class="ugov">노무그룹지노 TEAM JINO 관리 화면</span>
+  <span class="usp"></span>
   <span class="who" id="who"></span>
-  <button class="tbtn" id="btnPrint">🖨 인쇄·PDF</button>
+  <button class="tbtn" id="btnPrint">인쇄·PDF</button>
   <a class="tbtn" href="./" target="_blank" style="text-decoration:none">회원사 화면 ↗</a>
   <button class="tbtn" id="btnLock">잠그기</button>
+ </div></div>
+ <header class="top"><div class="wrap topbar">
+  <img class="lg" src="logo.png" alt="노무그룹지노">
+  <div class="ttl"><h1>개정법 안내 관리</h1><p>회원사·월별 소식·개정사항 항목을 관리합니다 · TEAM JINO</p></div>
  </div></header>
  <nav class="tabs"><div class="wrap">
   <button class="tab" data-t="dash">📋 현황<span class="cnt" id="cAsk"></span></button>
@@ -282,7 +286,7 @@ function issEdit(s,pre){
 
 /* ---------- 개정사항 항목 ---------- */
 function renderItems(){
-  var h='<div class="note">회원사 화면 「📋 개정사항」 탭에 나오는 항목입니다. <b>해당 회사</b>를 지정하면 그 조건에 맞는 회원사에게만 할 일로 나타납니다.</div>'+
+  var h='<div class="note">회원사 화면 「📋 개정사항」 탭에 나오는 항목입니다. <b>해당 회사</b>를 지정하면 회원사 화면 카드에 「건설업 해당」 같은 표시가 붙습니다 (모든 회원사에게 보임).</div>'+
     '<div class="toolbar"><span class="sp"></span><button class="btn pri" id="newItem">새 항목</button></div>';
   h+='<div class="tw"><table><thead><tr><th>시행일</th><th>법령</th><th>주요 내용</th><th>회사가 할 일</th><th>해당 회사</th><th>수정</th></tr></thead><tbody>'+ITEMS.map(function(o){
     return '<tr class="click" data-no="'+o.no+'"><td style="white-space:nowrap">'+(o.dt?fmt(o.dt):'미정')+'</td><td style="font-size:13.5px">'+esc(o.law)+'</td><td>'+esc(o.summary)+'</td><td style="font-size:13.5px">'+esc(o.action)+'</td><td style="white-space:nowrap;font-size:13px">'+esc(o.cond||'모든 회사')+(o.min_size?' · '+o.min_size+'인 이상':'')+'</td><td style="white-space:nowrap;font-size:12.5px" class="muted">'+esc(o._by||'')+'<br>'+ago(o._at)+'</td></tr>'}).join('')+'</tbody></table></div>';
