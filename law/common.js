@@ -83,9 +83,16 @@ function formsHtml(t,plain){
   return (h?'<ul class="fl">'+h+'</ul>':'')+'<div class="talk">💬 '+TALK_NOTE+'</div>';
 }
 function detailHtml(o){
-  return (o.article?'<div class="art"><b>근거 조문</b><span>'+nbParen(esc(o.article)).replace(/\n/g,'<br>')+'</span></div>':'')+
-    '<div class="ba"><div class="bx bef"><h4>개정 전</h4><div class="bxb">'+richText(o.before)+'</div></div><div class="arr"><span>→</span></div><div class="bx aft"><h4>개정 후</h4><div class="bxb">'+richText(o.after)+'</div></div></div>'+
-    '<div class="tips"><div class="bx tip"><h4>실무상 유의사항</h4><div class="bxb">'+richText(o.tips)+'</div></div><div class="bx frm"><h4>관련 서식·자료</h4><div class="bxb">'+formsHtml(o.forms)+'</div></div></div>';
+  // 공공기관 문서표 형식: 왼쪽 항목명 + 오른쪽 내용
+  return '<table class="dtab"><tbody>'+
+    (o.article?'<tr><th scope="row">근거 조문</th><td class="dart">'+nbParen(esc(o.article)).replace(/\n/g,'<br>')+'</td></tr>':'')+
+    '<tr><th scope="row">개정 내용</th><td class="dcmp"><div class="cmp2">'+
+      '<div class="cbef"><div class="clab">개정 전</div>'+richText(o.before)+'</div>'+
+      '<div class="caft"><div class="clab">개정 후</div>'+richText(o.after)+'</div>'+
+    '</div></td></tr>'+
+    '<tr><th scope="row">실무상 유의사항</th><td class="dtip">'+richText(o.tips)+'</td></tr>'+
+    '<tr><th scope="row">관련 서식·자료</th><td class="dfrm">'+formsHtml(o.forms)+'</td></tr>'+
+  '</tbody></table>';
 }
 function tagsHtml(o){
   return (o.cond?'<span class="tag c">'+esc(o.cond)+' 해당</span>':'')+(o.rules?'<span class="tag r">취업규칙 개정</span>':'')+(o.ref?'<span class="tag">참고</span>':'');

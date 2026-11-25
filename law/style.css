@@ -438,3 +438,34 @@ a.flink:hover{color:#063a86}
 .pdoc .rh{font-weight:700;font-size:9pt}.pdoc ul.fl{margin:0;padding:0;list-style:none}.pdoc .flab{font-weight:700;margin-right:4px}.pdoc .talk{font-size:8.5pt;color:#7a5600;margin-top:4px}
 .pdoc p{margin:0}
 @media(max-width:900px){.arr{transform:none!important}.arr span{transform:rotate(90deg)}}
+
+/* ===== 상세: 공공기관 문서표 형식 (2026-11) ===== */
+.tdet{background:#fff;border-top:1px solid var(--line);padding:18px 20px 22px}
+table.dtab{width:100%;border-collapse:collapse;border-top:2px solid var(--navy);font-size:15px;line-height:1.7;color:var(--ink);table-layout:fixed}
+table.dtab th{width:148px;background:#f4f6fa;color:var(--navy);font-weight:700;text-align:left;vertical-align:top;padding:14px 16px;border-bottom:1px solid var(--line);border-right:1px solid var(--line);font-size:14.5px}
+table.dtab td{padding:14px 18px;border-bottom:1px solid var(--line);vertical-align:top;background:#fff}
+td.dart{color:#3a414b;font-size:14.5px}
+td.dcmp{padding:0}
+.cmp2{display:grid;grid-template-columns:1fr 1fr}
+.cbef,.caft{padding:14px 18px}
+.cbef{border-right:1px solid var(--line);color:#4a515b}
+.caft{background:#f5f8fe;color:#10284f}
+.clab{display:inline-block;font-size:12.5px;font-weight:700;padding:1px 9px;border-radius:2px;margin-bottom:8px}
+.cbef .clab{background:#eceff3;color:#5b6370;border:1px solid #d3d8df}
+.caft .clab{background:var(--blue);color:#fff;border:1px solid var(--blue)}
+.caft ul.rl li::before{background:var(--blue);opacity:1}
+td.dtip .rh{color:#b35100;border-color:#f3c79d;background:#fff8f1}
+td.dtip ul.rl li::before{background:#e8590c;opacity:1}
+td.dfrm ul.fl li{padding:6px 0}
+td.dfrm .talk{display:inline-block;margin-top:8px;padding:5px 12px;font-size:14px;background:#fffbea;border-color:#f0dc9a}
+table.dtab .bxb,table.dtab p{margin:0 0 3px}
+@media(max-width:900px){
+ .tdet{padding:12px 10px 14px}
+ table.dtab,table.dtab tbody,table.dtab tr,table.dtab th,table.dtab td{display:block;width:auto}
+ table.dtab th{border-right:0;padding:8px 12px}
+ table.dtab td{padding:10px 12px}
+ .cmp2{grid-template-columns:1fr}
+ .cbef{border-right:0;border-bottom:1px solid var(--line)}
+ .cbef,.caft{padding:10px 12px}
+}
+table.dtab td.dcmp{padding:0}
