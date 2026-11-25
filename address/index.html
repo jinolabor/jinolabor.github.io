@@ -138,8 +138,9 @@ td.note{min-width:110px;max-width:220px;white-space:pre-line;font-size:14.5px;co
   <span class="emblem">지노</span>
   <h1>거래처 주소록 관리대장</h1>
   <span class="sub">노무그룹지노 · 자문회사</span>
-  <span class="savebox" id="savebox"><span id="savetext"></span><b id="who" style="color:#fff"></b><button class="btn sm" id="btn-admin" hidden>관리</button><button class="btn sm" id="btn-import" hidden>주소록 가져오기</button><button class="btn sm" id="btn-refresh">새로고침</button><button class="btn primary sm" id="btn-lock">잠그기</button></span>
+  <span class="savebox" id="savebox"><span id="savetext"></span><b id="who" style="color:#fff"></b><button class="btn sm" id="btn-history">수정이력</button><button class="btn sm" id="btn-backup" hidden>백업</button><button class="btn sm" id="btn-admin" hidden>관리</button><button class="btn sm" id="btn-bizno" hidden>사업자번호 넣기</button><button class="btn sm" id="btn-import" hidden>주소록 가져오기</button><button class="btn sm" id="btn-refresh">새로고침</button><button class="btn primary sm" id="btn-lock">잠그기</button></span>
 </div></header>
+<input type="file" id="bizno-file" accept=".xlsx,.xls,.csv" hidden>
 <input type="file" id="import-file" accept=".xlsx,.xls,.html,.htm" hidden>
 <div class="wrap">
 <div class="banner" id="restore" hidden></div>
@@ -242,7 +243,7 @@ $('#lform').onsubmit=async function(ev){
     if(!who||who.status!=='active'){TOKEN='';say(who&&who.status==='pending'?'아직 승인되지 않았습니다. 대표님께 승인을 요청해 주세요.':who&&who.status==='revoked'?'사용이 중지된 비밀번호입니다.':'구성원 명단에 없습니다. 급여대행 프로그램에서 먼저 한 번 로그인해 등록해 주세요.',true);return}
     ME=who;AKEY=await addrKey(hit.k);
     $('#login').hidden=true;$('#who').textContent=ME.name+' 님';
-    $('#btn-admin').hidden=!ME.is_master;$('#btn-import').hidden=!ME.is_master;$('#btn-xlsx').hidden=!ME.can_export;
+    $('#btn-admin').hidden=!ME.is_master;$('#btn-backup').hidden=!ME.is_master;$('#btn-import').hidden=!ME.is_master;$('#btn-bizno').hidden=!ME.is_master;$('#btn-xlsx').hidden=!ME.can_export;
     status('불러오는 중…');await load();
     watchT=setInterval(async function(){try{var k=await fetchKeys();if(!(k.entries||[]).some(function(e){return e.id===hit.id}))lockOut('이 비밀번호는 더 이상 쓸 수 없습니다.')}catch(e){}},RECHECK);
   }catch(e){say('열지 못했습니다: '+(e&&e.message||e),true)}
@@ -292,7 +293,7 @@ function fromRows(aoa){
   var out=[],byKey={};
   for(var r=1;r<aoa.length;r++){var row=aoa[r];if(!row||!g(row,'회사명'))continue;
     var k=(g(row,'연번')||'')+'|'+g(row,'회사명');var c=byKey[k];
-    if(!c){c=byKey[k]={status:g(row,'상태')||'자문중',name:g(row,'회사명'),industry:g(row,'업종')||'건설',owner:g(row,'우리담당'),mailGroup:g(row,'메일그룹'),note:g(row,'비고'),ceo:g(row,'대표자'),tel:g(row,'회사전화'),fax:g(row,'팩스'),address:g(row,'주소'),memo:g(row,'메모'),contacts:[]};out.push(c)}
+    if(!c){c=byKey[k]={status:g(row,'상태')||'자문중',name:g(row,'회사명'),bizno:bizFmt(g(row,'사업자번호'))||g(row,'사업자번호'),industry:g(row,'업종')||'건설',owner:g(row,'우리담당'),mailGroup:g(row,'메일그룹'),note:g(row,'비고'),ceo:g(row,'대표자'),tel:g(row,'회사전화'),fax:g(row,'팩스'),address:g(row,'주소'),memo:g(row,'메모'),contacts:[]};out.push(c)}
     if(g(row,'담당자')||g(row,'이메일')||g(row,'휴대폰')||g(row,'직함')||g(row,'담당업무')||g(row,'이메일메모'))c.contacts.push({title:g(row,'직함'),name:g(row,'담당자'),role:g(row,'담당업무'),email:g(row,'이메일'),emailNote:g(row,'이메일메모'),phone:g(row,'휴대폰'),status:g(row,'재직상태')||'재직'});
   }
   return out;
@@ -310,7 +311,7 @@ $('#import-file').addEventListener('change',function(e){
     if(!list.length){toast('가져올 회사가 없습니다.');return}
     var people=list.reduce(function(n,c){return n+(c.contacts||[]).length},0);
     var ov=modal('<h2>주소록 가져오기 (대표 전용)</h2>'+
-      '<p class="note-p"><b>'+esc(f.name)+'</b>에서 회사 <b>'+list.length+'</b>곳, 담당자 <b>'+people+'</b>명을 읽었습니다. 지금 주소록 전체를 이 내용으로 바꿉니다. 이전 내용은 서버 기록에 남습니다.</p>'+
+      '<p class="note-p"><b>'+esc(f.name)+'</b>에서 회사 <b>'+list.length+'</b>곳, 담당자 <b>'+people+'</b>명을 읽었습니다. 지금 주소록 전체를 이 내용으로 바꿉니다. 바꾸기 직전 상태는 자동으로 백업됩니다(백업 메뉴에서 되돌릴 수 있습니다).</p>'+
       '<div class="act"><button class="btn" id="i-cancel">취소</button><button class="btn primary" id="i-ok">주소록 바꾸기</button></div>');
     ov.querySelector('#i-cancel').onclick=closeModal;
     ov.querySelector('#i-ok').onclick=async function(){
@@ -344,6 +345,78 @@ $('#btn-admin').onclick=async function(){
 
 /* ---------- 공통 ---------- */
 function ownerKey(o){return String(o||'').replace(/\n/g,'+').replace(/\(.*?\)/g,'').replace(/\s+/g,'').replace(/(대리|과장|팀장|주임|사원|실장|부장)$/,'')||'(미지정)'}
+/* ---------- 사업자번호 ---------- */
+function bizFmt(s){var d=String(s||'').replace(/\D/g,'');return d.length===10?d.slice(0,3)+'-'+d.slice(3,5)+'-'+d.slice(5):''}
+function bizOk(s){var d=String(s||'').replace(/\D/g,'');if(d.length!==10)return false;var w=[1,3,7,1,3,7,1,3,5],sum=0;for(var i=0;i<9;i++)sum+=(+d[i])*w[i];sum+=Math.floor((+d[8])*5/10);return (10-sum%10)%10===+d[9]}
+/* 대표 전용: 엑셀(회사명 + 사업자번호)로 여러 회사에 한꺼번에 넣기 */
+$('#bizno-file').addEventListener('change',function(e){
+  var f=e.target.files[0];if(!f||!ME||!ME.is_master)return;
+  var r=new FileReader();
+  r.onload=function(){
+    var aoa;
+    try{var wb=XLSX.read(new Uint8Array(r.result),{type:'array'});aoa=XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]],{header:1,raw:false,defval:''})}catch(err){toast('파일을 읽지 못했습니다.');return}
+    var hr=-1,ci=-1,bi=-1;
+    for(var i=0;i<Math.min(10,aoa.length)&&hr<0;i++){var h=(aoa[i]||[]).map(function(x){return String(x||'').replace(/\s/g,'')});
+      var c=h.findIndex(function(x){return /회사명|상호|업체명|거래처/.test(x)}),b=h.findIndex(function(x){return /사업자/.test(x)});
+      if(c>=0&&b>=0){hr=i;ci=c;bi=b}}
+    if(hr<0){toast('첫 줄에 "회사명"(또는 상호)과 "사업자번호" 제목이 있어야 합니다.');return}
+    var byName={};data.companies.forEach(function(c){var k=normCo(c.name);(byName[k]=byName[k]||[]).push(c)});
+    var add=[],chg=[],same=[],miss=[],bad=[],dup=[],seen={};
+    for(var j=hr+1;j<aoa.length;j++){var row=aoa[j]||[];var nm=String(row[ci]||'').trim(),raw=String(row[bi]||'').trim();if(!nm&&!raw)continue;
+      var bz=bizFmt(raw);if(!bz){bad.push(nm+' ('+raw+')');continue}
+      var hit=byName[normCo(nm)]||[];
+      if(!hit.length){miss.push(nm+' '+bz);continue}
+      if(hit.length>1){dup.push(nm);continue}
+      var c=hit[0];if(seen[c.id])continue;seen[c.id]=1;
+      var item={c:c,bz:bz,warn:!bizOk(bz)};
+      if(!c.bizno)add.push(item);else if(bizFmt(c.bizno)===bz)same.push(item);else chg.push(item);
+    }
+    var li=function(arr,fmt){return arr.length?'<div style="max-height:150px;overflow:auto;font-size:14px;border:1px solid var(--rule);padding:6px 10px;margin-top:4px">'+arr.map(fmt).join('<br>')+'</div>':''};
+    var ov=modal('<h2>사업자번호 넣기 (대표 전용)</h2>'+
+      '<p class="note-p"><b>'+esc(f.name)+'</b>을 주소록 회사명과 맞춰 보았습니다. ㈜·주식회사·띄어쓰기는 빼고 비교합니다.</p>'+
+      '<table><tbody>'+
+      '<tr><th>새로 넣음</th><td><b>'+add.length+'</b>곳 (사업자번호가 비어 있던 회사)</td></tr>'+
+      '<tr><th>번호가 다름</th><td><b>'+chg.length+'</b>곳 <label style="display:inline-flex;gap:6px;align-items:center;margin-left:8px"><input type="checkbox" id="bz-over" style="width:auto;min-height:0"> 새 번호로 바꾸기</label>'+li(chg,function(x){return esc(x.c.name)+' : '+esc(x.c.bizno)+' → <b>'+esc(x.bz)+'</b>'})+'</td></tr>'+
+      '<tr><th>이미 같음</th><td>'+same.length+'곳</td></tr>'+
+      '<tr><th>주소록에 없음</th><td>'+miss.length+'곳'+li(miss,esc)+'</td></tr>'+
+      '<tr><th>이름이 겹침</th><td>'+dup.length+'곳 (주소록에 같은 이름 회사가 둘 이상 — 직접 넣어 주세요)'+li(dup,esc)+'</td></tr>'+
+      '<tr><th>번호 형식 오류</th><td>'+bad.length+'곳 (숫자 10자리가 아님)'+li(bad,esc)+'</td></tr>'+
+      '</tbody></table>'+
+      ((add.concat(chg)).some(function(x){return x.warn})?'<p class="note-p" style="color:var(--warn)">검증 숫자가 맞지 않는 번호가 있습니다: '+esc(add.concat(chg).filter(function(x){return x.warn}).map(function(x){return x.c.name+' '+x.bz}).join(', '))+' — 넣기는 하지만 한 번 더 확인해 주세요.</p>':'')+
+      '<div id="bz-prog" class="note-p" hidden></div>'+
+      '<div class="act"><button class="btn" id="bz-cancel">닫기</button><button class="btn primary" id="bz-go">사업자번호 넣기</button></div>');
+    ov.querySelector('#bz-cancel').onclick=closeModal;
+    ov.querySelector('#bz-go').onclick=async function(){
+      var list=add.concat(ov.querySelector('#bz-over').checked?chg:[]);
+      if(!list.length){toast('넣을 사업자번호가 없습니다.');return}
+      var go=this;go.disabled=true;busy=true;var prog=ov.querySelector('#bz-prog');prog.hidden=false;var ok=0,fail=[];
+      for(var k=0;k<list.length;k++){var it=list[k],cur=docs[it.c.id];prog.textContent='저장 중… '+(k+1)+' / '+list.length;
+        try{if(!cur)throw new Error('없음');var body=clone(cur.c);delete body.id;body.bizno=it.bz;var e2=await enc(body);
+          var res=await rpc('addr_put',{p_key:it.c.id,p_expected_rev:cur.rev,p_iv:e2.iv,p_data:e2.data,p_deleted:false});
+          if(res&&res.conflict)fail.push(it.c.name+' (다른 구성원이 방금 고침)');else ok++;
+        }catch(err){fail.push(it.c.name+' ('+(err.message||'오류')+')');if(!ME)break}}
+      busy=false;closeModal();await load();
+      toast(ok+'곳에 사업자번호를 넣었습니다.'+(fail.length?' 넣지 못한 곳 '+fail.length+'곳: '+fail.slice(0,5).join(', '):''));
+    };
+  };
+  r.readAsArrayBuffer(f);
+});
+$('#btn-bizno').onclick=function(){
+  var ov=modal('<h2>사업자번호 넣기 (대표 전용)</h2>'+
+    '<p class="note-p">엑셀 첫 줄에 <b>회사명</b>(또는 상호)과 <b>사업자번호</b> 제목이 있는 파일을 고르세요. 다른 칸은 있어도 됩니다. 회사명으로 주소록과 맞춰 본 뒤, 넣기 전에 결과를 먼저 보여 드립니다.</p>'+
+    '<p class="note-p">사업자번호는 123-45-67890 형식으로 저장됩니다. 하이픈이 없어도 됩니다.</p>'+
+    '<div class="act"><button class="btn" id="bz-x">닫기</button><button class="btn" id="bz-tpl">양식 내려받기</button><button class="btn primary" id="bz-pick">엑셀 파일 고르기</button></div>');
+  ov.querySelector('#bz-x').onclick=closeModal;
+  ov.querySelector('#bz-pick').onclick=function(){$('#bizno-file').value='';$('#bizno-file').click()};
+  ov.querySelector('#bz-tpl').onclick=function(){
+    if(typeof XLSX==='undefined'){toast('엑셀 기능을 불러오지 못했습니다.');return}
+    var rows=[['회사명','사업자번호','상태']].concat(companies().map(function(c){return [c.name,c.bizno||'',c.status]}));
+    var ws=XLSX.utils.aoa_to_sheet(rows);ws['!cols']=[{wch:30},{wch:16},{wch:8}];
+    var wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,ws,'사업자번호');
+    var buf=XLSX.write(wb,{bookType:'xlsx',type:'array'});var a=document.createElement('a');a.href=URL.createObjectURL(new Blob([buf],{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'}));a.download='주소록_사업자번호_양식.xlsx';document.body.appendChild(a);a.click();setTimeout(function(){URL.revokeObjectURL(a.href);a.remove()},2000);
+    toast('회사 목록이 들어간 양식을 내려받았습니다. 사업자번호 칸만 채워서 올려 주세요.');
+  };
+};
 function normCo(n){return String(n||'').replace(/\(주\)|㈜|주식회사|\(유\)|\(합\)|\s|\(구.*?\)/g,'').toLowerCase()}
 function isConstruction(c){return /^건설/.test(c.industry||'')}
 function activeContact(p){return !p.status||p.status==='재직'}
@@ -370,9 +443,9 @@ function renderAll(){
     if(ind==='비건설'&&isConstruction(c))return false;
     if(qv){
       var ps=c.contacts||[];
-      var hay=[c.name,c.ceo,c.owner,c.address,c.memo,c.note,c.tel,c.fax].concat(ps.map(function(p){return [p.name,p.title,p.email,p.emailNote,p.phone,p.role].join(' ')})).join(' ').toLowerCase();
+      var hay=[c.name,c.bizno,c.ceo,c.owner,c.address,c.memo,c.note,c.tel,c.fax].concat(ps.map(function(p){return [p.name,p.title,p.email,p.emailNote,p.phone,p.role].join(' ')})).join(' ').toLowerCase();
       if(hay.indexOf(qv)>=0)return true;
-      if(qd.length>=3){var digits=[c.tel,c.fax].concat(ps.map(function(p){return p.phone})).join(' ').replace(/[^\d ]/g,'');if(digits.indexOf(qd)>=0)return true}
+      if(qd.length>=3){var digits=[c.bizno,c.tel,c.fax].concat(ps.map(function(p){return p.phone})).join(' ').replace(/[^\d ]/g,'');if(digits.indexOf(qd)>=0)return true}
       return false;
     }
     return true;
@@ -386,11 +459,11 @@ function renderAll(){
   if(loadErr){box.innerHTML='<div class="empty"><b style="color:var(--bad)">주소록을 불러오지 못했습니다.</b><br>'+esc(loadErr)+'</div>';return}
   if(!all.length){box.innerHTML='<div class="empty">'+(!ME?'비밀번호를 넣으면 주소록이 열립니다.':loaded?'등록된 거래처가 없습니다. 대표님이 오른쪽 위 <b>주소록 가져오기</b>로 기존 주소록을 옮겨 주세요.':'주소록을 불러오는 중입니다…')+'</div>';return}
   if(!list.length){box.innerHTML='<div class="empty">조건에 맞는 회사가 없습니다. 검색어나 필터를 바꿔 보세요.</div>';return}
-  box.innerHTML='<div class="tablewrap"><table><thead><tr><th>연번</th><th>상태</th><th>회사명</th><th>업종</th><th>우리 담당</th><th>비고</th><th>실무 담당자</th><th>이메일</th><th>휴대폰</th><th>회사 전화</th><th>주소</th></tr></thead><tbody>'+
+  box.innerHTML='<div class="tablewrap"><table><thead><tr><th>연번</th><th>상태</th><th>회사명</th><th>사업자번호</th><th>업종</th><th>우리 담당</th><th>비고</th><th>실무 담당자</th><th>이메일</th><th>휴대폰</th><th>회사 전화</th><th>주소</th></tr></thead><tbody>'+
     list.map(function(c,ix){
       var cs=c.contacts||[];var ps=cs.filter(activeContact).concat(cs.filter(function(p){return !activeContact(p)}));
       var cls=function(p){return activeContact(p)?'':' class="gone"'};
-      return '<tr class="click" data-edit="'+esc(c.id)+'"><td class="no mono">'+(ix+1)+'</td><td class="c">'+statusChip(c)+'</td><td class="nowrap"><b>'+esc(c.name)+'</b></td><td>'+(isConstruction(c)?'<span class="chip line">건설</span>':'<span class="chip info">비건설</span>')+'</td><td class="nowrap">'+esc(ownerKey(c.owner))+'</td><td class="note">'+esc(c.note)+'</td>'+
+      return '<tr class="click" data-edit="'+esc(c.id)+'"><td class="no mono">'+(ix+1)+'</td><td class="c">'+statusChip(c)+'</td><td class="nowrap"><b>'+esc(c.name)+'</b></td><td class="nowrap mono">'+esc(c.bizno||'')+'</td><td>'+(isConstruction(c)?'<span class="chip line">건설</span>':'<span class="chip info">비건설</span>')+'</td><td class="nowrap">'+esc(ownerKey(c.owner))+'</td><td class="note">'+esc(c.note)+'</td>'+
         '<td class="stack">'+ps.map(function(p){return '<div'+cls(p)+'><span class="nm">'+esc(p.name||'-')+'</span> <span style="color:var(--muted)">'+esc((p.title||'').replace(/\n/g,' '))+'</span>'+(activeContact(p)?'':' <span class="chip '+(p.status==='퇴사'?'end':'warn')+'">'+esc(p.status)+'</span>')+'</div>'}).join('')+'</td>'+
         '<td class="stack">'+ps.map(function(p){return '<div'+cls(p)+'>'+esc(emailsOf(p).join(', '))+'</div>'}).join('')+'</td>'+
         '<td class="stack mono">'+ps.map(function(p){return '<div'+cls(p)+'>'+esc((p.phone||'').replace(/\s*\n\s*/g,' '))+'</div>'}).join('')+'</td>'+
@@ -400,6 +473,120 @@ function renderAll(){
 ['#q','#f-status','#f-owner','#f-group','#f-ind'].forEach(function(s){$(s).addEventListener(s==='#q'?'input':'change',renderAll)});
 $('#list').addEventListener('click',function(e){var t=e.target.closest('[data-edit]');if(t)openCompany(data.companies.find(function(c){return c.id===t.dataset.edit}))});
 $('#btn-add').onclick=function(){openCompany(null)};
+/* ---------- 수정이력 (TEAM JINO 누구나) ---------- */
+var FLD=[['name','회사명'],['bizno','사업자번호'],['status','상태'],['owner','우리 담당'],['mailGroup','메일 그룹'],['industry','업종'],['ceo','대표자'],['tel','회사 전화'],['fax','팩스'],['address','주소'],['note','비고'],['memo','메모']];
+function short(v){v=String(v==null?'':v).replace(/\s+/g,' ');return v.length>40?v.slice(0,40)+'…':v}
+function pname(p){return (p.name||p.email||p.title||'이름 없음')}
+function diffList(a,b,del,prevDel){
+  if(!b)return [];
+  if(del&&!prevDel)return ['<b class="red">거래처 삭제</b>'];
+  if(!a||prevDel)return [a&&prevDel?'<b>삭제했던 거래처를 되살림</b>':'<b>새로 등록</b>'];
+  var out=[];
+  FLD.forEach(function(f){var x=a[f[0]]||'',y=b[f[0]]||'';if(x!==y)out.push(f[1]+': '+(x?'<s>'+esc(short(x))+'</s> → ':'')+(y?esc(short(y)):'<i>(지움)</i>'))});
+  var key=function(p){return (p.name||'')+'|'+(p.email||'')+'|'+(p.title||'')};
+  var A={},B={};(a.contacts||[]).forEach(function(p){A[key(p)]=p});(b.contacts||[]).forEach(function(p){B[key(p)]=p});
+  var addN=[],delN=[];
+  Object.keys(B).forEach(function(k){if(!A[k])addN.push(B[k])});Object.keys(A).forEach(function(k){if(!B[k])delN.push(A[k])});
+  // 이름이 같으면 '수정'으로 묶음
+  addN=addN.filter(function(p){var i=-1;delN.some(function(q,j){if(q.name&&q.name===p.name){i=j;return true}});if(i<0)return true;var q=delN.splice(i,1)[0];
+    var ch=[];[['title','직함'],['email','이메일'],['phone','휴대폰'],['role','담당업무'],['emailNote','이메일 메모'],['status','재직']].forEach(function(f){if((q[f[0]]||'')!==(p[f[0]]||''))ch.push(f[1]+' '+esc(short(q[f[0]]||'-'))+' → '+esc(short(p[f[0]]||'-')))});
+    out.push('담당자 '+esc(pname(p))+': '+ch.join(', '));return false});
+  Object.keys(A).forEach(function(k){if(B[k]&&JSON.stringify(A[k])!==JSON.stringify(B[k])){var q=A[k],p=B[k],ch=[];
+    [['role','담당업무'],['phone','휴대폰'],['emailNote','이메일 메모'],['status','재직']].forEach(function(f){if((q[f[0]]||'')!==(p[f[0]]||''))ch.push(f[1]+' '+esc(short(q[f[0]]||'-'))+' → '+esc(short(p[f[0]]||'-')))});
+    if(ch.length)out.push('담당자 '+esc(pname(p))+': '+ch.join(', '))}});
+  addN.forEach(function(p){out.push('담당자 추가: '+esc(pname(p)))});
+  delN.forEach(function(p){out.push('담당자 삭제: '+esc(pname(p)))});
+  return out.length?out:['(바뀐 내용 없음)'];
+}
+function when(iso){var d=new Date(iso);return fmtDate(iso)+' '+hm(d)}
+async function decSafe(iv,d){if(!iv||!d)return null;try{return await dec(iv,d)}catch(e){return null}}
+$('#btn-history').onclick=async function(){
+  var ov=modal('<h2>수정이력 — 최근 고친 내용</h2><p class="note-p">누가 언제 무엇을 바꿨는지 최근 150건을 보여 줍니다. 줄을 누르면 그 회사의 전체 이력과 되돌리기가 나옵니다.</p><div id="h-box" class="note-p">불러오는 중…</div><div class="act"><button class="btn primary" id="h-close">닫기</button></div>');
+  ov.querySelector('#h-close').onclick=closeModal;
+  try{
+    var rows=await rpc('addr_history_recent',{p_limit:150}),html=[];
+    for(var i=0;i<rows.length;i++){var r=rows[i],b=await decSafe(r.iv,r.data),a=r.prev_iv?await decSafe(r.prev_iv,r.prev_data):null;
+      if(!b){html.push('<tr><td class="mono nowrap">'+when(r.updated_at)+'</td><td class="nowrap">'+esc(r.updated_by)+'</td><td colspan="2">(열 수 없는 기록)</td></tr>');continue}
+      html.push('<tr class="click" data-hk="'+esc(r.key)+'" data-hn="'+esc(b.name)+'"><td class="mono nowrap">'+when(r.updated_at)+'</td><td class="nowrap">'+esc(r.updated_by)+'</td><td class="nowrap"><b>'+esc(b.name)+'</b></td><td>'+diffList(a,b,r.deleted,r.prev_deleted).join('<br>')+'</td></tr>')}
+    var box=ov.querySelector('#h-box');
+    box.innerHTML=rows.length?'<table><thead><tr><th>일시</th><th>고친 사람</th><th>회사</th><th>바뀐 내용</th></tr></thead><tbody>'+html.join('')+'</tbody></table>':'아직 기록이 없습니다.';
+    box.addEventListener('click',function(e){var t=e.target.closest('[data-hk]');if(t)companyHistory(t.dataset.hk,t.dataset.hn)});
+  }catch(e){ov.querySelector('#h-box').textContent='불러오지 못했습니다: '+e.message}
+};
+async function companyHistory(key,name){
+  var ov=modal('<h2>'+esc(name||'')+' — 수정이력</h2><div id="ch-box" class="note-p">불러오는 중…</div><div class="act"><button class="btn primary" id="ch-close">닫기</button></div>');
+  ov.querySelector('#ch-close').onclick=closeModal;
+  try{
+    var rows=await rpc('addr_history_list',{p_key:key}),items=[];
+    for(var i=0;i<rows.length;i++)items.push(await decSafe(rows[i].iv,rows[i].data));
+    var latest=rows[0];
+    var html=rows.map(function(r,i){var b=items[i],a=i+1<rows.length?items[i+1]:null,pd=i+1<rows.length?rows[i+1].deleted:false;
+      var act=i===0?(r.deleted?'<button class="btn sm" data-back="'+i+'">되살리기</button>':'<span class="chip info">지금 내용</span>'):(r.deleted||!b?'':'<button class="btn sm" data-back="'+i+'">이 내용으로 되돌리기</button>');
+      return '<tr><td class="mono nowrap">'+when(r.updated_at)+'</td><td class="nowrap">'+esc(r.updated_by)+'</td><td>'+(b?diffList(a,b,r.deleted,pd).join('<br>'):'(열 수 없는 기록)')+'</td><td class="c nowrap">'+act+'</td></tr>'}).join('');
+    var box=ov.querySelector('#ch-box');
+    box.innerHTML=rows.length?'<p class="note-p" style="margin-top:0">위가 최신입니다. 예전 내용으로 되돌려도 그 사실이 새 이력으로 남습니다.</p><table><thead><tr><th>일시</th><th>고친 사람</th><th>바뀐 내용</th><th></th></tr></thead><tbody>'+html+'</tbody></table>':'기록이 없습니다.';
+    box.addEventListener('click',async function(e){var t=e.target.closest('[data-back]');if(!t)return;var i=+t.dataset.back,src=items[i];
+      if(latest.deleted&&i===0){for(var j=1;j<rows.length;j++)if(!rows[j].deleted&&items[j]){src=items[j];break}}
+      if(!src){toast('되돌릴 내용을 찾지 못했습니다.');return}
+      if(t.dataset.sure!=='1'){t.dataset.sure='1';t.textContent='한 번 더 누르면 되돌립니다';t.classList.add('danger');return}
+      t.disabled=true;busy=true;
+      try{var body=clone(src);delete body.id;var e2=await enc(body);
+        var res=await rpc('addr_put',{p_key:key,p_expected_rev:latest.rev,p_iv:e2.iv,p_data:e2.data,p_deleted:false});busy=false;
+        if(res&&res.conflict){toast((res.updated_by||'다른 구성원')+' 님이 방금 고쳤습니다. 다시 열어 주세요.');closeModal();await load();return}
+        closeModal();toast('되돌렸습니다. TEAM JINO 모두의 화면에 반영됩니다.');await load();
+      }catch(err){busy=false;t.disabled=false;toast('되돌리지 못했습니다: '+err.message)}});
+  }catch(e){ov.querySelector('#ch-box').textContent='불러오지 못했습니다: '+e.message}
+}
+
+/* ---------- 대표 전용: 백업 ---------- */
+function stamp(d){var p=function(n){return String(n).padStart(2,'0')};return d.getFullYear()+p(d.getMonth()+1)+p(d.getDate())+'_'+p(d.getHours())+p(d.getMinutes())}
+function saveFile(name,text){var a=document.createElement('a');a.href=URL.createObjectURL(new Blob([text],{type:'application/json'}));a.download=name;document.body.appendChild(a);a.click();setTimeout(function(){URL.revokeObjectURL(a.href);a.remove()},1000)}
+$('#btn-backup').onclick=async function(){
+  if(!ME||!ME.is_master)return;
+  var ov=modal('<h2>백업 (대표 전용)</h2>'+
+    '<p class="note-p"><b>자동 백업:</b> 하루 중 누군가 처음 주소록을 고치기 직전 상태를 서버에 저장합니다(1년 보관). 가져오기·되돌리기를 하기 직전에도 자동으로 저장합니다.<br>'+
+    '<b>PC에 저장:</b> 암호화된 백업 파일(.json)을 내려받습니다. TEAM JINO 로그인 없이는 열 수 없어 안전하게 보관할 수 있습니다.</p>'+
+    '<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center"><input id="bk-note" placeholder="메모 (예: 연말 정리 전)" style="flex:1;min-width:200px"><button class="btn primary" id="bk-now">지금 백업</button><button class="btn" id="bk-pc">지금 상태를 PC에 저장</button><button class="btn" id="bk-file">PC 백업 파일로 되돌리기</button></div>'+
+    '<div class="subhead">서버 백업 목록</div><div id="bk-list" class="note-p">불러오는 중…</div>'+
+    '<input type="file" id="bk-input" accept=".json" hidden>'+
+    '<div class="act"><button class="btn primary" id="bk-close">닫기</button></div>');
+  ov.querySelector('#bk-close').onclick=closeModal;
+  var list=[];
+  async function draw(){
+    try{list=await rpc('addr_backup_list');
+      ov.querySelector('#bk-list').innerHTML=list.length?'<table><thead><tr><th>일시</th><th>종류</th><th>회사 수</th><th>만든 사람 · 메모</th><th></th></tr></thead><tbody>'+list.map(function(b,i){return '<tr><td class="mono nowrap">'+when(b.created_at)+'</td><td class="c nowrap">'+esc(b.kind)+'</td><td class="c">'+b.doc_count+'</td><td>'+esc(b.created_by)+(b.note?' · '+esc(b.note):'')+'</td><td class="nowrap"><button class="btn sm" data-dl="'+b.id+'">PC에 저장</button> <button class="btn sm" data-rs="'+b.id+'">이 백업으로 되돌리기</button></td></tr>'}).join('')+'</tbody></table>':'아직 백업이 없습니다.';
+    }catch(e){ov.querySelector('#bk-list').textContent='불러오지 못했습니다: '+e.message}
+  }
+  function fileOf(docs2,when2,note){return JSON.stringify({type:'jino-addr-backup',v:1,saved_at:when2,note:note||'',count:docs2.length,docs:docs2})}
+  ov.querySelector('#bk-now').onclick=async function(){this.disabled=true;
+    try{var r=await rpc('addr_backup_now',{p_note:ov.querySelector('#bk-note').value.trim()});toast(r.ok?'백업했습니다.':'백업할 내용이 없습니다.');ov.querySelector('#bk-note').value='';await draw()}catch(e){toast('백업하지 못했습니다: '+e.message)}this.disabled=false};
+  ov.querySelector('#bk-pc').onclick=async function(){this.disabled=true;
+    try{var r=await rpc('addr_backup_now',{p_note:ov.querySelector('#bk-note').value.trim()||'PC에 저장'});if(!r.ok)throw new Error('백업할 내용이 없습니다.');
+      var b=await rpc('addr_backup_get',{p_id:r.id});saveFile('주소록백업_'+stamp(new Date(b.created_at))+'.json',fileOf(b.docs,b.created_at,b.note));toast('PC에 저장했습니다 (다운로드 폴더).');await draw()}catch(e){toast('저장하지 못했습니다: '+e.message)}this.disabled=false};
+  ov.querySelector('#bk-list').addEventListener('click',async function(e){
+    var t=e.target.closest('[data-dl],[data-rs]');if(!t)return;
+    if(t.dataset.dl){t.disabled=true;try{var b=await rpc('addr_backup_get',{p_id:+t.dataset.dl});saveFile('주소록백업_'+stamp(new Date(b.created_at))+'.json',fileOf(b.docs,b.created_at,b.note));toast('PC에 저장했습니다 (다운로드 폴더).')}catch(err){toast('저장하지 못했습니다: '+err.message)}t.disabled=false;return}
+    if(t.dataset.sure!=='1'){t.dataset.sure='1';t.textContent='지금 주소록 전체가 바뀝니다. 한 번 더 누르세요';t.classList.add('danger');return}
+    t.disabled=true;busy=true;
+    try{var r=await rpc('addr_backup_restore',{p_id:+t.dataset.rs});busy=false;docs={};toast(r.count+'개 회사로 되돌렸습니다. 되돌리기 전 상태도 백업해 두었습니다.');await load();await draw()}
+    catch(err){busy=false;t.disabled=false;toast('되돌리지 못했습니다: '+err.message)}
+  });
+  ov.querySelector('#bk-file').onclick=function(){var i=ov.querySelector('#bk-input');i.value='';i.click()};
+  ov.querySelector('#bk-input').addEventListener('change',function(e){var f=e.target.files[0];if(!f)return;var rd=new FileReader();
+    rd.onload=async function(){
+      try{var j=JSON.parse(rd.result);if(!j||j.type!=='jino-addr-backup'||!Array.isArray(j.docs))throw new Error('주소록 백업 파일이 아닙니다.');
+        var ok=0;for(var i=0;i<j.docs.length;i++){if(await decSafe(j.docs[i].iv,j.docs[i].data))ok++}
+        if(!ok)throw new Error('이 파일은 지금 열쇠로 열 수 없습니다.');
+        var w=ov.querySelector('#bk-list');w.insertAdjacentHTML('beforebegin','<p class="note-p" id="bk-confirm" style="background:#fff4e5;padding:10px;border-radius:6px"><b>'+esc(f.name)+'</b> ('+esc(when(j.saved_at))+' 저장, 회사 '+ok+'곳)으로 지금 주소록 전체를 바꿀까요? 지금 상태는 먼저 자동 백업됩니다. <button class="btn danger sm" id="bk-fy">되돌리기</button> <button class="btn sm" id="bk-fn">취소</button></p>');
+        var cf=ov.querySelector('#bk-confirm');cf.querySelector('#bk-fn').onclick=function(){cf.remove()};
+        cf.querySelector('#bk-fy').onclick=async function(){this.disabled=true;busy=true;
+          try{var r=await rpc('addr_import',{p_docs:j.docs.map(function(d){return {key:d.key,iv:d.iv,data:d.data}})});busy=false;docs={};cf.remove();toast(r.count+'개 회사로 되돌렸습니다.');await load();await draw()}
+          catch(err){busy=false;this.disabled=false;toast('되돌리지 못했습니다: '+err.message)}};
+      }catch(err){toast(err.message||'파일을 읽지 못했습니다.')}
+    };rd.readAsText(f,'utf-8')});
+  draw();
+};
+
 
 /* ---------- 수정 창 ---------- */
 function modal(html){var root=$('#modal-root');var m=html.match(/^<h2>[\s\S]*?<\/h2>/);var h2=m?m[0]:'';var rest=html.slice(h2.length);var ai=rest.lastIndexOf('<div class="act">');
@@ -432,18 +619,19 @@ function openCompany(c){
       f('owner','우리 담당',c.owner)+
       '<label><span>메일 그룹</span><select id="m-mailGroup">'+opt(['','유','다애','비건설'],c.mailGroup,'미지정')+'</select></label>'+
       '<label><span>업종</span><select id="m-industry">'+opt(['건설','비건설'],isConstruction(c)?'건설':'비건설')+'</select></label>'+
-      f('ceo','대표자',c.ceo)+f('tel','회사 전화',c.tel)+f('fax','팩스',c.fax)+
+      f('bizno','사업자번호',c.bizno)+f('ceo','대표자',c.ceo)+f('tel','회사 전화',c.tel)+f('fax','팩스',c.fax)+
       f('address','주소',c.address,'full')+f('note','비고',c.note,'full')+
       '<label class="full"><span>메모</span><textarea id="m-memo">'+esc(c.memo)+'</textarea></label>'+
     '</div>'+
     '<div><div class="subhead" style="margin-bottom:6px">실무 담당자<span style="font-size:14px;color:var(--muted);font-weight:400">퇴사·휴직은 각 담당자 오른쪽의 상태에서 바꿉니다</span><button class="btn sm" id="m-add-contact">+ 담당자</button></div>'+
       '<div class="crows" id="m-contacts">'+(c.contacts||[]).map(contactRow).join('')+'</div></div>'+
-    '<div class="act">'+(isNew?'':'<span class="left" id="m-delwrap"><button class="btn danger" id="m-del">거래처 삭제</button></span>')+'<button class="btn" id="m-cancel">취소</button><button class="btn primary" id="m-save">확인</button></div>');
+    '<div class="act">'+(isNew?'':'<span class="left" id="m-delwrap"><button class="btn danger" id="m-del">거래처 삭제</button> <button class="btn" id="m-hist">수정이력</button></span>')+'<button class="btn" id="m-cancel">취소</button><button class="btn primary" id="m-save">확인</button></div>');
   var cbox=ov.querySelector('#m-contacts');
   ov.querySelector('#m-add-contact').onclick=function(){cbox.insertAdjacentHTML('beforeend',contactRow({status:'재직'}));cbox.lastElementChild.querySelector('input').focus()};
   cbox.addEventListener('click',function(e){if(e.target.closest('[data-del-contact]'))e.target.closest('.crow').remove()});
   cbox.addEventListener('change',function(e){if(e.target.dataset.k==='status')e.target.classList.toggle('off',e.target.value!=='재직')});
   ov.querySelector('#m-cancel').onclick=closeModal;
+  var hb=ov.querySelector('#m-hist');if(hb)hb.onclick=function(){companyHistory(c.id,c.name)};
   var del=ov.querySelector('#m-del');
   if(del)del.onclick=function(){
     var w=ov.querySelector('#m-delwrap');
@@ -455,7 +643,10 @@ function openCompany(c){
     var v=function(k){return ov.querySelector('#m-'+k).value.trim()};
     if(!v('name')){ov.querySelector('#m-name').focus();toast('회사명을 입력해 주세요.');return}
     var contacts=[].slice.call(cbox.querySelectorAll('.crow')).map(function(r){var o={};r.querySelectorAll('[data-k]').forEach(function(i){o[i.dataset.k]=i.value.trim()});return o}).filter(function(p){return p.name||p.email||p.phone||p.title});
-    var out={id:c.id,name:v('name'),status:v('status'),owner:v('owner'),mailGroup:v('mailGroup'),industry:v('industry'),ceo:v('ceo'),tel:v('tel'),fax:v('fax'),address:v('address'),note:v('note'),memo:v('memo'),contacts:contacts};
+    var bz=bizFmt(v('bizno'));
+    if(v('bizno')&&!bz){ov.querySelector('#m-bizno').focus();toast('사업자번호는 숫자 10자리입니다 (예: 123-45-67890).');return}
+    if(bz&&!bizOk(bz))toast('사업자번호 검증 숫자가 맞지 않습니다. 저장은 하지만 번호를 한 번 더 확인해 주세요.');
+    var out={id:c.id,name:v('name'),bizno:bz,status:v('status'),owner:v('owner'),mailGroup:v('mailGroup'),industry:v('industry'),ceo:v('ceo'),tel:v('tel'),fax:v('fax'),address:v('address'),note:v('note'),memo:v('memo'),contacts:contacts};
     saveCompany(out,'저장했습니다. TEAM JINO 모두의 화면에 반영됩니다.');
   };
 }
@@ -478,7 +669,7 @@ $('#btn-xlsx').onclick=function(){
   function rows(){
     var gone=ov.querySelector('#x-gone').checked,out=[];
     pick().forEach(function(c,i){
-      var base=[i+1,c.status,c.name,isConstruction(c)?'건설':'비건설',ownerKey(c.owner),c.mailGroup,c.note,c.ceo,c.tel,c.fax,c.address];
+      var base=[i+1,c.status,c.name,c.bizno||'',isConstruction(c)?'건설':'비건설',ownerKey(c.owner),c.mailGroup,c.note,c.ceo,c.tel,c.fax,c.address];
       var ps=(c.contacts||[]).filter(function(p){return gone||activeContact(p)});
       if(!ps.length)out.push(base.concat(['','','','','','','',c.memo]));
       ps.forEach(function(p){out.push(base.concat([p.title,p.name,p.role,p.email,p.emailNote,p.phone,p.status||'재직',c.memo]))});
@@ -491,12 +682,12 @@ $('#btn-xlsx').onclick=function(){
   ov.querySelector('#x-cancel').onclick=closeModal;
   ov.querySelector('#x-go').onclick=function(){
     if(typeof XLSX==='undefined'){toast('엑셀 기능을 불러오지 못했습니다. 인터넷 연결을 확인하고 새로고침해 주세요.');return}
-    var head=['연번','상태','회사명','업종','우리담당','메일그룹','비고','대표자','회사전화','팩스','주소','직함','담당자','담당업무','이메일','이메일메모','휴대폰','재직상태','메모'];
+    var head=['연번','상태','회사명','사업자번호','업종','우리담당','메일그룹','비고','대표자','회사전화','팩스','주소','직함','담당자','담당업무','이메일','이메일메모','휴대폰','재직상태','메모'];
     var body=rows().map(function(r){return r.map(function(v){return v==null?'':v})});
     var go=this;go.disabled=true;
     rpc('addr_export_begin',{p_scope:{view:'지금 보이는 목록',active:'자문중 전체',all:'종료·해지 포함 전체'}[scope]+(ov.querySelector('#x-gone').checked?' (퇴사 포함)':''),p_rows:body.length}).then(function(){
     var ws=XLSX.utils.aoa_to_sheet([head].concat(body));
-    ws['!cols']=[6,8,26,8,14,9,18,10,15,15,40,12,10,14,30,22,15,9,30].map(function(w){return {wch:w}});
+    ws['!cols']=[6,8,26,14,8,14,9,18,10,15,15,40,12,10,14,30,22,15,9,30].map(function(w){return {wch:w}});
     ws['!autofilter']={ref:XLSX.utils.encode_range({s:{r:0,c:0},e:{r:body.length,c:head.length-1}})};
     var wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,ws,'거래처주소록');
     var d=new Date(),ymd=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
