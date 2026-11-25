@@ -385,3 +385,56 @@ main.wrap{padding-top:30px;padding-bottom:64px}
 .cp{color:var(--sub)}
 .login .lg{background:#fff;padding:8px 14px;border:1px solid var(--line);border-radius:2px;box-sizing:content-box}
 .login.adm::before{content:'노무그룹지노 TEAM JINO 관리 화면'}
+
+/* ===== 개정 전·후 상세 (뚜렷한 상자) ===== */
+body{word-break:keep-all;overflow-wrap:break-word}
+.nw{white-space:nowrap}
+.tdet{background:#eef1f6;border-top:2px solid var(--navy);padding:20px 22px 22px 150px}
+.art{display:flex;gap:12px;align-items:flex-start;background:#fff;border:1px solid #c4ccd8;padding:10px 14px;margin-bottom:14px;font-size:14.5px;color:var(--ink);white-space:normal;line-height:1.65}
+.art b{flex:none;background:#3d4654;color:#fff;font-size:12.5px;padding:2px 8px;border-radius:2px;margin-top:2px}
+.ba{grid-template-columns:1fr 44px 1fr}
+.bx{background:#fff;border:1px solid #b9c3d1;border-radius:0;padding:0;white-space:normal;font-size:15.5px;line-height:1.7;color:var(--ink);display:flex;flex-direction:column}
+.bx h4{margin:0;padding:8px 14px;font-size:14.5px;font-weight:800;letter-spacing:0;color:#fff}
+.bxb{padding:12px 16px 14px;flex:1}
+.bef h4{background:#5f6b7a}
+.bef{border-color:#aab3bf;color:#3a414b}
+.aft{border:2px solid var(--blue);color:#0c2a55}
+.aft h4{background:var(--blue)}
+.aft .bxb{background:#f4f8ff;font-weight:500}
+.arr{font-size:0}
+.arr span{display:flex;align-items:center;justify-content:center;width:34px;height:34px;border-radius:50%;background:var(--navy);color:#fff;font-size:18px;font-weight:800}
+.tips{grid-template-columns:1.4fr 1fr;gap:14px;margin-top:14px}
+.tip{border:2px solid #e8590c}
+.tip h4{background:#e8590c}
+.tip .bxb{background:#fffaf5}
+.frm{border:1px solid #9aa6b6}
+.frm h4{background:#2b3138}
+.bxb p{margin:0 0 4px}
+.bxb p.none{color:var(--sub)}
+.rh{display:inline-block;font-size:13px;font-weight:800;color:#c2410c;border:1px solid #f7b98b;background:#fff;padding:0 7px;border-radius:2px;margin:2px 0 6px}
+.bef .rh,.aft .rh{color:var(--navy);border-color:#b9c3d1}
+ul.rl{margin:0 0 4px;padding:0;list-style:none}
+ul.rl li{position:relative;padding-left:14px;margin-bottom:5px}
+ul.rl li::before{content:'';position:absolute;left:2px;top:.72em;width:5px;height:5px;background:currentColor;opacity:.7}
+.aft ul.rl li::before{background:var(--blue);opacity:1}
+.tip ul.rl li::before{background:#e8590c;opacity:1}
+ul.fl{margin:0;padding:0;list-style:none}
+ul.fl li{display:flex;gap:8px;align-items:flex-start;padding:7px 0;border-bottom:1px dashed #d3d9e2}
+ul.fl li:last-child{border-bottom:0}
+.flab{flex:none;font-size:12.5px;font-weight:700;color:#fff;background:#5f6b7a;padding:1px 7px;border-radius:2px;margin-top:3px}
+a.flink{color:var(--blue);font-weight:700;text-decoration:underline;text-underline-offset:3px}
+a.flink i{font-style:normal;margin-left:4px;font-size:13px}
+a.flink:hover{color:#063a86}
+.talk{margin-top:10px;background:#fff8db;border:1px solid #f0d27a;color:#7a5600;font-weight:700;font-size:14.5px;padding:8px 12px}
+@media(max-width:900px){
+ .tdet{padding:14px 12px}
+ .ba{grid-template-columns:1fr}
+ .arr{padding:6px 0}.arr span{transform:rotate(90deg);width:28px;height:28px;font-size:15px}
+ .tips{grid-template-columns:1fr}
+ .art{flex-direction:column;gap:6px}
+}
+/* 인쇄용 상세 */
+.pdoc ul.rl{margin:0;padding-left:0;list-style:none}.pdoc ul.rl li{padding-left:10px;position:relative}.pdoc ul.rl li::before{content:'·';position:absolute;left:0}
+.pdoc .rh{font-weight:700;font-size:9pt}.pdoc ul.fl{margin:0;padding:0;list-style:none}.pdoc .flab{font-weight:700;margin-right:4px}.pdoc .talk{font-size:8.5pt;color:#7a5600;margin-top:4px}
+.pdoc p{margin:0}
+@media(max-width:900px){.arr{transform:none!important}.arr span{transform:rotate(90deg)}}

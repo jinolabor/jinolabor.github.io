@@ -53,10 +53,38 @@ function profileText(P){
 }
 
 /* 개정사항 상세 */
+// 줄 단위 글을 목록·소제목으로 정리하고, 짧은 괄호 안 글은 줄이 바뀌어도 쪼개지지 않게 묶음
+function nbParen(h){return h.replace(/\(([^()]{1,18})\)/g,'<span class="nw">($1)</span>')}
+function richText(t){
+  var ls=String(t||'').split('\n').map(function(x){return x.trim()}).filter(Boolean),h='',inList=false;
+  ls.forEach(function(x){
+    var b=/^[•·\-▪]\s*/.test(x);
+    if(b){if(!inList){h+='<ul class="rl">';inList=true}h+='<li>'+nbParen(esc(x.replace(/^[•·\-▪]\s*/,'')))+'</li>';return}
+    if(inList){h+='</ul>';inList=false}
+    var m=x.match(/^\[([^\]]{1,12})\]\s*(.*)$/);
+    if(m&&!m[2])h+='<div class="rh">'+esc(m[1])+'</div>';
+    else h+='<p>'+nbParen(esc(x))+'</p>';
+  });
+  if(inList)h+='</ul>';
+  return h||'<p class="none">—</p>';
+}
+var TALK_NOTE='세부 자료 필요 시 업무톡으로 요청해주세요';
+// 관련 서식·자료: 한 줄에 「[구분] 제목 | https://주소」 형식이면 링크로 표시
+function formsHtml(t,plain){
+  var ls=String(t||'').split('\n').map(function(x){return x.trim()}).filter(Boolean),links=0;
+  var h=ls.map(function(x){
+    var url='',m=x.match(/https?:\/\/\S+/);if(m){url=m[0];x=x.replace(m[0],'').replace(/\s*\|\s*$/,'').replace(/\s*\|\s*/,' ').trim()}
+    var lab='',k=x.match(/^\[([^\]]{1,12})\]\s*(.*)$/);if(k){lab=k[1];x=k[2]}
+    var txt=nbParen(esc(x||url));
+    var body=url&&!plain&&okUrl(url)?(links++,'<a class="flink" href="'+esc(url)+'" target="_blank" rel="noopener">'+txt+'<i>↗</i></a>'):'<span>'+txt+'</span>';
+    return '<li>'+(lab?'<b class="flab">'+esc(lab)+'</b>':'')+body+'</li>';
+  }).join('');
+  return (h?'<ul class="fl">'+h+'</ul>':'')+(links?'':'<div class="talk">💬 '+TALK_NOTE+'</div>');
+}
 function detailHtml(o){
-  return '<div class="art">'+esc(o.article)+'</div>'+
-    '<div class="ba"><div class="bx bef"><h4>개정 전</h4>'+esc(o.before)+'</div><div class="arr">→</div><div class="bx aft"><h4>개정 후</h4>'+esc(o.after)+'</div></div>'+
-    '<div class="tips"><div class="tip"><h4>실무상 유의사항</h4>'+esc(o.tips)+'</div><div class="frm"><h4>관련 서식·자료</h4>'+esc(o.forms)+'</div></div>';
+  return (o.article?'<div class="art"><b>근거 조문</b><span>'+nbParen(esc(o.article)).replace(/\n/g,'<br>')+'</span></div>':'')+
+    '<div class="ba"><div class="bx bef"><h4>개정 전</h4><div class="bxb">'+richText(o.before)+'</div></div><div class="arr"><span>→</span></div><div class="bx aft"><h4>개정 후</h4><div class="bxb">'+richText(o.after)+'</div></div></div>'+
+    '<div class="tips"><div class="bx tip"><h4>실무상 유의사항</h4><div class="bxb">'+richText(o.tips)+'</div></div><div class="bx frm"><h4>관련 서식·자료</h4><div class="bxb">'+formsHtml(o.forms)+'</div></div></div>';
 }
 function tagsHtml(o){
   return (o.cond?'<span class="tag c">'+esc(o.cond)+' 해당</span>':'')+(o.rules?'<span class="tag r">취업규칙 개정</span>':'')+(o.ref?'<span class="tag">참고</span>':'');
@@ -104,8 +132,8 @@ function printHtml(items,mode,who,checks,scopeLabel){
   }else{
     h+=items.map(function(o){return '<div class="pdc" style="border-left-color:'+(stc[o.s]||'#1971c2')+'"><div class="plw">'+(o.dt?fmt(o.dt):'미정')+' · '+esc(o.sl)+' · '+esc(o.law)+(o.cond?' · '+esc(o.cond)+' 해당':'')+(o.rules?' · 취업규칙 개정':'')+'<span class="pmk">'+mark(o)+'</span></div>'+
       '<div class="psm">'+esc(o.summary)+'</div><div class="pac"><b>회사가 할 일</b> · '+esc(o.action)+'</div><div class="par">'+esc(o.article)+'</div>'+
-      '<div class="pg2"><div class="pbx pbef"><h5>개정 전</h5>'+esc(o.before)+'</div><div class="pbx paft"><h5>개정 후</h5>'+esc(o.after)+'</div></div>'+
-      '<div class="pg2"><div class="pbx ptip"><h5>실무상 유의사항</h5>'+esc(o.tips)+'</div><div class="pbx pfrm"><h5>관련 서식·자료</h5>'+esc(o.forms)+'</div></div></div>'}).join('');
+      '<div class="pg2"><div class="pbx pbef"><h5>개정 전</h5>'+richText(o.before)+'</div><div class="pbx paft"><h5>개정 후</h5>'+richText(o.after)+'</div></div>'+
+      '<div class="pg2"><div class="pbx ptip"><h5>실무상 유의사항</h5>'+richText(o.tips)+'</div><div class="pbx pfrm"><h5>관련 서식·자료</h5>'+formsHtml(o.forms,true)+'</div></div></div>'}).join('');
   }
   if(!items.length)h+='<p style="padding:30px;text-align:center;color:#5b6577">해당 항목이 없습니다.</p>';
   h+='<div class="pft">노무그룹지노 · 용산센트럴파크타워 업무동 1003호 · jinolabor@kakao.com · www.jinolabor.com — 본 자료는 회원사 전용으로 제공되며 외부 배포를 삼가 주시기 바랍니다.</div>';
