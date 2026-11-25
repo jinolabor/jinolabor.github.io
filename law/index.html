@@ -173,6 +173,7 @@ function card(o,opt){
 
 /* ---------- 우리 회사 할 일 ---------- */
 function mine(){return ITEMS}
+var CONTACT_HTML='<div class="lnbinfo ctc"><b>문의</b><ul><li><span>💬</span>업무톡</li><li><span>📞</span>전화 <a href="tel:02-6080-8558">02-6080-8558</a></li><li><span>✉️</span>메일 <a href="mailto:timetodh@naver.com">timetodh@naver.com</a></li></ul></div>';
 var CAT_IC={'근로시간·휴가':'🕘','모성·육아':'👶','임금·퇴직':'💰','산업안전':'⛑️','4대보험·연금':'🏥','외국인 고용':'🌏','건설업':'🏗️','개인정보':'🔐','제도·기타':'📁'};
 function renderTodo(){
   var S=ITEMS;
@@ -183,7 +184,7 @@ function renderTodo(){
   var side='<aside class="lnb"><div class="lnbh">분야별 보기</div><ul>'+
     '<li><button class="'+(!ALLF.cat?'on':'')+'" data-cat=""><span>📚 전체</span><em>'+S.length+'</em></button></li>'+
     CATS.map(function(c){var k=S.filter(function(o){return (o.cats||[]).indexOf(c)>=0}).length;return k?'<li><button class="'+(ALLF.cat===c?'on':'')+'" data-cat="'+esc(c)+'"><span>'+(CAT_IC[c]||'·')+' '+esc(c)+'</span><em>'+k+'</em></button></li>':''}).join('')+
-    '</ul><div class="lnbinfo"><b>문의</b>담당 노무사 또는<br>jinolabor@kakao.com</div></aside>';
+    '</ul>'+CONTACT_HTML+'</aside>';
   var h='<div class="crumb">홈 <i>›</i> 개정사항'+(ALLF.cat?' <i>›</i> '+esc(ALLF.cat):'')+'</div>'+
     '<h2 class="ptitle">'+(ALLF.cat?esc(ALLF.cat)+' 개정사항':'2026~2027 개정사항 전체')+'</h2>';
   h+='<div class="sum"><div class="k main"><span>'+(ALLF.cat?esc(ALLF.cat):'전체 분야')+'</span><b>'+L.length+'<small>건</small></b><span>시행일 순으로 정리했습니다</span></div>'+

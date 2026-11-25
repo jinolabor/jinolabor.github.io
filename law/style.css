@@ -469,3 +469,10 @@ table.dtab .bxb,table.dtab p{margin:0 0 3px}
  .cbef,.caft{padding:10px 12px}
 }
 table.dtab td.dcmp{padding:0}
+.lnbinfo.ctc b{font-size:15px;margin-bottom:6px}
+.lnbinfo.ctc ul{list-style:none;margin:0;padding:0;display:block}
+.lnbinfo.ctc li{display:flex;align-items:center;gap:7px;padding:4px 0;font-size:14.5px;color:var(--ink)}
+.lnbinfo.ctc li span{width:20px;text-align:center}
+.lnbinfo.ctc a{color:var(--ink);text-decoration:none;font-weight:600}
+.lnbinfo.ctc a:hover{color:var(--blue);text-decoration:underline}
+@media(max-width:900px){.lnbinfo.ctc{display:none}}
