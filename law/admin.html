@@ -164,9 +164,9 @@ function renderDash(){
     '<p class="pdfn">버튼을 누르면 화면에서 먼저 <b>미리보기</b>가 열립니다. 확인 후 「인쇄 · PDF 저장」을 누르고 대상(프린터)을 <b>「PDF로 저장」</b>으로 고르세요.</p></div>';
   h+='<div class="h2">💬 상담 요청 <small>회원사가 「상담 요청」을 누른 항목입니다. 연락 후 회원사 쪽 표시는 그대로 두셔도 됩니다.</small></div>';
   h+=asks.length?'<div class="tw"><table><thead><tr><th>요청 일시</th><th>회원사</th><th>항목</th></tr></thead><tbody>'+asks.map(function(a){return '<tr class="asks"><td style="white-space:nowrap">'+ago(a.at)+'</td><td><b>'+esc(a.m.name)+'</b></td><td>'+esc(itemLabel(a.k))+'</td></tr>'}).join('')+'</tbody></table></div>':'<div class="empty">아직 상담 요청이 없습니다.</div>';
-  h+='<div class="h2">📈 회원사별 확인 현황 <small>해당 개정사항 중 「조치 완료·해당 없음」으로 표시한 비율</small></div>';
-  h+=act.length?'<div class="tw"><table><thead><tr><th>회원사</th><th>회사 정보</th><th>확인 진행률</th><th>상담 요청</th><th>마지막 접속</th></tr></thead><tbody>'+act.map(function(m){var p=progress(m);var ak=Object.values(m.checks||{}).filter(function(c){return c.s==='ask'}).length;
-      return '<tr class="click" data-mid="'+m.id+'"><td><b>'+esc(m.name)+'</b></td><td style="font-size:13px">'+esc(profileText(m.profile).join(' · '))+(m.profile_confirmed?'':' <span class="pill off">회사 미확인</span>')+'</td><td style="white-space:nowrap"><span class="pg"><i style="width:'+p.pct+'%"></i></span>'+p.d+'/'+p.n+'</td><td>'+(ak?'<span class="pill ask">'+ak+'건</span>':'-')+'</td><td style="white-space:nowrap">'+ago(m.last_login)+(m.login_count?' <span class="muted" style="font-size:12px">('+m.login_count+'회)</span>':'')+'</td></tr>'}).join('')+'</tbody></table></div>':'<div class="empty">등록된 회원사가 없습니다. 「회원사 관리」에서 추가해 주세요.</div>';
+  h+='<div class="h2">📈 회원사별 접속 현황</div>';
+  h+=act.length?'<div class="tw"><table><thead><tr><th>회원사</th><th>상담 요청</th><th>마지막 접속</th></tr></thead><tbody>'+act.map(function(m){var ak=Object.values(m.checks||{}).filter(function(c){return c.s==='ask'}).length;
+      return '<tr><td><b>'+esc(m.name)+'</b></td><td>'+(ak?'<span class="pill ask">'+ak+'건</span>':'-')+'</td><td style="white-space:nowrap">'+ago(m.last_login)+(m.login_count?' <span class="muted" style="font-size:12px">('+m.login_count+'회)</span>':'')+'</td></tr>'}).join('')+'</tbody></table></div>':'<div class="empty">등록된 회원사가 없습니다. 「회원사 관리」에서 추가해 주세요.</div>';
   $('#v-dash').innerHTML=h;
   $$('#v-dash [data-pdf]').forEach(function(b){b.onclick=function(){adminPrint(b.dataset.pdf)}});
   $$('#v-dash [data-mid]').forEach(function(r){r.onclick=function(){memDetail(r.dataset.mid)}});
@@ -186,8 +186,8 @@ function renderMem(){
   var L=MEMBERS.filter(function(m){return !Q||m.name.indexOf(Q)>=0});
   var h='<div class="note">회원사는 <b>사업자등록번호</b>로 로그인합니다. 번호는 서버에 암호화(해시)해서 저장하므로 화면에는 일부만 보입니다. 「주소록에서 추가」를 누르면 주소록의 자문중 회사를 골라 등록할 수 있습니다.</div>'+
     '<div class="toolbar"><input type="search" id="mq" placeholder="회사명 검색" value="'+esc(Q)+'"><span class="sp"></span><button class="btn" id="addFree">직접 추가</button><button class="btn pri" id="addAddr">주소록에서 추가</button></div>';
-  h+=L.length?'<div class="tw"><table><thead><tr><th>회원사</th><th>사업자번호</th><th>회사 정보</th><th>사용</th><th>마지막 접속</th><th>메모</th></tr></thead><tbody>'+L.map(function(m){
-    return '<tr class="click" data-edit="'+m.id+'"><td><b>'+esc(m.name)+'</b>'+(m.addr_key?' <span class="muted" style="font-size:12px">주소록 연결</span>':'')+'</td><td style="white-space:nowrap" class="muted">'+esc(m.biz_mask)+'</td><td style="font-size:13px">'+esc(profileText(m.profile).join(' · '))+'</td><td>'+(m.active?'<span class="pill ok">사용 중</span>':'<span class="pill off">중지</span>')+'</td><td style="white-space:nowrap">'+ago(m.last_login)+'</td><td style="font-size:13px">'+esc(m.memo||'')+'</td></tr>'}).join('')+'</tbody></table></div>':'<div class="empty">등록된 회원사가 없습니다.</div>';
+  h+=L.length?'<div class="tw"><table><thead><tr><th>회원사</th><th>사업자번호</th><th>사용</th><th>마지막 접속</th><th>메모</th></tr></thead><tbody>'+L.map(function(m){
+    return '<tr class="click" data-edit="'+m.id+'"><td><b>'+esc(m.name)+'</b>'+(m.addr_key?' <span class="muted" style="font-size:12px">주소록 연결</span>':'')+'</td><td style="white-space:nowrap" class="muted">'+esc(m.biz_mask)+'</td><td>'+(m.active?'<span class="pill ok">사용 중</span>':'<span class="pill off">중지</span>')+'</td><td style="white-space:nowrap">'+ago(m.last_login)+'</td><td style="font-size:13px">'+esc(m.memo||'')+'</td></tr>'}).join('')+'</tbody></table></div>':'<div class="empty">등록된 회원사가 없습니다.</div>';
   var v=$('#v-mem');v.innerHTML=h;
   $('#mq').oninput=function(){Q=this.value.trim();renderMem();var q=$('#mq');q.focus();q.setSelectionRange(q.value.length,q.value.length)};
   $('#addFree').onclick=function(){memEdit(null,{})};
@@ -208,11 +208,10 @@ function memEdit(m,pre){
   var ov=openOv('<h3>'+(isNew?'회원사 등록':'회원사 정보 수정')+'</h3>'+
     '<div class="fg"><label>회사명</label><input type="text" id="f-name" value="'+esc(m.name)+'"></div>'+
     '<div class="fg"><label>사업자등록번호</label><div><input type="text" id="f-biz" inputmode="numeric" placeholder="'+(isNew?'000-00-00000':'바꿀 때만 입력 (현재 '+esc(m.biz_mask)+')')+'"><div class="muted" style="font-size:12.5px;margin-top:4px">회원사가 이 번호로 로그인합니다.</div></div></div>'+
-    '<div class="fg"><label>상시 근로자 수</label><select id="f-size"><option value="">선택</option>'+SIZES.map(function(s){return '<option value="'+s[0]+'"'+(P.size===s[0]?' selected':'')+'>'+s[1]+'</option>'}).join('')+'</select></div>'+
-    '<div class="fg"><label>해당 사항</label><div class="ck">'+FLAGS.map(function(f){return '<label><input type="checkbox" id="f-'+f[0]+'"'+(P[f[0]]?' checked':'')+'> '+f[1]+'</label>'}).join('')+'</div></div>'+
+    '<div class="fg" style="display:none"><label>상시 근로자 수</label><select id="f-size"><option value="">선택</option>'+SIZES.map(function(s){return '<option value="'+s[0]+'"'+(P.size===s[0]?' selected':'')+'>'+s[1]+'</option>'}).join('')+'</select></div>'+
+    '<div class="fg" style="display:none"><label>해당 사항</label><div class="ck">'+FLAGS.map(function(f){return '<label><input type="checkbox" id="f-'+f[0]+'"'+(P[f[0]]?' checked':'')+'> '+f[1]+'</label>'}).join('')+'</div></div>'+
     '<div class="fg"><label>메모</label><input type="text" id="f-memo" value="'+esc(m.memo||'')+'" placeholder="내부 메모 (회원사에게 보이지 않음)"></div>'+
     (isNew?'':'<div class="fg"><label>사용</label><div class="ck"><label><input type="checkbox" id="f-active"'+(m.active?' checked':'')+'> 사용 중 (끄면 바로 로그인 차단)</label></div></div>')+
-    '<div class="note">회사 정보는 회원사가 처음 로그인할 때 확인·수정할 수 있습니다. 회원사가 고치면 그 내용이 우선합니다.</div>'+
     '<div class="mact">'+(isNew?'':'<button class="btn red" id="del" style="margin-right:auto">삭제</button>')+'<button class="btn" id="x">취소</button><button class="btn pri" id="ok">저장</button></div>');
   $('#f-biz',ov).oninput=function(){var d=this.value.replace(/\D/g,'').slice(0,10);this.value=d.length<=3?d:d.length<=5?d.slice(0,3)+'-'+d.slice(3):d.slice(0,3)+'-'+d.slice(3,5)+'-'+d.slice(5)};
   $('#x',ov).onclick=closeOv;

@@ -30,7 +30,7 @@
    <div class="lhelp">이용 문의 · 담당 노무사 또는 jinolabor@kakao.com</div>
   </div>
   <div class="feat">
-   <div><b>📋</b>우리 회사<br>해당 개정사항</div>
+   <div><b>📋</b>개정사항<br>한눈에 보기</div>
    <div><b>📰</b>매월 노동법<br>업데이트</div>
    <div><b>⚖️</b>개정 전·후<br>조문 비교</div>
   </div>
@@ -45,7 +45,6 @@
   <h1>2026~2027 노동관계법령 개정 안내</h1>
   <span class="who">🔒 <b id="meName"></b> 전용</span>
   <button class="tbtn" id="btnPrint">🖨 인쇄·PDF</button>
-  <button class="tbtn" id="btnProf">회사 정보</button>
   <button class="tbtn" id="btnOut">로그아웃</button>
  </div></header>
  <nav class="tabs"><div class="wrap">
@@ -67,7 +66,7 @@
 
 <script src="common.js"></script>
 <script>
-var TOKEN='',ME=null,P={},ITEMS=[],ISSUES=[],CHECKS={},TAB='todo',F='open',ALLF={cat:'',mine:true},CUR_ISSUE=null,OPEN=new Set(),PROF_OPEN=false;
+var TOKEN='',ME=null,P={},ITEMS=[],ISSUES=[],CHECKS={},TAB='todo',F='open',ALLF={cat:''},CUR_ISSUE=null,OPEN=new Set(),PROF_OPEN=false;
 var TKEY='jino-law-member-token';
 
 /* ---------- 로그인 ---------- */
@@ -94,7 +93,7 @@ function logout(msg){
   TOKEN='';mem.del(TKEY);mem.sdel(TKEY);$('#app').hidden=true;$('#login').hidden=false;$('#biz').value='';say(msg||'',!!msg);
 }
 $('#btnOut').onclick=function(){logout('')};
-$('#btnPrint').onclick=function(){printDialog({who:ME.name+' 전용',mineItems:mine(),allItems:ITEMS,checks:{},mineLabel:'우리 회사 해당'})};
+$('#btnPrint').onclick=function(){printDialog({who:ME.name+' 전용',mineItems:ITEMS,allItems:ITEMS,checks:{}})};
 async function api(fn,args){
   try{return await rpcCall(fn,Object.assign({p_token:TOKEN},args||{}))}
   catch(e){if(e.code==='denied'){logout('로그인이 만료되었습니다. 다시 로그인해 주세요.')}throw e}
@@ -110,7 +109,7 @@ async function boot(){
     ISSUES=c.issues||[];
     $('#meName').textContent=ME.name;$('#footName').textContent=ME.name;
     document.title=ME.name+' 전용 · 노동관계법령 개정 안내 | 노무그룹지노';
-    PROF_OPEN=!ME.profile_confirmed;
+    PROF_OPEN=false; // 회사 정보 확인 단계는 화면에서 뺌 (저장된 정보는 유지)
     $('#loading').hidden=true;$('#app').hidden=false;
     var latest=ISSUES[0];$('#newMonth').hidden=!(latest&&latest.published_at&&(Date.now()-new Date(latest.published_at))<40*864e5);
     renderAll();window.scrollTo(0,0);
@@ -121,7 +120,6 @@ function setTab(t){TAB=t;$$('.tab').forEach(function(b){b.classList.toggle('on',
 $$('.tab').forEach(function(b){b.onclick=function(){setTab(b.dataset.t);window.scrollTo({top:0,behavior:'smooth'})}});
 
 /* ---------- 회사 정보 ---------- */
-$('#btnProf').onclick=function(){PROF_OPEN=!PROF_OPEN;renderProf();if(PROF_OPEN)window.scrollTo({top:0,behavior:'smooth'})};
 function renderProf(){
   var box=$('#profBox');
   if(!PROF_OPEN){box.innerHTML='';return}
@@ -154,14 +152,14 @@ document.addEventListener('click',function(e){
   var m=e.target.closest('.tmain');if(m){var t=m.closest('.todo');var k=t.dataset.key;t.classList.toggle('open');t.classList.contains('open')?OPEN.add(k):OPEN.delete(k);return}
   var go=e.target.closest('[data-goitem]');if(go){goItem(+go.dataset.goitem);return}
 });
-function goItem(no){var key='item:'+no;OPEN.add(key);var o=ITEMS.find(function(x){return x.no===no});if(o&&!(applies(o,P)&&!o.ref))ALLF.mine=false;ALLF.cat='';setTab('todo');renderTodo();var el=$('#v-todo .todo[data-key="'+key+'"]');if(el)el.scrollIntoView({behavior:'smooth',block:'center'})}
+function goItem(no){var key='item:'+no;OPEN.add(key);ALLF.cat='';setTab('todo');renderTodo();var el=$('#v-todo .todo[data-key="'+key+'"]');if(el)el.scrollIntoView({behavior:'smooth',block:'center'})}
 
 /* ---------- 할 일 카드 ---------- */
 function card(o,opt){
-  var key='item:'+o.no,ap=applies(o,P);
+  var key='item:'+o.no;
   return '<div class="todo nobtn'+(OPEN.has(key)?' open':'')+'" data-key="'+key+'">'+
    '<div class="trow"><div class="dt"><div class="d">'+(o.dt?fmt(o.dt):'미정')+'</div><span class="dd '+o.s+'">'+esc(o.dd)+'</span></div>'+
-   '<div class="tmain"><div class="tlaw">'+esc(o.law)+tagsHtml(o)+(!ap?'<span class="tag">우리 회사 해당 없음</span>':'')+'</div>'+
+   '<div class="tmain"><div class="tlaw">'+esc(o.law)+tagsHtml(o)+'</div>'+
    '<div class="tsum">'+esc(o.summary)+'</div>'+
    (o.action?'<div class="tact"><b>회사가 할 일</b> · '+esc(o.action)+'</div>':'')+
    '<div class="tmore">▾ 눌러서 개정 전·후 비교 보기</div></div>'+
@@ -170,26 +168,24 @@ function card(o,opt){
 }
 
 /* ---------- 우리 회사 할 일 ---------- */
-function mine(){return ITEMS.filter(function(o){return applies(o,P)&&!o.ref})}
+function mine(){return ITEMS}
 function renderTodo(){
-  var M=mine(),S=ALLF.mine?M:ITEMS;
+  var S=ITEMS;
   var L=S.filter(function(o){return !ALLF.cat||(o.cats||[]).indexOf(ALLF.cat)>=0});
   var G=[['late','⚠ 이미 시행 중',function(o){return o.s==='done'}],['soon','⏰ 60일 안에 시행',function(o){return o.s==='soon'}],['plan','🗓 이후 시행 예정',function(o){return o.s==='plan'}],['tbd','⏳ 시행일 미확정',function(o){return o.s==='tbd'}]];
   var n=function(i){return L.filter(G[i][2]).length};
-  $('#cntTodo').textContent=M.length;
-  var h='<div class="psum" style="margin-bottom:12px">우리 회사 기준: '+profileText(P).map(function(t){return '<span class="tg">'+esc(t)+'</span>'}).join('')+' <a href="#" id="editProf" style="font-size:13px">수정</a></div>';
-  h+='<div class="sum"><div class="k main"><span>'+(ALLF.mine?'우리 회사 해당 개정사항':'전체 개정사항')+(ALLF.cat?' · '+esc(ALLF.cat):'')+'</span><b>'+L.length+'건</b><span>시행일 순으로 정리했습니다</span></div>'+
+  $('#cntTodo').textContent=ITEMS.length;
+  var h='<div style="height:16px"></div>';
+  h+='<div class="sum"><div class="k main"><span>'+'2026~2027 개정사항'+(ALLF.cat?' · '+esc(ALLF.cat):'')+'</span><b>'+L.length+'건</b><span>시행일 순으로 정리했습니다</span></div>'+
      '<div class="k"><b style="color:#d9480f">'+n(0)+'</b><span>이미 시행 중</span></div>'+
      '<div class="k"><b style="color:var(--soon)">'+n(1)+'</b><span>60일 안에 시행</span></div>'+
      '<div class="k"><b style="color:var(--navy)">'+(n(2)+n(3))+'</b><span>이후 · 미확정</span></div></div>';
-  h+='<div class="box" style="margin:12px 0 4px"><div class="chips" style="margin-bottom:10px"><button class="chip'+(ALLF.mine?' on':'')+'" data-mine="1">우리 회사 해당<span class="n">'+M.length+'</span></button><button class="chip'+(!ALLF.mine?' on':'')+'" data-mine="0">전체<span class="n">'+ITEMS.length+'</span></button></div>'+
+  h+='<div class="box" style="margin:12px 0 4px">'+
     '<div class="chips"><button class="chip'+(!ALLF.cat?' on':'')+'" data-cat="">전체 분야</button>'+CATS.map(function(c){var k=S.filter(function(o){return (o.cats||[]).indexOf(c)>=0}).length;return k?'<button class="chip'+(ALLF.cat===c?' on':'')+'" data-cat="'+esc(c)+'">'+esc(c)+'<span class="n">'+k+'</span></button>':''}).join('')+'</div></div>';
   if(!L.length)h+='<div class="empty">조건에 맞는 개정사항이 없습니다.</div>';
   G.forEach(function(g){var X=L.filter(g[2]);if(!X.length)return;h+='<div class="grp '+g[0]+'">'+g[1]+' <span class="n">'+X.length+'건</span></div>'+X.map(function(o){return card(o)}).join('')});
   $('#v-todo').innerHTML=h;
-  $$('#v-todo [data-mine]').forEach(function(b){b.onclick=function(){ALLF.mine=b.dataset.mine==='1';if(ALLF.cat&&!(ALLF.mine?M:ITEMS).some(function(o){return (o.cats||[]).indexOf(ALLF.cat)>=0}))ALLF.cat='';renderTodo()}});
   $$('#v-todo [data-cat]').forEach(function(b){b.onclick=function(){ALLF.cat=b.dataset.cat;renderTodo()}});
-  var ep=$('#editProf');if(ep)ep.onclick=function(e){e.preventDefault();PROF_OPEN=true;renderProf();window.scrollTo({top:0,behavior:'smooth'})};
 }
 
 /* ---------- 월별 업데이트 ---------- */
@@ -199,13 +195,13 @@ function renderMonth(){
   if(!CUR_ISSUE||!ISSUES.some(function(x){return x.id===CUR_ISSUE}))CUR_ISSUE=ISSUES[0].id;
   var m=ISSUES.find(function(x){return x.id===CUR_ISSUE});
   var items=(m.items||[]).map(function(it,i){return Object.assign({_i:i},it)});
-  var my=items.filter(function(it){return applies(it,P)}),others=items.filter(function(it){return !applies(it,P)});
+  var my=items,others=[];
   var h=ISSUES.length>1?'<div class="mtabs">'+ISSUES.map(function(x,i){return '<button class="chip'+(x.id===CUR_ISSUE?' on':'')+'" data-iss="'+esc(x.id)+'">'+esc(x.title||x.id)+(i===0?' · 최신':'')+'</button>'}).join('')+'</div>':'';
   var nx=nextYm(m.id);
   h+='<div class="mhero"><div><div class="mt">'+esc(m.title||m.id)+' · '+dot(m.issued)+' 발행</div><div class="lead">'+esc(m.lead||'')+'</div><div class="per">대상 기간 '+esc(m.period||'')+'</div></div>'+
-     '<div class="kpis"><div class="kpi" data-jump="mNew"><b>'+my.length+'</b><span>우리 회사 소식</span></div><div class="kpi" data-jump="mNow"><b>'+rowsIn(m.id).length+'</b><span>'+(+m.id.slice(5))+'월 시행</span></div><div class="kpi" data-jump="mNext"><b>'+rowsIn(nx).length+'</b><span>'+(+nx.slice(5))+'월 시행 예정</span></div></div></div>';
-  h+='<div class="h2" id="mNew" style="margin-top:22px">🆕 이달의 새 소식 <small>우리 회사 해당 '+my.length+'건 · 제목을 누르면 펼쳐집니다</small></div>';
-  h+=my.length?'<div class="acc">'+my.map(function(it){return accItem(m,it)}).join('')+'</div>':'<div class="empty">이달에는 우리 회사에 해당하는 새 소식이 없습니다.</div>';
+     '<div class="kpis"><div class="kpi" data-jump="mNew"><b>'+my.length+'</b><span>이달의 새 소식</span></div><div class="kpi" data-jump="mNow"><b>'+rowsIn(m.id).length+'</b><span>'+(+m.id.slice(5))+'월 시행</span></div><div class="kpi" data-jump="mNext"><b>'+rowsIn(nx).length+'</b><span>'+(+nx.slice(5))+'월 시행 예정</span></div></div></div>';
+  h+='<div class="h2" id="mNew" style="margin-top:22px">🆕 이달의 새 소식 <small>'+my.length+'건 · 제목을 누르면 펼쳐집니다</small></div>';
+  h+=my.length?'<div class="acc">'+my.map(function(it){return accItem(m,it)}).join('')+'</div>':'<div class="empty">이달에는 새 소식이 없습니다.</div>';
   if(others.length)h+='<details class="fold"><summary>우리 회사에 해당하지 않는 소식 '+others.length+'건 보기</summary><div class="acc">'+others.map(function(it){return accItem(m,it)}).join('')+'</div></details>';
   h+=monthRows(m.id);
   v.innerHTML=h;
@@ -221,12 +217,12 @@ function accItem(m,it){
     '<button class="sbtn s-ask'+(st==='ask'?' on':'')+'" data-chk="ask" data-key="'+key+'" style="margin-left:auto">💬 '+(st==='ask'?'상담 요청함':'이 내용 상담 요청')+'</button></div></div></div>';
 }
 function nextYm(s){var y=+s.slice(0,4),m=+s.slice(5)+1;if(m>12){m=1;y++}return y+'-'+String(m).padStart(2,'0')}
-function rowsIn(s){return ITEMS.filter(function(o){return o.dt&&ym(o.dt)===s&&applies(o,P)})}
+function rowsIn(s){return ITEMS.filter(function(o){return o.dt&&ym(o.dt)===s})}
 function monthRows(s){
   var nx=nextYm(s),a=rowsIn(s),b=rowsIn(nx);
   function rows(L){return L.map(function(o){return '<div class="todo" style="cursor:pointer" data-goitem="'+o.no+'"><div class="trow" style="grid-template-columns:96px 1fr auto"><div class="dt"><div class="d">'+fmt(o.dt)+'</div></div><div><div class="tlaw">'+esc(o.law)+'</div><div style="font-size:15.5px">'+esc(o.summary.split('\n')[0])+'</div></div><div class="muted" style="font-size:13px;white-space:nowrap">할 일 보기 →</div></div></div>'}).join('')}
-  return '<div class="h2" id="mNow">📌 '+(+s.slice(5))+'월에 시행되는 개정사항 <small>우리 회사 해당 '+a.length+'건</small></div>'+(a.length?rows(a):'<div class="empty">이달 시행되는 해당 개정사항이 없습니다.</div>')+
-    '<div class="h2" id="mNext">⏭ '+(+nx.slice(5))+'월 시행 예정 <small>우리 회사 해당 '+b.length+'건 · 미리 준비하세요</small></div>'+(b.length?rows(b):'<div class="empty">다음 달 시행 예정인 해당 개정사항이 없습니다.</div>');
+  return '<div class="h2" id="mNow">📌 '+(+s.slice(5))+'월에 시행되는 개정사항 <small>'+a.length+'건</small></div>'+(a.length?rows(a):'<div class="empty">이달 시행되는 개정사항이 없습니다.</div>')+
+    '<div class="h2" id="mNext">⏭ '+(+nx.slice(5))+'월 시행 예정 <small>'+b.length+'건 · 미리 준비하세요</small></div>'+(b.length?rows(b):'<div class="empty">다음 달 시행 예정인 개정사항이 없습니다.</div>');
 }
 
 /* ---------- 전체 개정사항 ---------- */
