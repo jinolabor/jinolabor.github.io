@@ -5,7 +5,7 @@
 | 폴더 | 프로그램 | 예전 위치 (더 이상 고치지 않음) |
 |---|---|---|
 | `address/` | 거래처 주소록 | dhkim0629-ops/dhkim0629-ops.github.io `address/` |
-| `law/` | 개정법 안내 (회원사용, `law/admin.html`은 TEAM JINO 관리) | dhkim0629-ops/dhkim0629-ops.github.io `law/` |
+| `law/` | **옮김 → https://jino-member.com** (저장소 `jinolabor/jino-member`). 여기에는 이동 화면만 둡니다 | dhkim0629-ops/dhkim0629-ops.github.io `law/` |
 | `contract/` | 근로계약서 작성 | dhkim0629-ops/config-files `contract/` |
 | `forms/` | 스마트지노 문서작성 | dhkim0629-ops/config-files `forms/` |
 | `safety/` | 지노 중처법 이행관리 (안전보건 통합관리) | dhkim0629-ops/jino-safety |
