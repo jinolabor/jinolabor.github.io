@@ -3,11 +3,11 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>2026~2027 노동관계법령 개정 안내 | 노무그룹지노 회원사 전용</title>
+<title>노동관계법령 개정 안내 | 노무그룹지노 회원사 전용</title>
 <meta name="robots" content="noindex">
 <link rel="icon" href="logo.png">
 <link rel="apple-touch-icon" href="logo.png">
-<link rel="stylesheet" href="style.css?v=202611250408">
+<link rel="stylesheet" href="style.css?v=202611250418">
 </head>
 <body>
 
@@ -17,7 +17,7 @@
   <img class="lg" src="logo.png" alt="노무그룹지노">
   <div class="lcard">
    <span class="mo">MEMBERS ONLY</span>
-   <h1>2026~2027<br>노동관계법령 개정 안내</h1>
+   <h1><span class="sv-period">2026~2027</span><br>노동관계법령 개정 안내</h1>
    <p>노무그룹지노 자문 회원사 전용 서비스입니다.<br>귀사의 <b>사업자등록번호</b>로 로그인해 주세요.</p>
    <form id="lform" autocomplete="off">
     <label class="f" for="biz">사업자등록번호</label>
@@ -49,7 +49,7 @@
  </div></div>
  <header class="top"><div class="wrap topbar">
   <img class="lg" src="logo.png" alt="노무그룹지노">
-  <div class="ttl"><h1>2026~2027 노동관계법령 개정 안내</h1><p>시행일·회사 조치사항·개정 전후 비교를 한곳에서 확인하세요</p></div>
+  <div class="ttl"><h1><span class="sv-period">2026~2027</span> 노동관계법령 개정 안내</h1><p>시행일·회사 조치사항·개정 전후 비교를 한곳에서 확인하세요</p></div>
  </div></header>
  <nav class="tabs"><div class="wrap">
   <button class="tab" data-t="todo">개정사항<span class="cnt" id="cntTodo"></span></button>
@@ -68,7 +68,7 @@
 </div>
 <div class="loading" id="loading" hidden>불러오는 중…</div>
 
-<script src="common.js?v=202611250408"></script>
+<script src="common.js?v=202611250418"></script>
 <script>
 var TOKEN='',ME=null,P={},ITEMS=[],ISSUES=[],CHECKS={},TAB='todo',F='open',ALLF={cat:''},CUR_ISSUE=null,OPEN=new Set(),PROF_OPEN=false;
 var TKEY='jino-law-member-token';
@@ -76,7 +76,6 @@ var TKEY='jino-law-member-token';
 /* ---------- 로그인 ---------- */
 function bizDigits(s){return String(s||'').replace(/\D/g,'').slice(0,10)}
 function bizFmt(d){return d.length<=3?d:d.length<=5?d.slice(0,3)+'-'+d.slice(3):d.slice(0,3)+'-'+d.slice(3,5)+'-'+d.slice(5)}
-function bizValid(d){if(!/^\d{10}$/.test(d))return false;var w=[1,3,7,1,3,7,1,3,5],s=0;for(var i=0;i<9;i++)s+=d[i]*w[i];s+=Math.floor(d[8]*5/10);return (10-s%10)%10===+d[9]}
 function say(t,err){var m=$('#lmsg');m.textContent=t||'';m.className='lmsg'+(err?' err':'')}
 $('#biz').addEventListener('input',function(){var d=bizDigits(this.value);this.value=bizFmt(d)});
 $('#lform').onsubmit=async function(ev){
@@ -107,12 +106,13 @@ async function api(fn,args){
 async function boot(){
   $('#login').hidden=true;$('#loading').hidden=false;
   try{
+    await loadSettings();
     var c=await api('law_content');
     ME=c.me;P=ME.profile||{};CHECKS=c.checks||{};
     ITEMS=(c.items||[]).map(prep).sort(function(a,b){return (a.dt?a.dt:9e15)-(b.dt?b.dt:9e15)||a.no-b.no});
     ISSUES=c.issues||[];
     $('#meName').textContent=ME.name;$('#footName').textContent=ME.name;
-    document.title=ME.name+' 전용 · 노동관계법령 개정 안내 | 노무그룹지노';
+    document.title=ME.name+' 전용 · '+SET.period+' 노동관계법령 개정 안내 | 노무그룹지노';
     PROF_OPEN=false; // 회사 정보 확인 단계는 화면에서 뺌 (저장된 정보는 유지)
     $('#loading').hidden=true;$('#app').hidden=false;
     var latest=ISSUES[0];$('#newMonth').hidden=!(latest&&latest.published_at&&(Date.now()-new Date(latest.published_at))<40*864e5);
@@ -186,7 +186,7 @@ function renderTodo(){
     CATS.map(function(c){var k=S.filter(function(o){return (o.cats||[]).indexOf(c)>=0}).length;return k?'<li><button class="'+(ALLF.cat===c?'on':'')+'" data-cat="'+esc(c)+'"><span>'+(CAT_IC[c]||'·')+' '+esc(c)+'</span><em>'+k+'</em></button></li>':''}).join('')+
     '</ul>'+CONTACT_HTML+'</aside>';
   var h='<div class="crumb">홈 <i>›</i> 개정사항'+(ALLF.cat?' <i>›</i> '+esc(ALLF.cat):'')+'</div>'+
-    '<h2 class="ptitle">'+(ALLF.cat?esc(ALLF.cat)+' 개정사항':'2026~2027 개정사항 전체')+'</h2>';
+    '<h2 class="ptitle">'+(ALLF.cat?esc(ALLF.cat)+' 개정사항':esc(SET.period)+' 개정사항 전체')+'</h2>';
   h+='<div class="sum"><div class="k main"><span>'+(ALLF.cat?esc(ALLF.cat):'전체 분야')+'</span><b>'+L.length+'<small>건</small></b><span>시행일 순으로 정리했습니다</span></div>'+
      '<div class="k late"><span>이미 시행 중</span><b>'+n(0)+'<small>건</small></b></div>'+
      '<div class="k soon"><span>60일 안에 시행</span><b>'+n(1)+'<small>건</small></b></div>'+
@@ -240,7 +240,7 @@ function monthRows(s){
 
 /* ---------- 전체 개정사항 ---------- */
 /* ---------- 시작 ---------- */
-(function(){TOKEN=mem.get(TKEY)||mem.sget(TKEY)||'';if(TOKEN)boot();else $('#biz').focus()})();
+(function(){loadSettings();TOKEN=mem.get(TKEY)||mem.sget(TKEY)||'';if(TOKEN)boot();else $('#biz').focus()})();
 </script>
 </body>
 </html>

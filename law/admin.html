@@ -6,7 +6,7 @@
 <title>[TEAM JINO] 개정법 안내 관리 | 노무그룹지노</title>
 <meta name="robots" content="noindex">
 <link rel="icon" href="logo.png">
-<link rel="stylesheet" href="style.css?v=202611250408">
+<link rel="stylesheet" href="style.css?v=202611250418">
 <style>
 .adm table{width:100%;border-collapse:collapse;background:#fff;font-size:14.5px}
 .adm th,.adm td{border-bottom:1px solid var(--line);padding:9px 10px;text-align:left;vertical-align:top}
@@ -83,7 +83,7 @@
 </div>
 <div id="ovRoot"></div>
 
-<script src="common.js?v=202611250408"></script>
+<script src="common.js?v=202611250418"></script>
 <script>
 /* ---------- JINO 열쇠 (주소록·급여대행과 같은 구성원 비밀번호) ---------- */
 var KEY_URL='https://raw.githubusercontent.com/jinolabor/config-files/main/key.json', KEY_URLS=[KEY_URL,'https://raw.githubusercontent.com/dhkim0629-ops/config-files/main/key.json'];
@@ -126,6 +126,7 @@ async function loadAll(){
   var c=await api('law_admin_content');
   ITEMS=(c.items||[]).map(prep).sort(function(a,b){return (a.dt?a.dt:9e15)-(b.dt?b.dt:9e15)||a.no-b.no});
   ISSUES=c.issues||[];
+  await loadSettings();
   MEMBERS=await api('law_members_list')||[];
   try{var rows=await rpcCall('addr_list',{p_token:TOKEN});var out=[];
     for(var i=0;i<rows.length;i++){var r=rows[i];if(r.deleted)continue;try{var co=await adec(r.iv,r.data);co.key=r.key;out.push(co)}catch(e){}}
@@ -166,12 +167,22 @@ function renderDash(){
     '<button class="pdfb" data-pdf="sum"><b>📋 요약본 PDF</b><span>시행일·주요내용·회사 조치사항을 표로 정리 (조치 확인 체크칸 포함)</span></button>'+
     '<button class="pdfb" data-pdf="det"><b>📄 상세본 PDF</b><span>개정 전·후 비교, 실무상 유의사항, 관련 서식까지 모두 포함</span></button></div>'+
     '<p class="pdfn">버튼을 누르면 화면에서 먼저 <b>미리보기</b>가 열립니다. 확인 후 「인쇄 · PDF 저장」을 누르고 대상(프린터)을 <b>「PDF로 저장」</b>으로 고르세요.</p></div>';
+  h+='<div class="setbox"><div class="pdfh">⚙️ 안내 제목·기준일 <small>회원사 화면 머리·로그인 화면·인쇄 제목에 함께 쓰입니다</small></div>'+
+    '<div class="setrow"><label>안내 연도</label><input type="text" id="setPeriod" maxlength="20" value="'+esc(SET.period)+'"><span class="muted">예) 2026~2027 → 「2026~2027 노동관계법령 개정 안내」</span></div>'+
+    '<div class="setrow"><label>법령 조사 기준일</label><input type="text" id="setBasis" maxlength="20" value="'+esc(SET.basis)+'"><span class="muted">인쇄·PDF 머리에 「법령 조사 기준일」로 표시</span></div>'+
+    '<div class="setrow"><label></label><button class="btn pri" id="setSave">저장</button></div></div>';
   h+='<div class="h2">💬 상담 요청 <small>회원사가 「상담 요청」을 누른 항목입니다. 연락 후 회원사 쪽 표시는 그대로 두셔도 됩니다.</small></div>';
   h+=asks.length?'<div class="tw"><table><thead><tr><th>요청 일시</th><th>회원사</th><th>항목</th></tr></thead><tbody>'+asks.map(function(a){return '<tr class="asks"><td style="white-space:nowrap">'+ago(a.at)+'</td><td><b>'+esc(a.m.name)+'</b></td><td>'+esc(itemLabel(a.k))+'</td></tr>'}).join('')+'</tbody></table></div>':'<div class="empty">아직 상담 요청이 없습니다.</div>';
   h+='<div class="h2">📈 회원사별 접속 현황</div>';
   h+=act.length?'<div class="tw"><table><thead><tr><th>회원사</th><th>상담 요청</th><th>마지막 접속</th></tr></thead><tbody>'+act.map(function(m){var ak=Object.values(m.checks||{}).filter(function(c){return c.s==='ask'}).length;
       return '<tr><td><b>'+esc(m.name)+'</b></td><td>'+(ak?'<span class="pill ask">'+ak+'건</span>':'-')+'</td><td style="white-space:nowrap">'+ago(m.last_login)+(m.login_count?' <span class="muted" style="font-size:12px">('+m.login_count+'회)</span>':'')+'</td></tr>'}).join('')+'</tbody></table></div>':'<div class="empty">등록된 회원사가 없습니다. 「회원사 관리」에서 추가해 주세요.</div>';
   $('#v-dash').innerHTML=h;
+  $('#setSave').onclick=async function(){
+    var p=$('#setPeriod').value.trim(),q=$('#setBasis').value.trim();
+    if(!p||!q){toast('안내 연도와 기준일을 모두 입력해 주세요.');return}
+    if(!confirm('회원사 화면의 제목이 「'+p+' 노동관계법령 개정 안내」로 바뀝니다. 저장할까요?'))return;
+    try{await api('law_setting_put',{p_key:'period',p_value:p});await api('law_setting_put',{p_key:'basis',p_value:q});await loadSettings();toast('저장했습니다. 회원사 화면에 바로 반영됩니다.')}catch(e){toast('저장하지 못했습니다: '+(e.message||e))}
+  };
   $$('#v-dash [data-pdf]').forEach(function(b){b.onclick=function(){adminPrint(b.dataset.pdf)}});
   $$('#v-dash [data-mid]').forEach(function(r){r.onclick=function(){memDetail(r.dataset.mid)}});
 }
@@ -224,6 +235,7 @@ function memEdit(m,pre){
     var biz=val(ov,'#f-biz').replace(/\D/g,'');
     if(isNew&&biz.length!==10){toast('사업자등록번호 10자리를 입력해 주세요.');return}
     if(biz&&biz.length!==10){toast('사업자등록번호는 10자리입니다.');return}
+    if(biz&&!bizValid(biz)){toast('올바른 사업자등록번호가 아닙니다. 번호를 다시 확인해 주세요.');return}
     var prof={size:val(ov,'#f-size')};FLAGS.forEach(function(f){prof[f[0]]=$('#f-'+f[0],ov).checked});
     this.disabled=true;
     try{await api('law_member_put',{p_id:isNew?null:m.id,p_biz:biz||null,p_name:val(ov,'#f-name'),p_addr_key:m.addr_key||null,p_profile:prof,p_active:isNew?true:$('#f-active',ov).checked,p_memo:val(ov,'#f-memo')});

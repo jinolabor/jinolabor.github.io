@@ -5,6 +5,14 @@ function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){retur
 function okUrl(u){return /^https:\/\//i.test(String(u||''))}
 var mem={get:function(k){try{return localStorage.getItem(k)}catch(e){return null}},set:function(k,v){try{localStorage.setItem(k,v)}catch(e){}},del:function(k){try{localStorage.removeItem(k)}catch(e){}},
   sget:function(k){try{return sessionStorage.getItem(k)}catch(e){return null}},sset:function(k,v){try{sessionStorage.setItem(k,v)}catch(e){}},sdel:function(k){try{sessionStorage.removeItem(k)}catch(e){}}};
+// 화면 공통 설정 (관리 화면 「안내 제목·기준일」에서 바꿈)
+var SET={period:'2026~2027',basis:'2026.10.27.'};
+async function loadSettings(){
+  try{var r=await rpcCall('law_settings_public',{});if(r&&r.period)SET.period=r.period;if(r&&r.basis)SET.basis=r.basis}catch(e){}
+  $$('.sv-period').forEach(function(e){e.textContent=SET.period});
+  $$('.sv-basis').forEach(function(e){e.textContent=SET.basis});
+  return SET;
+}
 async function rpcCall(fn,args){
   var r=await fetch(SB_URL+'/rest/v1/rpc/'+fn,{method:'POST',headers:{'apikey':SB_KEY,'Content-Type':'application/json'},body:JSON.stringify(args||{})});
   var t=await r.text(),j=null;try{j=t?JSON.parse(t):null}catch(e){}
@@ -19,11 +27,13 @@ function pd(s){if(!s||!/^\d{4}-\d{2}-\d{2}$/.test(s))return null;var d=new Date(
 function dot(s){var d=pd(s);return d?d.getFullYear()+'.'+(d.getMonth()+1)+'.'+d.getDate()+'.':(s||'')}
 function fmt(d){return d.getFullYear()+'.'+String(d.getMonth()+1).padStart(2,'0')+'.'+String(d.getDate()).padStart(2,'0')}
 function ym(d){return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')}
+// 사업자등록번호 검증 (국세청 검증 규칙) — 회원사 로그인·관리 화면 등록에 함께 씀
+function bizValid(d){if(!/^\d{10}$/.test(d))return false;var w=[1,3,7,1,3,7,1,3,5],s=0;for(var i=0;i<9;i++)s+=d[i]*w[i];s+=Math.floor(d[8]*5/10);return (10-s%10)%10===+d[9]}
 function prep(o){
   o.dt=pd(o.date);
-  if(!o.dt){o.s='tbd';o.sl='미확정';o.dd='국회 계류';o.diff=99999}
+  if(!o.dt){o.s='tbd';o.sl='미확정';o.dd=o.status||'시행일 미정';o.diff=99999}
   else{var diff=Math.round((o.dt-TODAY)/864e5);o.diff=diff;
-    if(diff<=0){o.s='done';o.sl='시행완료';o.dd='시행 중'}
+    if(diff<=0){o.s='done';o.sl='시행 중';o.dd='시행 중'}
     else if(diff<=60){o.s='soon';o.sl='곧 시행';o.dd='D-'+diff}
     else{o.s='plan';o.sl='시행예정';o.dd='D-'+diff}}
   return o;
@@ -132,8 +142,8 @@ function printDialog(opt,mode){
 function printHtml(items,mode,who,checks,scopeLabel){
   var stc={done:'#868e96',soon:'#d9480f',plan:'#1971c2',tbd:'#7048e8'};
   var mark=function(o){var c=checks['item:'+o.no];return c==='done'?'✓ 완료':c==='na'?'해당없음':c==='ask'?'상담요청':'☐'};
-  var h='<div class="pcov"><img src="logo.png" alt=""><div><div class="pbr">NOMU GROUP JINO · 회원사 전용</div><h1>2026~2027 노동관계법령 개정 안내 '+(mode==='sum'?'(요약)':'(상세)')+'</h1>'+
-    '<div class="pmt">'+(who?esc(who)+' · ':'')+esc(scopeLabel)+' '+items.length+'건 · 출력일 '+fmt(TODAY)+' · 법령 조사 기준일 2026.10.27. (이후 변경은 월별 업데이트 참고)</div></div></div>';
+  var h='<div class="pcov"><img src="logo.png" alt=""><div><div class="pbr">NOMU GROUP JINO · 회원사 전용</div><h1>'+esc(SET.period)+' 노동관계법령 개정 안내 '+(mode==='sum'?'(요약)':'(상세)')+'</h1>'+
+    '<div class="pmt">'+(who?esc(who)+' · ':'')+esc(scopeLabel)+' '+items.length+'건 · 출력일 '+fmt(TODAY)+' · 법령 조사 기준일 '+esc(SET.basis)+' (이후 변경은 월별 업데이트 참고)</div></div></div>';
   if(mode==='sum'){
     h+='<table class="ptb"><colgroup><col style="width:13%"><col style="width:17%"><col style="width:36%"><col style="width:26%"><col style="width:8%"></colgroup><thead><tr><th>시행일</th><th>법령</th><th>주요 내용</th><th>회사가 할 일</th><th>확인</th></tr></thead><tbody>'+
       items.map(function(o){return '<tr><td class="c"><b>'+(o.dt?fmt(o.dt):'미정')+'</b><br><span class="pst" style="background:'+(stc[o.s]||'#1971c2')+'">'+esc(o.sl)+'</span></td><td>'+esc(o.law)+(o.cond?'<br><span class="pcd">'+esc(o.cond)+' 해당</span>':'')+(o.rules?'<br><span class="prl">취업규칙 개정</span>':'')+'</td><td>'+esc(o.summary)+'</td><td>'+esc(o.action)+'</td><td class="c">'+mark(o)+'</td></tr>'}).join('')+'</tbody></table>';
