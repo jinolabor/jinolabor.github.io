@@ -80,6 +80,9 @@ textarea{min-height:80.5px;resize:vertical}
 .chip.new{border-color:#e9c98f;background:#fff4d6;color:#8a5a00;font-weight:600;margin-left:6px}
 tr.unseen td{background:#fffbea}
 .chg-sum summary{cursor:pointer;color:var(--blue)}
+.why{color:#6b4e00;background:#fff8e1;border-left:3px solid #e9c98f;padding:1px 6px;margin-top:3px;font-size:14px}
+.chip.editing{border-color:#d98b8b;background:#fdecec;color:#a52a2a;font-weight:600;margin-left:6px}
+.edit-warn{background:#fdecec;border:1px solid #e3b3ae;color:#8a1f1f;padding:8px 10px;border-radius:4px;font-size:15px;margin-bottom:8px}
 .chip.line{border-color:#9bbbe3;color:var(--blue)}
 
 .tablewrap{overflow-x:auto;border-top:2px solid var(--navy)}
@@ -142,7 +145,7 @@ td.note{min-width:110px;max-width:220px;white-space:pre-line;font-size:14.5px;co
   <span class="emblem">지노</span>
   <h1>거래처 주소록 관리대장</h1>
   <span class="sub">노무그룹지노 · 자문회사</span>
-  <span class="savebox" id="savebox"><span id="savetext"></span><b id="who" style="color:#fff"></b><button class="btn sm" id="btn-changes">최근 30일 변경<b id="chg-n" class="cnt" hidden></b></button><button class="btn sm" id="btn-history">수정이력</button><button class="btn sm" id="btn-backup" hidden>백업</button><button class="btn sm" id="btn-admin" hidden>관리</button><button class="btn sm" id="btn-bizno" hidden>사업자번호 넣기</button><button class="btn sm" id="btn-import" hidden>주소록 가져오기</button><button class="btn sm" id="btn-refresh">새로고침</button><button class="btn primary sm" id="btn-lock">잠그기</button></span>
+  <span class="savebox" id="savebox"><span id="savetext"></span><b id="who" style="color:#fff"></b><button class="btn sm" id="btn-changes">최근 30일 변경<b id="chg-n" class="cnt" hidden></b></button><button class="btn sm" id="btn-history">수정이력</button><button class="btn sm" id="btn-trash">휴지통<b id="trash-n" class="cnt" style="background:#6b7a8f" hidden></b></button><button class="btn sm" id="btn-backup" hidden>백업</button><button class="btn sm" id="btn-admin" hidden>관리</button><button class="btn sm" id="btn-bizno" hidden>사업자번호 넣기</button><button class="btn sm" id="btn-import" hidden>주소록 가져오기</button><button class="btn sm" id="btn-refresh">새로고침</button><button class="btn primary sm" id="btn-lock">잠그기</button></span>
 </div></header>
 <input type="file" id="bizno-file" accept=".xlsx,.xls,.csv" hidden>
 <input type="file" id="import-file" accept=".xlsx,.xls,.html,.htm" hidden>
@@ -202,7 +205,7 @@ function copyText(text,el){
 // 서버는 급여대행과 같은 구성원 명단에서 '사용 중'인 사람인지 매번 확인합니다.
 var SB_URL='https://vsbddasoslqmcvoppvuj.supabase.co', SB_KEY='sb_publishable__6dfg59E_kmUEO9nkLNA_Q_gxt1jidT';
 var KEY_URL='https://raw.githubusercontent.com/jinolabor/config-files/main/key.json', KEY_URLS=[KEY_URL,'https://raw.githubusercontent.com/dhkim0629-ops/config-files/main/key.json'], RECHECK=10*60*1000;
-var ME=null,TOKEN='',AKEY=null,docs={},watchT=null;
+var ME=null,TOKEN='',AKEY=null,docs={},watchT=null,TRASH=[],EDITING={},EDITKEY='',editBeat=null;
 var unb64=function(s){return Uint8Array.from(atob(s),function(c){return c.charCodeAt(0)})};
 function b64(u){var s='';for(var i=0;i<u.length;i+=8192)s+=String.fromCharCode.apply(null,u.subarray(i,i+8192));return btoa(s)}
 async function fetchKeys(){var last=null;for(var i=0;i<KEY_URLS.length;i++){try{var r=await fetch(KEY_URLS[i]+'?t='+Date.now(),{cache:'no-store'});if(!r.ok)throw new Error('열쇠 파일을 불러오지 못했습니다 (HTTP '+r.status+')');return await r.json()}catch(e){last=e}}throw last||new Error('열쇠 파일을 불러오지 못했습니다')}
@@ -249,7 +252,7 @@ $('#lform').onsubmit=async function(ev){
     $('#login').hidden=true;$('#who').textContent=ME.name+' 님';
     $('#btn-admin').hidden=!ME.is_master;$('#btn-backup').hidden=!ME.is_master;$('#btn-import').hidden=!ME.is_master;$('#btn-bizno').hidden=!ME.is_master;$('#btn-xlsx').hidden=!ME.can_export;
     status('불러오는 중…');await load();
-    showChanges(true);
+    showChanges(true);pollEditing();
     watchT=setInterval(async function(){try{var k=await fetchKeys();if(!(k.entries||[]).some(function(e){return e.id===hit.id}))lockOut('이 비밀번호는 더 이상 쓸 수 없습니다.')}catch(e){}},RECHECK);
   }catch(e){say('열지 못했습니다: '+(e&&e.message||e),true)}
   finally{$('#lgo').disabled=false}
@@ -260,12 +263,12 @@ $('#btn-lock').onclick=function(){lockOut('')};
 async function load(){
   if(busy||!ME)return;
   try{
-    var rows=await rpc('addr_list'),next={},fail=0,first=!loaded||!Object.keys(docs).length,others=[];
-    for(var i=0;i<rows.length;i++){var d=rows[i];if(d.deleted)continue;var old=docs[d.key];
+    var rows=await rpc('addr_list'),next={},fail=0,dl=[],first=!loaded||!Object.keys(docs).length,others=[];
+    for(var i=0;i<rows.length;i++){var d=rows[i];if(d.deleted){dl.push(d);continue}var old=docs[d.key];
       if(old&&old.rev===d.rev){next[d.key]=old;continue}
       try{var c=await dec(d.iv,d.data);c.id=d.key;next[d.key]={rev:d.rev,c:c,by:d.updated_by,at:d.updated_at};if(!first&&!mine(d.updated_by))others.push(d.updated_by+' 님: '+c.name+(old?' 변경':' 추가'))}catch(e){fail++}}
     if(!first)Object.keys(docs).forEach(function(k){var r=rows.find(function(x){return x.key===k});if(r&&r.deleted&&!mine(r.updated_by))others.push(r.updated_by+' 님: '+docs[k].c.name+' 삭제')});
-    docs=next;data={companies:Object.keys(docs).map(function(k){return docs[k].c}),at:new Date().toISOString()};
+    docs=next;TRASH=dl;var tn=$('#trash-n');tn.hidden=!dl.length;tn.textContent=dl.length;data={companies:Object.keys(docs).map(function(k){return docs[k].c}),at:new Date().toISOString()};
     loaded=true;loadErr=fail&&!data.companies.length?'저장된 주소록을 열 수 없습니다(열쇠가 다릅니다). 대표님께 알려 주세요.':'';
     status('연결됨 · '+hm(new Date())+' 기준'+(fail?' · 열지 못한 '+fail+'건':''),!!fail);renderAll();
     if(others.length){toast('다른 구성원이 방금 고쳤습니다 — '+others.slice(0,3).join(' / ')+(others.length>3?' 외 '+(others.length-3)+'건':''));refreshChgCount()}
@@ -286,7 +289,7 @@ async function putDoc(key,body,deleted,msg){
   }
 }
 function saveCompany(c,msg){var key=c.id||newKey(),body=clone(c);delete body.id;return putDoc(key,body,false,msg)}
-function deleteCompany(id,msg){var cur=docs[id];if(!cur)return;var body=clone(cur.c);delete body.id;return putDoc(id,body,true,msg)}
+function deleteCompany(id,msg,why){var cur=docs[id];if(!cur)return;var body=clone(cur.c);delete body.id;body._why=why||'';return putDoc(id,body,true,msg)}
 $('#btn-refresh').onclick=function(){if(ME){status('불러오는 중…');load()}};
 setInterval(function(){if(ME&&!document.hidden&&!$('#modal-root').firstChild)load()},60000);
 document.addEventListener('visibilitychange',function(){if(ME&&!document.hidden&&!$('#modal-root').firstChild)load()});
@@ -330,7 +333,7 @@ $('#import-file').addEventListener('change',function(e){
     ov.querySelector('#i-add').onclick=async function(){
       var btn=this,prog=ov.querySelector('#i-prog');btn.disabled=true;ov.querySelector('#i-all').disabled=true;busy=true;prog.hidden=false;var okN=0,fail=0;
       for(var i=0;i<add.length;i++){prog.textContent='추가하는 중… '+(i+1)+' / '+add.length;
-        try{var x=await enc(add[i]);var res=await rpc('addr_put',{p_key:newKey(),p_expected_rev:0,p_iv:x.iv,p_data:x.data,p_deleted:false});if(res&&res.ok)okN++;else fail++}catch(err){fail++}}
+        try{add[i]._why='주소록 가져오기로 추가';var x=await enc(add[i]);var res=await rpc('addr_put',{p_key:newKey(),p_expected_rev:0,p_iv:x.iv,p_data:x.data,p_deleted:false});if(res&&res.ok)okN++;else fail++}catch(err){fail++}}
       busy=false;closeModal();toast(okN+'곳을 추가했습니다.'+(fail?' 실패 '+fail+'곳 — 다시 해 주세요.':''));await load();
     };
     ov.querySelector('#i-all').onclick=async function(){
@@ -411,7 +414,7 @@ $('#bizno-file').addEventListener('change',function(e){
       if(!list.length){toast('넣을 사업자번호가 없습니다.');return}
       var go=this;go.disabled=true;busy=true;var prog=ov.querySelector('#bz-prog');prog.hidden=false;var ok=0,fail=[];
       for(var k=0;k<list.length;k++){var it=list[k],cur=docs[it.c.id];prog.textContent='저장 중… '+(k+1)+' / '+list.length;
-        try{if(!cur)throw new Error('없음');var body=clone(cur.c);delete body.id;body.bizno=it.bz;var e2=await enc(body);
+        try{if(!cur)throw new Error('없음');var body=clone(cur.c);delete body.id;body.bizno=it.bz;body._why='사업자번호 일괄 넣기';var e2=await enc(body);
           var res=await rpc('addr_put',{p_key:it.c.id,p_expected_rev:cur.rev,p_iv:e2.iv,p_data:e2.data,p_deleted:false});
           if(res&&res.conflict)fail.push(it.c.name+' (다른 구성원이 방금 고침)');else ok++;
         }catch(err){fail.push(it.c.name+' ('+(err.message||'오류')+')');if(!ME)break}}
@@ -483,7 +486,7 @@ function renderAll(){
     list.map(function(c,ix){
       var cs=c.contacts||[];var ps=cs.filter(activeContact).concat(cs.filter(function(p){return !activeContact(p)}));
       var cls=function(p){return activeContact(p)?'':' class="gone"'};
-      return '<tr class="click" data-edit="'+esc(c.id)+'"><td class="no mono">'+(ix+1)+'</td><td class="c">'+statusChip(c)+'</td><td class="nowrap"><b>'+esc(c.name)+'</b>'+recentChip(c.id)+'</td><td class="nowrap mono">'+esc(c.bizno||'')+'</td><td>'+(isConstruction(c)?'<span class="chip line">건설</span>':'<span class="chip info">비건설</span>')+'</td><td class="nowrap">'+esc(ownerKey(c.owner))+'</td><td class="note">'+esc(c.note)+'</td>'+
+      return '<tr class="click" data-edit="'+esc(c.id)+'"><td class="no mono">'+(ix+1)+'</td><td class="c">'+statusChip(c)+'</td><td class="nowrap"><b>'+esc(c.name)+'</b>'+recentChip(c.id)+editChip(c.id)+'</td><td class="nowrap mono">'+esc(c.bizno||'')+'</td><td>'+(isConstruction(c)?'<span class="chip line">건설</span>':'<span class="chip info">비건설</span>')+'</td><td class="nowrap">'+esc(ownerKey(c.owner))+'</td><td class="note">'+esc(c.note)+'</td>'+
         '<td class="stack">'+ps.map(function(p){return '<div'+cls(p)+'><span class="nm">'+esc(p.name||'-')+'</span> <span style="color:var(--muted)">'+esc((p.title||'').replace(/\n/g,' '))+'</span>'+(activeContact(p)?'':' <span class="chip '+(p.status==='퇴사'?'end':'warn')+'">'+esc(p.status)+'</span>')+'</div>'}).join('')+'</td>'+
         '<td class="stack">'+ps.map(function(p){return '<div'+cls(p)+'>'+esc(emailsOf(p).join(', '))+'</div>'}).join('')+'</td>'+
         '<td class="stack mono">'+ps.map(function(p){return '<div'+cls(p)+'>'+esc((p.phone||'').replace(/\s*\n\s*/g,' '))+'</div>'}).join('')+'</td>'+
@@ -493,6 +496,46 @@ function renderAll(){
 ['#q','#f-status','#f-owner','#f-group','#f-ind'].forEach(function(s){$(s).addEventListener(s==='#q'?'input':'change',renderAll)});
 $('#list').addEventListener('click',function(e){var t=e.target.closest('[data-edit]');if(t)openCompany(data.companies.find(function(c){return c.id===t.dataset.edit}))});
 $('#btn-add').onclick=function(){openCompany(null)};
+/* ---------- 수정 중 표시 ---------- */
+function ago(iso){var m=Math.max(0,Math.round((Date.now()-new Date(iso))/60000));return m<1?'방금':m+'분 전'}
+function editChip(id){var e=EDITING[id];if(!e||!e.length)return '';return '<span class="chip editing" title="'+esc(e.map(function(x){return x.name+' 님 '+ago(x.since)+'부터'}).join(', '))+'">✎ '+esc(e.map(function(x){return x.name}).join(', '))+' 님 수정 중</span>'}
+async function pollEditing(){if(!ME||document.hidden)return;try{var rows=await rpc('addr_editing_list'),m={};
+  rows.forEach(function(r){if(r.member_id===ME.id)return;(m[r.key]=m[r.key]||[]).push({name:r.member_name,since:r.since})});
+  if(JSON.stringify(m)!==JSON.stringify(EDITING)){EDITING=m;if(loaded)renderAll()}}catch(e){}}
+setInterval(pollEditing,20000);
+function editStart(key,ov){
+  editStop();EDITKEY=key;
+  async function beat(){if(!ME||EDITKEY!==key)return;try{var r=await rpc('addr_edit_begin',{p_key:key});var o=(r&&r.others)||[];var box=ov.querySelector('#m-editwarn');
+    if(!box){box=document.createElement('div');box.id='m-editwarn';var body=ov.querySelector('.body');body.insertBefore(box,body.firstChild)}
+    box.className=o.length?'edit-warn':'';box.innerHTML=o.length?'<b>⚠ '+esc(o.map(function(x){return x.name}).join(', '))+' 님이 지금 이 회사를 수정하고 있습니다</b> ('+esc(o.map(function(x){return ago(x.since)+' 시작'}).join(', '))+').<br>동시에 저장하면 먼저 저장한 내용만 남습니다. 끝난 뒤 고치시거나 먼저 연락해 주세요.':''}catch(e){}}
+  beat();editBeat=setInterval(beat,30000);
+}
+function editStop(){if(editBeat){clearInterval(editBeat);editBeat=null}if(EDITKEY&&ME){var k=EDITKEY;EDITKEY='';rpc('addr_edit_end',{p_key:k}).then(pollEditing,function(){})}EDITKEY=''}
+window.addEventListener('pagehide',function(){if(EDITKEY&&TOKEN){try{fetch(SB_URL+'/rest/v1/rpc/addr_edit_end',{method:'POST',keepalive:true,headers:{'apikey':SB_KEY,'Content-Type':'application/json'},body:JSON.stringify({p_token:TOKEN,p_key:EDITKEY})})}catch(e){}}});
+
+/* ---------- 휴지통 (TEAM JINO 누구나) ---------- */
+$('#btn-trash').onclick=async function(){
+  var ov=modal('<h2>휴지통 — 삭제된 거래처</h2><p class="note-p">삭제된 거래처는 지워지지 않고 여기에 남습니다. <b>되살리기</b>를 누르면 삭제 직전 내용 그대로 주소록에 돌아옵니다.</p><div id="tr-box" class="note-p">불러오는 중…</div><div class="act"><button class="btn primary" id="tr-close">닫기</button></div>');
+  ov.querySelector('#tr-close').onclick=closeModal;
+  var list=TRASH.slice().sort(function(a,b){return new Date(b.updated_at)-new Date(a.updated_at)}),items=[];
+  for(var i=0;i<list.length;i++)items.push(await decSafe(list[i].iv,list[i].data));
+  var box=ov.querySelector('#tr-box');
+  if(!list.length){box.textContent='휴지통이 비어 있습니다.';return}
+  box.innerHTML='<table><thead><tr><th>삭제 일시</th><th>삭제한 사람</th><th>회사</th><th>상태 · 담당자</th><th>삭제 사유</th><th></th></tr></thead><tbody>'+list.map(function(d,i){var b=items[i];
+    return '<tr><td class="mono nowrap">'+when(d.updated_at)+'</td><td class="nowrap">'+esc(d.updated_by)+'</td><td class="nowrap"><b>'+esc(b?b.name:'(열 수 없음)')+'</b></td><td>'+(b?esc(b.status||'')+' · '+(b.contacts||[]).length+'명':'')+'</td><td>'+esc(b&&b._why||'')+'</td><td class="nowrap">'+(b?'<button class="btn sm" data-rs="'+i+'">되살리기</button> <button class="btn ghost sm" data-hs="'+i+'">이력</button>':'')+'</td></tr>'}).join('')+'</tbody></table>';
+  box.addEventListener('click',async function(e){
+    var h=e.target.closest('[data-hs]');if(h){var k=+h.dataset.hs;companyHistory(list[k].key,items[k].name);return}
+    var t=e.target.closest('[data-rs]');if(!t)return;var k=+t.dataset.rs,d=list[k];
+    if(t.dataset.sure!=='1'){t.dataset.sure='1';t.textContent='한 번 더 누르면 되살립니다';return}
+    t.disabled=true;busy=true;
+    try{var body=clone(items[k]);delete body.id;body._why='휴지통에서 되살림';var e2=await enc(body);
+      var res=await rpc('addr_put',{p_key:d.key,p_expected_rev:d.rev,p_iv:e2.iv,p_data:e2.data,p_deleted:false});busy=false;
+      if(res&&res.conflict){toast((res.updated_by||'다른 구성원')+' 님이 방금 고쳤습니다. 다시 열어 주세요.');closeModal();await load();return}
+      closeModal();toast(items[k].name+' — 되살렸습니다.');await load();
+    }catch(err){busy=false;t.disabled=false;toast('되살리지 못했습니다: '+err.message)}
+  });
+};
+
 /* ---------- 최근 30일 변경 알림 ---------- */
 var DAY=864e5;
 function mine(by){by=String(by||'');return !!ME&&(by===ME.name||by.indexOf(ME.name+' (')===0)}
@@ -514,7 +557,7 @@ async function showChanges(auto){
   ov.querySelector('#cg-ok').onclick=async function(){this.disabled=true;try{await rpc('addr_seen_mark',{p_at:info.now});await refreshChgCount()}catch(e){}closeModal();toast('확인했습니다. 새 변경이 생기면 다시 알려 드립니다.')};
   var items=[];
   for(var i=0;i<info.rows.length;i++){var r=info.rows[i],b=await decSafe(r.iv,r.data);if(!b)continue;var a=r.prev_iv?await decSafe(r.prev_iv,r.prev_data):null;
-    items.push({key:r.key,at:r.updated_at,by:r.updated_by,kind:chgKind(r),name:b.name,det:diffList(a,b,r.deleted,r.prev_deleted),me:mine(r.updated_by),unseen:!mine(r.updated_by)&&new Date(r.updated_at)>info.seen})}
+    items.push({key:r.key,at:r.updated_at,by:r.updated_by,kind:chgKind(r),name:b.name,det:diffList(a,b,r.deleted,r.prev_deleted),why:whyHtml(b),me:mine(r.updated_by),unseen:!mine(r.updated_by)&&new Date(r.updated_at)>info.seen})}
   var KC={'추가':'ok','삭제':'end','변경':'warn','되살림':'info'};
   function draw(){
     var showMine=ov.querySelector('#cg-mine').checked,list=items.filter(function(x){return showMine||!x.me});
@@ -526,7 +569,7 @@ async function showChanges(auto){
     groups.forEach(function(g){
       if(g.length>6){var un=g.some(function(x){return x.unseen});
         html.push('<tr'+(un?' class="unseen"':'')+'><td class="mono nowrap">'+when(g[0].at)+'</td><td class="nowrap">'+esc(g[0].by)+'</td><td class="c"><span class="chip '+KC[g[0].kind]+'">'+g[0].kind+'</span></td><td colspan="2"><details class="chg-sum"><summary><b>'+g.length+'곳</b> 한꺼번에 '+g[0].kind+' (눌러서 목록 보기)</summary>'+g.map(function(x){return esc(x.name)}).join(', ')+'</details></td></tr>')}
-      else g.forEach(function(x){html.push('<tr class="click'+(x.unseen?' unseen':'')+'" data-hk="'+esc(x.key)+'" data-hn="'+esc(x.name)+'"><td class="mono nowrap">'+when(x.at)+'</td><td class="nowrap">'+esc(x.by)+'</td><td class="c"><span class="chip '+KC[x.kind]+'">'+x.kind+'</span></td><td class="nowrap"><b>'+esc(x.name)+'</b></td><td>'+(x.kind==='추가'?'새 거래처 등록':x.kind==='삭제'?'거래처 삭제':x.det.join('<br>'))+'</td></tr>')});
+      else g.forEach(function(x){html.push('<tr class="click'+(x.unseen?' unseen':'')+'" data-hk="'+esc(x.key)+'" data-hn="'+esc(x.name)+'"><td class="mono nowrap">'+when(x.at)+'</td><td class="nowrap">'+esc(x.by)+'</td><td class="c"><span class="chip '+KC[x.kind]+'">'+x.kind+'</span></td><td class="nowrap"><b>'+esc(x.name)+'</b></td><td>'+(x.kind==='추가'?'새 거래처 등록':x.kind==='삭제'?'거래처 삭제':x.det.join('<br>'))+x.why+'</td></tr>')});
     });
     ov.querySelector('#cg-box').innerHTML='<table><thead><tr><th>일시</th><th>고친 사람</th><th>구분</th><th>회사</th><th>바뀐 내용</th></tr></thead><tbody>'+html.join('')+'</tbody></table>';
   }
@@ -561,6 +604,7 @@ function diffList(a,b,del,prevDel){
   delN.forEach(function(p){out.push('담당자 삭제: '+esc(pname(p)))});
   return out.length?out:['(바뀐 내용 없음)'];
 }
+function whyHtml(b){return b&&b._why?'<div class="why">사유: '+esc(b._why)+'</div>':''}
 function when(iso){var d=new Date(iso);return fmtDate(iso)+' '+hm(d)}
 async function decSafe(iv,d){if(!iv||!d)return null;try{return await dec(iv,d)}catch(e){return null}}
 $('#btn-history').onclick=async function(){
@@ -570,7 +614,7 @@ $('#btn-history').onclick=async function(){
     var rows=await rpc('addr_history_recent',{p_limit:150}),html=[];
     for(var i=0;i<rows.length;i++){var r=rows[i],b=await decSafe(r.iv,r.data),a=r.prev_iv?await decSafe(r.prev_iv,r.prev_data):null;
       if(!b){html.push('<tr><td class="mono nowrap">'+when(r.updated_at)+'</td><td class="nowrap">'+esc(r.updated_by)+'</td><td colspan="2">(열 수 없는 기록)</td></tr>');continue}
-      html.push('<tr class="click" data-hk="'+esc(r.key)+'" data-hn="'+esc(b.name)+'"><td class="mono nowrap">'+when(r.updated_at)+'</td><td class="nowrap">'+esc(r.updated_by)+'</td><td class="nowrap"><b>'+esc(b.name)+'</b></td><td>'+diffList(a,b,r.deleted,r.prev_deleted).join('<br>')+'</td></tr>')}
+      html.push('<tr class="click" data-hk="'+esc(r.key)+'" data-hn="'+esc(b.name)+'"><td class="mono nowrap">'+when(r.updated_at)+'</td><td class="nowrap">'+esc(r.updated_by)+'</td><td class="nowrap"><b>'+esc(b.name)+'</b></td><td>'+diffList(a,b,r.deleted,r.prev_deleted).join('<br>')+whyHtml(b)+'</td></tr>')}
     var box=ov.querySelector('#h-box');
     box.innerHTML=rows.length?'<table><thead><tr><th>일시</th><th>고친 사람</th><th>회사</th><th>바뀐 내용</th></tr></thead><tbody>'+html.join('')+'</tbody></table>':'아직 기록이 없습니다.';
     box.addEventListener('click',function(e){var t=e.target.closest('[data-hk]');if(t)companyHistory(t.dataset.hk,t.dataset.hn)});
@@ -585,7 +629,7 @@ async function companyHistory(key,name){
     var latest=rows[0];
     var html=rows.map(function(r,i){var b=items[i],a=i+1<rows.length?items[i+1]:null,pd=i+1<rows.length?rows[i+1].deleted:false;
       var act=i===0?(r.deleted?'<button class="btn sm" data-back="'+i+'">되살리기</button>':'<span class="chip info">지금 내용</span>'):(r.deleted||!b?'':'<button class="btn sm" data-back="'+i+'">이 내용으로 되돌리기</button>');
-      return '<tr><td class="mono nowrap">'+when(r.updated_at)+'</td><td class="nowrap">'+esc(r.updated_by)+'</td><td>'+(b?diffList(a,b,r.deleted,pd).join('<br>'):'(열 수 없는 기록)')+'</td><td class="c nowrap">'+act+'</td></tr>'}).join('');
+      return '<tr><td class="mono nowrap">'+when(r.updated_at)+'</td><td class="nowrap">'+esc(r.updated_by)+'</td><td>'+(b?diffList(a,b,r.deleted,pd).join('<br>')+whyHtml(b):'(열 수 없는 기록)')+'</td><td class="c nowrap">'+act+'</td></tr>'}).join('');
     var box=ov.querySelector('#ch-box');
     box.innerHTML=rows.length?'<p class="note-p" style="margin-top:0">위가 최신입니다. 예전 내용으로 되돌려도 그 사실이 새 이력으로 남습니다.</p><table><thead><tr><th>일시</th><th>고친 사람</th><th>바뀐 내용</th><th></th></tr></thead><tbody>'+html+'</tbody></table>':'기록이 없습니다.';
     box.addEventListener('click',async function(e){var t=e.target.closest('[data-back]');if(!t)return;var i=+t.dataset.back,src=items[i];
@@ -593,7 +637,7 @@ async function companyHistory(key,name){
       if(!src){toast('되돌릴 내용을 찾지 못했습니다.');return}
       if(t.dataset.sure!=='1'){t.dataset.sure='1';t.textContent='한 번 더 누르면 되돌립니다';t.classList.add('danger');return}
       t.disabled=true;busy=true;
-      try{var body=clone(src);delete body.id;var e2=await enc(body);
+      try{var body=clone(src);delete body.id;body._why=latest.deleted&&i===0?'수정이력에서 되살림':'수정이력에서 예전 내용으로 되돌림';var e2=await enc(body);
         var res=await rpc('addr_put',{p_key:key,p_expected_rev:latest.rev,p_iv:e2.iv,p_data:e2.data,p_deleted:false});busy=false;
         if(res&&res.conflict){toast((res.updated_by||'다른 구성원')+' 님이 방금 고쳤습니다. 다시 열어 주세요.');closeModal();await load();return}
         closeModal();toast('되돌렸습니다. TEAM JINO 모두의 화면에 반영됩니다.');await load();
@@ -655,7 +699,7 @@ $('#btn-backup').onclick=async function(){
 function modal(html){var root=$('#modal-root');var m=html.match(/^<h2>[\s\S]*?<\/h2>/);var h2=m?m[0]:'';var rest=html.slice(h2.length);var ai=rest.lastIndexOf('<div class="act">');
   root.innerHTML='<div class="overlay"><div class="sheet" role="dialog" aria-modal="true">'+h2+'<div class="body">'+(ai>=0?rest.slice(0,ai):rest)+'</div>'+(ai>=0?rest.slice(ai):'')+'</div></div>';var ov=root.firstChild;ov.addEventListener('mousedown',function(e){if(e.target===ov)closeModal()});document.addEventListener('keydown',escClose);var f=ov.querySelector('input,select,textarea');if(f)f.focus();return ov}
 function escClose(e){if(e.key==='Escape')closeModal()}
-function closeModal(){$('#modal-root').innerHTML='';document.removeEventListener('keydown',escClose)}
+function closeModal(){editStop();$('#modal-root').innerHTML='';document.removeEventListener('keydown',escClose)}
 
 var CSTATUS=['재직','휴직','출산휴가','육아휴직','퇴사'];
 function contactRow(p){
@@ -688,8 +732,10 @@ function openCompany(c){
     '</div>'+
     '<div><div class="subhead" style="margin-bottom:6px">실무 담당자<span style="font-size:14px;color:var(--muted);font-weight:400">퇴사·휴직은 각 담당자 오른쪽의 상태에서 바꿉니다</span><button class="btn sm" id="m-add-contact">+ 담당자</button></div>'+
       '<div class="crows" id="m-contacts">'+(c.contacts||[]).map(contactRow).join('')+'</div></div>'+
+    '<div class="form" style="margin-top:10px"><label class="full"><span>변경 사유</span><input id="m-why" placeholder="'+(isNew?'예: 11월 신규 자문계약':'예: 담당자 퇴사 통보 받음, 대표자 변경')+' — 다른 구성원 알림 창에 함께 보입니다"></label></div>'+
     '<div class="act">'+(isNew?'':'<span class="left" id="m-delwrap"><button class="btn danger" id="m-del">거래처 삭제</button> <button class="btn" id="m-hist">수정이력</button></span>')+'<button class="btn" id="m-cancel">취소</button><button class="btn primary" id="m-save">확인</button></div>');
   var cbox=ov.querySelector('#m-contacts');
+  if(!isNew)editStart(c.id,ov);
   ov.querySelector('#m-add-contact').onclick=function(){cbox.insertAdjacentHTML('beforeend',contactRow({status:'재직'}));cbox.lastElementChild.querySelector('input').focus()};
   cbox.addEventListener('click',function(e){if(e.target.closest('[data-del-contact]'))e.target.closest('.crow').remove()});
   cbox.addEventListener('change',function(e){if(e.target.dataset.k==='status')e.target.classList.toggle('off',e.target.value!=='재직')});
@@ -698,8 +744,9 @@ function openCompany(c){
   var del=ov.querySelector('#m-del');
   if(del)del.onclick=function(){
     var w=ov.querySelector('#m-delwrap');
-    w.innerHTML='<span class="confirm">담당자까지 모두 삭제할까요? <button class="btn danger sm" data-y>삭제</button><button class="btn sm" data-n>아니요</button></span>';
-    w.querySelector('[data-y]').onclick=function(){deleteCompany(c.id,'삭제했습니다.')};
+    w.innerHTML='<span class="confirm">삭제할까요? <input id="m-delwhy" placeholder="삭제 사유 (예: 자문 종료, 중복 등록)" style="width:240px;min-height:0;padding:4px 6px"> <button class="btn danger sm" data-y>삭제</button><button class="btn sm" data-n>아니요</button></span>';
+    w.querySelector('#m-delwhy').focus();
+    w.querySelector('[data-y]').onclick=function(){deleteCompany(c.id,'삭제했습니다. 휴지통에서 되살릴 수 있습니다.',w.querySelector('#m-delwhy').value.trim())};
     w.querySelector('[data-n]').onclick=function(){closeModal();openCompany(data.companies.find(function(x){return x.id===c.id}))};
   };
   ov.querySelector('#m-save').onclick=function(){
@@ -709,7 +756,7 @@ function openCompany(c){
     var bz=bizFmt(v('bizno'));
     if(v('bizno')&&!bz){ov.querySelector('#m-bizno').focus();toast('사업자번호는 숫자 10자리입니다 (예: 123-45-67890).');return}
     if(bz&&!bizOk(bz))toast('사업자번호 검증 숫자가 맞지 않습니다. 저장은 하지만 번호를 한 번 더 확인해 주세요.');
-    var out={id:c.id,name:v('name'),bizno:bz,status:v('status'),owner:v('owner'),mailGroup:v('mailGroup'),industry:v('industry'),ceo:v('ceo'),tel:v('tel'),fax:v('fax'),address:v('address'),note:v('note'),memo:v('memo'),contacts:contacts};
+    var out={id:c.id,name:v('name'),bizno:bz,status:v('status'),owner:v('owner'),mailGroup:v('mailGroup'),industry:v('industry'),ceo:v('ceo'),tel:v('tel'),fax:v('fax'),address:v('address'),note:v('note'),memo:v('memo'),contacts:contacts,_why:v('why')};
     saveCompany(out,'저장했습니다. TEAM JINO 모두의 화면에 반영됩니다.');
   };
 }
