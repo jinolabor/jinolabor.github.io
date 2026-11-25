@@ -516,3 +516,8 @@ table.dtab td.dcmp{padding:0}
 .setrow .muted{font-size:13px}
 @media(max-width:700px){.setrow{grid-template-columns:1fr}}
 .pdfbox{border-radius:0}.pdfb{border-radius:3px;border-width:1px}
+.lhelp{display:flex;flex-wrap:wrap;justify-content:center;gap:6px 14px;align-items:center}
+.lhelp b{width:100%;text-align:center;color:var(--navy);font-size:13.5px}
+.lhelp span{white-space:nowrap}
+.lhelp a{color:inherit;text-decoration:none;font-weight:600}
+.lhelp a:hover{color:var(--blue);text-decoration:underline}

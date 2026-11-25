@@ -164,7 +164,7 @@ function printHtml(items,mode,who,checks,scopeLabel){
         '</tbody></table></div></div>'}).join('');
   }
   if(!items.length)h+='<p style="padding:30px;text-align:center;color:#5b6577">해당 항목이 없습니다.</p>';
-  h+='<div class="pft">노무그룹지노 · 용산센트럴파크타워 업무동 1003호 · jinolabor@kakao.com · www.jinolabor.com — 본 자료는 회원사 전용으로 제공되며 외부 배포를 삼가 주시기 바랍니다.</div>';
+  h+='<div class="pft">노무그룹지노 · 용산센트럴파크타워 업무동 1003호 · 문의 02-6080-8558 · timetodh@naver.com · www.jinolabor.com — 본 자료는 회원사 전용으로 제공되며 외부 배포를 삼가 주시기 바랍니다.</div>';
   return h;
 }
 function printDoc(items,mode,who,checks,scopeLabel){
