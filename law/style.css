@@ -476,3 +476,36 @@ table.dtab td.dcmp{padding:0}
 .lnbinfo.ctc a{color:var(--ink);text-decoration:none;font-weight:600}
 .lnbinfo.ctc a:hover{color:var(--blue);text-decoration:underline}
 @media(max-width:900px){.lnbinfo.ctc{display:none}}
+
+/* ===== 인쇄 상세본: 문서표 형식 (2026-11) ===== */
+.pdoc .pdc{border:1px solid #9fb0c8;border-left:1px solid #9fb0c8;border-radius:0;padding:0;margin-bottom:10pt;break-inside:avoid;page-break-inside:avoid}
+.pdoc .pdh{display:flex;flex-wrap:wrap;align-items:center;gap:5pt;background:#1F3864;color:#fff;padding:4pt 8pt;font-size:8.5pt}
+.pdoc .pdd{font-size:9.5pt}
+.pdoc .pdh .pst{margin:0;border:1px solid rgba(255,255,255,.6)}
+.pdoc .pcat{font-size:7.5pt;font-weight:700;background:#fff;color:#1F3864;padding:0 4pt;border-radius:2px}
+.pdoc .plaw{font-weight:700}
+.pdoc .ptag{font-size:7.5pt;border:1px solid rgba(255,255,255,.7);padding:0 4pt;border-radius:2px}
+.pdoc .pdh .pmk{margin-left:auto;font-size:8.5pt;color:#fff}
+.pdoc .pdb{padding:7pt 9pt 9pt}
+.pdoc .psm{font-size:11.5pt;font-weight:800;margin:0 0 4pt;color:#111;white-space:normal}
+.pdoc .pac{display:block;background:#eef8f0;border:1px solid #b9e2c3;border-radius:0;color:#1f5130;font-size:9pt;padding:3pt 7pt;margin-bottom:6pt}
+.pdoc .pac b{margin-right:6pt}
+.pdoc table.pdt{width:100%;border-collapse:collapse;table-layout:fixed;font-size:8.8pt;line-height:1.5;border-top:1.5pt solid #1F3864}
+.pdoc table.pdt th{background:#f1f4f9;color:#1F3864;font-weight:700;text-align:left;vertical-align:top;padding:4pt 6pt;border-bottom:1px solid #c9d1dd;border-right:1px solid #c9d1dd}
+.pdoc table.pdt td{padding:4pt 7pt;border-bottom:1px solid #c9d1dd;vertical-align:top;white-space:normal}
+.pdoc td.part{color:#3a414b;font-size:8.3pt}
+.pdoc td.pcmp{padding:0}
+.pdoc .pc2{display:grid;grid-template-columns:1fr 1fr}
+.pdoc .pcb,.pdoc .pca{padding:4pt 7pt}
+.pdoc .pcb{border-right:1px solid #c9d1dd;color:#4a515b}
+.pdoc .pca{background:#f2f6fd;color:#0f2a55}
+.pdoc .plb{display:inline-block;font-size:7.3pt;font-weight:700;padding:0 4pt;margin-bottom:2pt;border:1px solid #b8c0cb;background:#eef0f3;color:#55606e}
+.pdoc .plb.a{background:#1b5ed1;border-color:#1b5ed1;color:#fff}
+.pdoc ul.rl li{padding-left:8pt;margin-bottom:1pt}
+.pdoc ul.rl li::before{content:'';position:absolute;left:1pt;top:.62em;width:3pt;height:3pt;background:#6b7480;opacity:1}
+.pdoc .pca ul.rl li::before{background:#1b5ed1}
+.pdoc .rh{display:inline-block;font-size:7.5pt;font-weight:700;color:#b35100;border:1px solid #f3c79d;background:#fff8f1;padding:0 4pt;margin:0 0 2pt}
+.pdoc ul.fl li{display:flex;gap:4pt;padding:1pt 0;border:0;align-items:baseline}
+.pdoc .flab{flex:none;font-size:7.3pt;font-weight:700;color:#fff;background:#5f6b7a;padding:0 4pt;border-radius:2px;margin:0}
+.pdoc .talk{display:inline-block;font-size:8pt;font-weight:700;color:#7a5600;background:#fffbea;border:1px solid #f0dc9a;padding:1pt 6pt;margin-top:3pt}
+.pdoc table.pdt td.pcmp{padding:0}

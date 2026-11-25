@@ -138,10 +138,20 @@ function printHtml(items,mode,who,checks,scopeLabel){
     h+='<table class="ptb"><colgroup><col style="width:13%"><col style="width:17%"><col style="width:36%"><col style="width:26%"><col style="width:8%"></colgroup><thead><tr><th>시행일</th><th>법령</th><th>주요 내용</th><th>회사가 할 일</th><th>확인</th></tr></thead><tbody>'+
       items.map(function(o){return '<tr><td class="c"><b>'+(o.dt?fmt(o.dt):'미정')+'</b><br><span class="pst" style="background:'+(stc[o.s]||'#1971c2')+'">'+esc(o.sl)+'</span></td><td>'+esc(o.law)+(o.cond?'<br><span class="pcd">'+esc(o.cond)+' 해당</span>':'')+(o.rules?'<br><span class="prl">취업규칙 개정</span>':'')+'</td><td>'+esc(o.summary)+'</td><td>'+esc(o.action)+'</td><td class="c">'+mark(o)+'</td></tr>'}).join('')+'</tbody></table>';
   }else{
-    h+=items.map(function(o){return '<div class="pdc" style="border-left-color:'+(stc[o.s]||'#1971c2')+'"><div class="plw">'+(o.dt?fmt(o.dt):'미정')+' · '+esc(o.sl)+' · '+esc(o.law)+(o.cond?' · '+esc(o.cond)+' 해당':'')+(o.rules?' · 취업규칙 개정':'')+'<span class="pmk">'+mark(o)+'</span></div>'+
-      '<div class="psm">'+esc(o.summary)+'</div><div class="pac"><b>회사가 할 일</b> · '+esc(o.action)+'</div><div class="par">'+esc(o.article)+'</div>'+
-      '<div class="pg2"><div class="pbx pbef"><h5>개정 전</h5>'+richText(o.before)+'</div><div class="pbx paft"><h5>개정 후</h5>'+richText(o.after)+'</div></div>'+
-      '<div class="pg2"><div class="pbx ptip"><h5>실무상 유의사항</h5>'+richText(o.tips)+'</div><div class="pbx pfrm"><h5>관련 서식·자료</h5>'+formsHtml(o.forms,true)+'</div></div></div>'}).join('');
+    h+=items.map(function(o){
+      var cat=(o.cats||[])[0];
+      return '<div class="pdc">'+
+        '<div class="pdh"><b class="pdd">'+(o.dt?fmt(o.dt):'시행일 미정')+'</b><span class="pst" style="background:'+(stc[o.s]||'#1971c2')+'">'+esc(o.sl)+'</span>'+
+          (cat?'<span class="pcat">'+esc(cat)+'</span>':'')+'<span class="plaw">'+esc(o.law)+'</span>'+
+          (o.cond?'<span class="ptag">'+esc(o.cond)+' 해당</span>':'')+(o.rules?'<span class="ptag r">취업규칙 개정</span>':'')+
+          '<span class="pmk">확인 '+mark(o)+'</span></div>'+
+        '<div class="pdb"><div class="psm">'+esc(o.summary)+'</div><div class="pac"><b>회사가 할 일</b>'+esc(o.action)+'</div>'+
+        '<table class="pdt"><colgroup><col style="width:17%"><col></colgroup><tbody>'+
+          (o.article?'<tr><th>근거 조문</th><td class="part">'+nbParen(esc(o.article)).replace(/\n/g,'<br>')+'</td></tr>':'')+
+          '<tr><th>개정 내용</th><td class="pcmp"><div class="pc2"><div class="pcb"><span class="plb">개정 전</span>'+richText(o.before)+'</div><div class="pca"><span class="plb a">개정 후</span>'+richText(o.after)+'</div></div></td></tr>'+
+          '<tr><th>실무상 유의사항</th><td>'+richText(o.tips)+'</td></tr>'+
+          '<tr><th>관련 서식·자료</th><td>'+formsHtml(o.forms,true)+'</td></tr>'+
+        '</tbody></table></div></div>'}).join('');
   }
   if(!items.length)h+='<p style="padding:30px;text-align:center;color:#5b6577">해당 항목이 없습니다.</p>';
   h+='<div class="pft">노무그룹지노 · 용산센트럴파크타워 업무동 1003호 · jinolabor@kakao.com · www.jinolabor.com — 본 자료는 회원사 전용으로 제공되며 외부 배포를 삼가 주시기 바랍니다.</div>';
