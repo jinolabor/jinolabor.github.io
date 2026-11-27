@@ -954,7 +954,7 @@ function renderCs(){
   var mcount={};
   $('#cs-list').innerHTML='<table class="grid cs"><thead><tr><th style="width:52px">연번</th><th style="width:96px">날짜</th><th>회사</th><th>담당자 / 연락처</th><th style="width:84px">상담유형</th><th style="width:110px">분야</th><th>상담내용</th><th>비고</th><th style="width:70px">입력</th></tr></thead><tbody>'+
     list.map(function(c,i){var d=CS.docs[c.id];
-      return '<tr class="click" data-cs="'+esc(c.id)+'"><td class="no mono">'+(i+1)+'</td><td class="nowrap mono">'+csDay(c.date)+'</td><td class="nowrap"><b>'+esc(c.company)+'</b>'+(c.cid&&docs[c.cid]?' <span class="chip ok" title="주소록 거래처">거래처</span>':'')+editChip(c.id)+'</td><td>'+esc(c.contact)+'</td><td class="c">'+esc(c.type)+'</td><td class="c">'+esc(c.field)+'</td><td class="cs-content">'+esc(c.content)+'</td><td class="note">'+esc(c.note)+'</td><td class="c" style="font-size:13.5px;color:var(--muted)" title="'+esc(d?when(d.at)+' '+d.by:'')+'">'+esc(String(c.by||'').replace(/\s*\(.*\)$/,''))+'</td></tr>'}).join('')+'</tbody></table>';
+      return '<tr class="click" data-cs="'+esc(c.id)+'"><td class="no mono">'+(i+1)+'</td><td class="nowrap mono">'+csDay(c.date)+'</td><td class="nowrap"><b>'+esc(c.company)+'</b>'+editChip(c.id)+'</td><td>'+esc(c.contact)+'</td><td class="c">'+esc(c.type)+'</td><td class="c nowrap">'+esc(c.field)+'</td><td class="cs-content">'+esc(c.content)+'</td><td class="note">'+esc(c.note)+'</td><td class="c" style="font-size:13.5px;color:var(--muted)" title="'+esc(d?when(d.at)+' '+d.by:'')+'">'+esc(String(c.by||'').replace(/\s*\(.*\)$/,''))+'</td></tr>'}).join('')+'</tbody></table>';
 }
 $('#cs-list').addEventListener('click',function(e){var t=e.target.closest('[data-cs]');if(t&&CS.docs[t.dataset.cs])openConsult(CS.docs[t.dataset.cs].c)});
 
@@ -1160,7 +1160,7 @@ $('#cs-file').addEventListener('change',function(e){var f=e.target.files[0];if(!
         '<table><tbody><tr><th style="width:180px">새로 옮길 기록</th><td><b>'+add.length+'</b>건 '+(add.length?'('+Object.keys(byY).sort().map(function(y){return y+'년 '+byY[y]+'건'}).join(', ')+')':'')+'</td></tr>'+
         '<tr><th>이미 있어서 건너뜀</th><td>'+dup+'건 (같은 날짜·회사·상담내용)</td></tr>'+
         '<tr><th>분야</th><td>'+Object.keys(fset).map(function(k){return esc(k)+' '+fset[k]}).join(', ')+'</td></tr></tbody></table>'+
-        '<p class="note-p">"산업안전"→"산업안전/재해", "전화"→"유선"처럼 같은 뜻의 이름은 하나로 맞췄습니다. 주소록에 있는 회사는 거래처로 연결됩니다.</p><p class="note-p" id="ki-prog" hidden></p>'+
+        '<p class="note-p">"산업안전"→"산업안전/재해", "전화"→"유선"처럼 같은 뜻의 이름은 하나로 맞췄습니다. 주소록에 있는 회사는 주소록의 회사와 연결됩니다.</p><p class="note-p" id="ki-prog" hidden></p>'+
         '<div class="act"><button class="btn" id="ki-cancel">취소</button><button class="btn primary" id="ki-go"'+(add.length?'':' disabled')+'>'+add.length+'건 옮기기</button></div>');
       ov.querySelector('#ki-cancel').onclick=closeModal;
       ov.querySelector('#ki-go').onclick=async function(){var btn=this,prog=ov.querySelector('#ki-prog');btn.disabled=true;prog.hidden=false;busy=true;var n=0,base=Date.now();
