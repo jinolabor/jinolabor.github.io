@@ -157,7 +157,7 @@ td.cs-content{min-width:260px;white-space:pre-line}
 .lv-tabs{display:flex;gap:4px;margin:6px 0 12px;border-bottom:2px solid var(--navy)}
 .lv-tabs button{font:inherit;font-size:15.5px;font-weight:700;padding:9px 20px;border:1px solid var(--rule);border-bottom:0;background:#e9eef5;color:var(--muted);cursor:pointer;border-radius:3px 3px 0 0;margin-bottom:-2px}
 .lv-tabs button.on{background:var(--navy);color:#fff;border-color:var(--navy)}
-.st{display:inline-block;font-size:13px;font-weight:700;padding:0 7px;border-radius:2px;line-height:22px;border:1px solid}
+.st{display:inline-block;white-space:nowrap;font-size:13px;font-weight:700;padding:0 7px;border-radius:2px;line-height:22px;border:1px solid}
 .st.s-신청{background:#fff4d6;border-color:#e9c98f;color:#8a5a00}
 .st.s-승인{background:#e8f0fb;border-color:#9bbbe3;color:#174a8c}
 .st.s-사용완료{background:#eef0f3;border-color:#c5ccd6;color:#5b6675}
@@ -175,6 +175,15 @@ td.num{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
 .ev{display:block;margin-top:3px;padding:1px 5px;border-radius:2px;background:#e8f0fb;color:#174a8c;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .ev.t-오전반차,.ev.t-오후반차{background:#eaf6ee;color:#1d6b3a}.ev.t-외출{background:#f3ecfb;color:#5b2d91}.ev.pend{background:#fff;border:1px dashed #e9c98f;color:#8a5a00}
 .calnav{display:flex;align-items:center;gap:10px;margin-bottom:8px}.calnav b{font-size:18px;color:var(--navy)}
+.grid.lv td{padding:6px 10px;font-size:14.5px;vertical-align:middle}.grid.lv th{padding:7px 10px}
+.mut{color:var(--muted);font-size:13.5px}td.r{text-align:right}td.memo{font-size:14px;color:#333;max-width:420px}
+a.doclink{font-size:13.5px;color:var(--blue);text-decoration:underline;margin-left:4px}
+details.mgrp{margin-bottom:8px;border:1px solid var(--rule)}details.mgrp>summary{cursor:pointer;padding:9px 12px;background:#f3f6fa;font-size:15px;color:var(--navy);list-style:none}
+details.mgrp>summary::before{content:'▸ ';color:var(--muted)}details.mgrp[open]>summary::before{content:'▾ '}
+details.mgrp>table{margin:0;border-left:0;border-right:0}
+.pill{display:inline-block;margin:2px 3px 2px 0;padding:1px 7px;border-radius:10px;font-size:13px;border:1px solid #c5ccd6;cursor:pointer;white-space:nowrap}
+.pill.p-사용완료{background:#eef0f3;color:#5b6675}.pill.p-승인{background:#e8f0fb;border-color:#9bbbe3;color:#174a8c}.pill.p-신청{background:#fff4d6;border-color:#e9c98f;color:#8a5a00}
+.pill.p-반려,.pill.p-취소{background:#fff;color:#aaa;text-decoration:line-through}
 .notice{border:1px solid var(--rule);background:#f7f9fc;padding:10px 14px;font-size:14px;color:#445;line-height:1.7;margin-bottom:12px}
 </style>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
@@ -207,6 +216,7 @@ td.num{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
     <span id="lv-count" style="color:var(--muted);font-size:14.5px"></span><span style="flex:1"></span>
     <select id="lv-who" style="width:auto" hidden></select>
     <select id="lv-st" style="width:auto"><option value="">상태 전체</option><option>신청</option><option>승인</option><option>사용완료</option><option>반려</option><option>취소</option></select>
+    <select id="lv-mode" style="width:auto" hidden><option value="month">월별 목록</option><option value="person">사람별 한눈에</option></select>
     <select id="lv-sort" style="width:auto"><option value="desc">최근 날짜부터</option><option value="asc">오래된 날짜부터</option></select>
   </div>
   <div id="lv-body"></div>
@@ -338,7 +348,7 @@ function fullRows(){return L.rows.filter(function(r){return r.full_view})}
 function setView(v){L.view=v;document.querySelectorAll('#lv-tabs button').forEach(function(b){b.classList.toggle('on',b.dataset.v===v)});$('#lv-filter').hidden=v==='cal';render()}
 document.querySelectorAll('#lv-tabs button').forEach(function(b){b.onclick=function(){setView(b.dataset.v)}});
 $('#btn-pending').onclick=function(){setView('pend')};
-['#lv-who','#lv-st','#lv-sort'].forEach(function(s){$(s).onchange=render});
+['#lv-who','#lv-st','#lv-sort','#lv-mode'].forEach(function(s){$(s).onchange=render});
 function summary(){
   var ms=isMgr()?L.members:L.members.filter(function(m){return m.id===ME.id});
   var t=today();
@@ -351,26 +361,51 @@ function summary(){
       '<td class="num"><span class="left-big">'+(left==null?'-':fmtN(left))+'</span></td><td class="num">'+out+' / '+OUT_MAX+'회</td></tr>'}).join('');
   $('#lv-sum').innerHTML='<table class="grid" style="margin-bottom:14px"><thead><tr><th>'+(isMgr()?'구성원':'이름')+'</th><th>'+L.year+'년 발생</th><th>사용완료</th><th>사용 예정(승인)</th><th>신청 중</th><th>남은 연차</th><th>외출 사용</th></tr></thead><tbody>'+(rows||'<tr><td colspan="7" class="c">구성원 정보가 없습니다.</td></tr>')+'</tbody></table>'+(isMgr()?'<div style="font-size:13.5px;color:var(--muted);margin:-8px 0 12px">※ 구성원 줄을 누르면 '+L.year+'년 발생 일수를 정할 수 있습니다. 남은 연차 = 발생 − 사용완료 − 사용 예정</div>':'');
 }
+var OPEN={};
+function rowAct(r){var a='<a href="#" class="doclink" data-doc="'+esc(r.key)+'">신청서</a>';
+  if(isMgr()&&r.status==='신청'&&(!mine(r)||ME.is_master))a='<button class="btn primary sm" data-ok="'+esc(r.key)+'">승인</button> <button class="btn sm" data-no="'+esc(r.key)+'">반려</button> '+a;return a}
+function rowHtml(r,showName){var c=r.c;
+  var period=dayK(c.start)+(c.end&&c.end!==c.start?' ~ '+dayK(c.end):'');
+  var memo=[c.reason,c.handover?'대행: '+c.handover:'',r.status==='반려'&&c.reject?'<span style="color:var(--bad)">반려 사유: '+esc(c.reject)+'</span>':''].filter(Boolean);
+  return '<tr class="click" data-edit="'+esc(r.key)+'">'+(showName?'<td class="nowrap"><b>'+esc(r.owner_name)+'</b></td>':'')+
+    '<td class="nowrap">'+period+(c.late?'<span class="late">사후</span>':'')+'</td>'+
+    '<td class="nowrap">'+esc(c.type)+(c.time?' <span class="mut">'+esc(c.time)+'</span>':'')+' <span class="mut">· '+fmtN(useOf(c))+'일</span></td>'+
+    '<td class="memo">'+memo.map(function(x,i){return i===memo.length-1&&/^<span/.test(x)?x:esc(x)}).join(' · ')+'</td>'+
+    '<td class="c">'+stChip(r)+'</td><td class="nowrap mut">'+(r.decided_by?esc(r.decided_by):'')+'</td><td class="nowrap r">'+rowAct(r)+'</td></tr>'}
 function render(){
   if(!ME)return;summary();
   if(L.view==='cal')return renderCal();
   var list=fullRows();
   if(L.view==='pend')list=list.filter(function(r){return r.status==='신청'&&!mine(r)});
-  var who=$('#lv-who').value,st=$('#lv-st').value;
+  var who=$('#lv-who').value,st=$('#lv-st').value,mode=$('#lv-mode').value;
   if(L.view==='list'){if(who)list=list.filter(function(r){return r.owner_id===who});if(st)list=list.filter(function(r){return dispSt(r)===st})}
   var asc=$('#lv-sort').value==='asc';list.sort(function(a,b){var x=a.c.start,y=b.c.start;return x<y?(asc?-1:1):x>y?(asc?1:-1):0});
   $('#lv-count').textContent='총 '+list.length+'건';
+  $('#lv-mode').hidden=L.view!=='list'||!isMgr();
   if(!list.length){$('#lv-body').innerHTML='<div class="empty">'+(L.view==='pend'?'승인을 기다리는 신청이 없습니다.':L.year+'년 기록이 없습니다. <b>연차 신청</b>으로 올려 주세요.')+'</div>';return}
-  $('#lv-body').innerHTML='<table class="grid"><thead><tr>'+(isMgr()?'<th>신청인</th>':'')+'<th>사용일</th><th>종류</th><th>일수</th><th>사유</th><th>업무 대행</th><th>상태</th><th>신청일</th><th>처리</th><th></th></tr></thead><tbody>'+
-    list.map(function(r){var c=r.c;
-      var period=dayK(c.start)+(c.end&&c.end!==c.start?' ~ '+dayK(c.end):'')+(c.time?' <span style="color:var(--muted)">'+esc(c.time)+'</span>':'');
-      var act='<button class="btn sm" data-doc="'+esc(r.key)+'">신청서</button>';
-      if(isMgr()&&r.status==='신청'&&(!mine(r)||ME.is_master))act='<button class="btn primary sm" data-ok="'+esc(r.key)+'">승인</button> <button class="btn sm" data-no="'+esc(r.key)+'">반려</button> '+act;
-      return '<tr class="click" data-edit="'+esc(r.key)+'">'+(isMgr()?'<td class="nowrap"><b>'+esc(r.owner_name)+'</b></td>':'')+'<td class="nowrap">'+period+(c.late?'<span class="late">사후</span>':'')+'</td><td class="c">'+esc(c.type)+'</td><td class="num">'+fmtN(useOf(c))+'</td><td>'+esc(c.reason||'')+(r.status==='반려'&&c.reject?'<div style="color:var(--bad);font-size:13.5px">반려 사유: '+esc(c.reject)+'</div>':'')+'</td><td>'+esc(c.handover||'')+'</td><td class="c">'+stChip(r)+'</td><td class="nowrap mono" style="font-size:13.5px">'+fmtDate(c.applied_at||r.created_at)+'</td><td class="nowrap" style="font-size:13.5px">'+(r.decided_by?esc(r.decided_by)+(r.decided_by==='예전 연차대장'?'':'<br><span style="color:var(--muted)">'+fmtDate(r.decided_at)+'</span>'):'')+'</td><td class="nowrap">'+act+'</td></tr>'}).join('')+'</tbody></table>';
+  var showName=isMgr();
+  var head='<thead><tr>'+(showName?'<th style="width:90px">신청인</th>':'')+'<th style="width:150px">사용일</th><th style="width:170px">종류 · 일수</th><th>사유 · 업무 대행</th><th style="width:84px">상태</th><th style="width:80px">처리</th><th style="width:140px"></th></tr></thead>';
+  if(L.view==='pend'){$('#lv-body').innerHTML='<table class="grid lv">'+head+'<tbody>'+list.map(function(r){return rowHtml(r,showName)}).join('')+'</tbody></table>';return}
+  if(isMgr()&&mode==='person'){
+    // 사람별 한눈에: 한 사람 한 줄, 사용일을 작은 칸으로
+    var ms=L.members.filter(function(m){return !who||m.id===who});
+    $('#lv-body').innerHTML='<table class="grid lv"><thead><tr><th style="width:90px">구성원</th><th>'+L.year+'년 사용·신청 (누르면 열림 · 회색=사용완료, 파랑=예정, 노랑=신청 중)</th></tr></thead><tbody>'+
+      ms.map(function(m){var my=list.filter(function(r){return r.owner_id===m.id}).slice().sort(function(a,b){return a.c.start<b.c.start?-1:1});
+        return '<tr><td class="nowrap"><b>'+esc(m.name)+'</b><div class="mut">'+my.length+'건</div></td><td>'+(my.length?my.map(function(r){var s=dispSt(r);
+          return '<span class="pill p-'+s+'" data-edit="'+esc(r.key)+'" title="'+esc(r.c.start+' '+r.c.type+' '+s)+'">'+(+r.c.start.slice(5,7))+'.'+(+r.c.start.slice(8,10))+(r.c.end&&r.c.end!==r.c.start?'~'+(+r.c.end.slice(8,10)):'')+' '+esc(r.c.type==='연차'?'연차':r.c.type.replace('반차','반'))+'</span>'}).join(''):'<span class="mut">기록 없음</span>')+'</td></tr>'}).join('')+'</tbody></table>';
+    return}
+  // 월별로 묶기: 이번 달과 앞으로는 펼치고, 지난달은 접어 둠
+  var tm=today().slice(0,7),groups=[],gi={};
+  list.forEach(function(r){var k=r.c.start.slice(0,7);if(gi[k]==null){gi[k]=groups.length;groups.push({k:k,rows:[]})}groups[gi[k]].rows.push(r)});
+  $('#lv-body').innerHTML=groups.map(function(g){var open=OPEN[g.k]!=null?OPEN[g.k]:(g.k>=tm||g.rows.some(function(r){return r.status==='신청'}));
+    var sum=g.rows.reduce(function(s,r){return s+(r.status==='승인'?useOf(r.c):0)},0),pend=g.rows.filter(function(r){return r.status==='신청'}).length;
+    return '<details class="mgrp" data-m="'+g.k+'"'+(open?' open':'')+'><summary><b>'+(+g.k.slice(0,4))+'년 '+(+g.k.slice(5,7))+'월</b> <span class="mut">'+g.rows.length+'건 · 사용 '+fmtN(sum)+'일'+(pend?' · <b style="color:#8a5a00">신청 중 '+pend+'건</b>':'')+'</span></summary>'+
+      '<table class="grid lv">'+head+'<tbody>'+g.rows.map(function(r){return rowHtml(r,showName)}).join('')+'</tbody></table></details>'}).join('');
+  $('#lv-body').querySelectorAll('details.mgrp').forEach(function(d){d.addEventListener('toggle',function(){OPEN[d.dataset.m]=d.open})});
 }
 $('#lv-body').addEventListener('click',function(e){
   var t;
-  if(t=e.target.closest('[data-doc]')){e.stopPropagation();openDoc(byKey(t.dataset.doc));return}
+  if(t=e.target.closest('[data-doc]')){e.preventDefault();e.stopPropagation();openDoc(byKey(t.dataset.doc));return}
   if(t=e.target.closest('[data-ok]')){e.stopPropagation();decide(byKey(t.dataset.ok),'승인');return}
   if(t=e.target.closest('[data-no]')){e.stopPropagation();decide(byKey(t.dataset.no),'반려');return}
   if(t=e.target.closest('[data-cal-prev]')){L.calM=shiftM(-1);renderCal();return}
