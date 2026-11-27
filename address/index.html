@@ -105,6 +105,14 @@ td.note{min-width:110px;max-width:220px;white-space:pre-line;font-size:14.5px;co
 .tabs+.paper,.tabs~.paper{margin-top:0}
 .fsum{display:flex;flex-wrap:wrap;gap:6px 18px;align-items:center;border:1px solid var(--rule);background:#f7f9fc;padding:8px 12px;margin:-4px 0 12px;font-size:14.5px;color:var(--muted)}
 .fsum .lb{font-weight:700;color:var(--navy)}.fsum b{color:var(--navy);font-variant-numeric:tabular-nums}
+.form label>.cell{display:flex;flex-wrap:wrap;align-items:center;gap:6px;padding:5px 8px;border-right:1px solid var(--rule);border-bottom:1px solid var(--rule);min-height:43.5px;min-width:0}
+.form label.full>.cell{grid-column:span 3}
+.form label>.cell input,.form label>.cell select{min-height:34px}
+.form .pickrow{grid-column:1/-1;display:flex;flex-wrap:wrap;gap:6px;align-items:center;padding:6px 10px;background:#f7f9fc;border-right:1px solid var(--rule);border-bottom:1px solid var(--rule)}
+.form .pickrow[hidden]{display:none}
+.dhint{font-size:13.5px;color:var(--muted);white-space:nowrap}
+th.sortable{cursor:pointer;user-select:none}th.sortable:hover{text-decoration:underline}
+@media (max-width:620px){.form label.full>.cell{grid-column:auto}}
 td.cs-ct{min-width:230px}
 td.cs-content{min-width:260px;white-space:pre-line}
 .empty{padding:40px 16px;text-align:center;color:var(--muted);border:1px solid var(--rule);border-top:2px solid var(--navy)}
@@ -192,6 +200,7 @@ td.cs-content{min-width:260px;white-space:pre-line}
     <span class="lb">월</span><span><select id="cs-mon" aria-label="월"></select></span>
     <span class="lb">분야</span><span><select id="cs-field" aria-label="분야"></select></span>
     <span class="lb">상담유형</span><span><select id="cs-type" aria-label="상담유형"></select></span>
+    <span class="lb">날짜 정렬</span><span><select id="cs-sortsel" aria-label="날짜 정렬"><option value="asc">오래된 날짜부터 (오름차순)</option><option value="desc">최근 날짜부터 (내림차순)</option></select></span>
   </div>
   <div class="toolbar">
     <span id="cs-count" style="color:var(--muted);font-size:14.5px"></span>
@@ -877,7 +886,7 @@ setTimeout(function(){$('#pw').focus()},50);
    경협 자문실적 (대한건설협회 경기도회 상담실적) — TEAM JINO 누구나 입력·내려받기
    저장: addr_docs 'k_연도_…' 키 (암호화, 수정이력·백업·휴지통 공용)
    ========================================================= */
-var CS={year:null,docs:{},del:[],busy:false},CS_TAB='addr';
+var CS={year:null,docs:{},del:[],busy:false},CS_TAB='addr',CS_SORT='asc';try{if(localStorage.getItem('jino-cs-sort')==='desc')CS_SORT='desc'}catch(e){}
 var CS_FIELDS=['근로기준','4대보험','산업안전/재해','퇴직금','퇴직공제','외국인','모성보호','노사관계','건설산업','기타'];
 var CS_TYPES=['유선','카톡','메일','방문','유선/카톡','유선/메일'];
 var REP_FIELDS=['퇴직금/퇴직공제','근로기준','외국인','노사관계','4대보험','산업안전/산업재해','기타'];
@@ -888,6 +897,15 @@ function normType(t){t=String(t||'').trim().replace(/\s*,\s*/g,'/').replace(/\s+
 function csKey(y){var a=crypto.getRandomValues(new Uint8Array(8));return 'k_'+y+'_'+Array.from(a,function(x){return x.toString(16).padStart(2,'0')}).join('')}
 function ymd(d){return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')}
 function today(){return ymd(new Date())}
+function parseDay(s){s=String(s||'').trim();if(!s)return '';var now=new Date(),y=now.getFullYear(),m,d,mt;
+  if(mt=s.match(/^(\d{4})\s*[-./년]\s*(\d{1,2})\s*[-./월]\s*(\d{1,2})/)){y=+mt[1];m=+mt[2];d=+mt[3]}
+  else if(mt=s.match(/^(\d{2})[-./](\d{1,2})[-./](\d{1,2})$/)){y=2000+(+mt[1]);m=+mt[2];d=+mt[3]}
+  else if(mt=s.match(/^(\d{1,2})\s*[-./월]\s*(\d{1,2})\s*일?$/)){m=+mt[1];d=+mt[2]}
+  else if(mt=s.match(/^(\d{8})$/)){y=+s.slice(0,4);m=+s.slice(4,6);d=+s.slice(6)}
+  else if(mt=s.match(/^(\d{3,4})$/)){m=+s.slice(0,s.length-2);d=+s.slice(-2)}
+  else if(mt=s.match(/^(\d{1,2})\s*일?$/)){m=now.getMonth()+1;d=+mt[1]}
+  else return '';
+  var dt=new Date(y,m-1,d);if(dt.getFullYear()!==y||dt.getMonth()!==m-1||dt.getDate()!==d)return '';return ymd(dt)}
 function csDay(s){var p=String(s||'').split('-');if(p.length<3)return esc(s);var d=new Date(+p[0],+p[1]-1,+p[2]);return (+p[1])+'. '+(+p[2])+'.('+WD[d.getDay()]+')'}
 function qOf(s){return Math.floor((+String(s).slice(5,7)-1)/3)+1}
 function csLabel(b){return '[자문실적] '+(b.date?b.date.slice(2,4)+'/'+(+b.date.slice(5,7))+'/'+(+b.date.slice(8,10)):'')+' '+(b.company||'')}
@@ -943,7 +961,8 @@ function csFiltered(){
 function renderCs(){
   if(!$('#pane-cs')||$('#pane-cs').hidden)return;
   var all=csRecs(),list=csFiltered(),y=CS.year;
-  $('#cs-ref').textContent='조회일: '+fmtDate(new Date());
+  $('#cs-ref').textContent='조회일: '+fmtDate(new Date());$('#cs-sortsel').value=CS_SORT;
+  (function(){var ts=CS_TYPES.slice();all.forEach(function(c){if(c.type&&ts.indexOf(c.type)<0)ts.push(c.type)});var el=$('#cs-type'),cur=el.value;if(el.options.length!==ts.length+1){el.innerHTML='<option value="">전체</option>'+ts.map(function(t){return '<option>'+esc(t)+'</option>'}).join('');el.value=cur}})();
   var qc=[0,0,0,0];all.forEach(function(c){qc[qOf(c.date)-1]++});
   var thisM=all.filter(function(c){return c.date.slice(0,7)===today().slice(0,7)}).length;
   $('#cs-stats').innerHTML='<div>'+y+'년 전체<b>'+all.length+'<small>건</small></b></div>'+qc.map(function(n,i){return '<div>'+(i+1)+'분기<b>'+n+'<small>건</small></b></div>'}).join('')+(y===new Date().getFullYear()?'<div>이번 달<b>'+thisM+'<small>건</small></b></div>':'');
@@ -954,11 +973,13 @@ function renderCs(){
   if(!all.length){$('#cs-list').innerHTML='<div class="empty">'+y+'년 상담 기록이 없습니다. <b>상담 추가</b>로 입력하거나, 지금까지 쓰던 엑셀을 <b>예전 엑셀 옮기기</b>로 가져오세요.</div>';return}
   if(!list.length){$('#cs-list').innerHTML='<div class="empty">조건에 맞는 상담 기록이 없습니다.</div>';return}
   var mcount={};
-  $('#cs-list').innerHTML='<table class="grid cs"><thead><tr><th style="width:52px">연번</th><th style="width:96px">날짜</th><th>회사</th><th>담당자 / 연락처</th><th style="width:84px">상담유형</th><th style="width:110px">분야</th><th>상담내용</th><th>비고</th><th style="width:70px">입력</th></tr></thead><tbody>'+
-    list.map(function(c,i){var d=CS.docs[c.id];
-      return '<tr class="click" data-cs="'+esc(c.id)+'"><td class="no mono">'+(i+1)+'</td><td class="nowrap mono">'+csDay(c.date)+'</td><td class="nowrap"><b>'+esc(c.company)+'</b>'+editChip(c.id)+'</td><td class="cs-ct">'+ctHtml(c.contact)+'</td><td class="c">'+esc(c.type)+'</td><td class="c nowrap">'+esc(c.field)+'</td><td class="cs-content">'+esc(c.content)+'</td><td class="note">'+esc(c.note)+'</td><td class="c" style="font-size:13.5px;color:var(--muted)" title="'+esc(d?when(d.at)+' '+d.by:'')+'">'+esc(String(c.by||'').replace(/\s*\(.*\)$/,''))+'</td></tr>'}).join('')+'</tbody></table>';
+  $('#cs-list').innerHTML='<table class="grid cs"><thead><tr><th style="width:52px">연번</th><th style="width:104px" class="sortable" id="cs-sort" title="눌러서 정렬 바꾸기">날짜 '+(CS_SORT==='asc'?'▲':'▼')+'</th><th>회사</th><th>담당자 / 연락처</th><th style="width:84px">상담유형</th><th style="width:110px">분야</th><th>상담내용</th><th>비고</th><th style="width:70px">입력</th></tr></thead><tbody>'+
+    (CS_SORT==='desc'?list.slice().reverse():list).map(function(c,i){var d=CS.docs[c.id];
+      return '<tr class="click" data-cs="'+esc(c.id)+'"><td class="no mono">'+(CS_SORT==='desc'?list.length-i:i+1)+'</td><td class="nowrap mono">'+csDay(c.date)+'</td><td class="nowrap"><b>'+esc(c.company)+'</b>'+editChip(c.id)+'</td><td class="cs-ct">'+ctHtml(c.contact)+'</td><td class="c">'+esc(c.type)+'</td><td class="c nowrap">'+esc(c.field)+'</td><td class="cs-content">'+esc(c.content)+'</td><td class="note">'+esc(c.note)+'</td><td class="c" style="font-size:13.5px;color:var(--muted)" title="'+esc(d?when(d.at)+' '+d.by:'')+'">'+esc(String(c.by||'').replace(/\s*\(.*\)$/,''))+'</td></tr>'}).join('')+'</tbody></table>';
 }
-$('#cs-list').addEventListener('click',function(e){var t=e.target.closest('[data-cs]');if(t&&CS.docs[t.dataset.cs])openConsult(CS.docs[t.dataset.cs].c)});
+function setSort(v){CS_SORT=v;try{localStorage.setItem('jino-cs-sort',v)}catch(e){}var s=$('#cs-sortsel');if(s)s.value=v;renderCs()}
+$('#cs-sortsel').onchange=function(){setSort(this.value)};
+$('#cs-list').addEventListener('click',function(e){if(e.target.closest('#cs-sort')){setSort(CS_SORT==='asc'?'desc':'asc');return}var t=e.target.closest('[data-cs]');if(t&&CS.docs[t.dataset.cs])openConsult(CS.docs[t.dataset.cs].c)});
 
 /* ---------- 입력·수정 창 ---------- */
 var csCoNames=null;
@@ -976,26 +997,32 @@ async function openConsult(c,preset){
   var sel=function(id,list,cur){if(cur&&list.indexOf(cur)<0)list=list.concat([cur]);return '<select id="'+id+'">'+list.map(function(s){return '<option'+(s===cur?' selected':'')+'>'+esc(s)+'</option>'}).join('')+'</select>'};
   var ov=modal('<h2>'+(isNew?'상담 추가':'상담 기록 수정')+'</h2>'+
     '<div class="form">'+
-      '<label><span>날짜</span><input type="date" id="k-date" value="'+esc(c.date)+'"></label>'+
-      '<label><span>상담유형</span>'+sel('k-type',CS_TYPES.slice(),c.type)+'</label>'+
+      '<label><span>날짜</span><div class="cell"><input id="k-date" value="'+esc(c.date)+'" placeholder="예: 11/27, 1127" style="width:118px" autocomplete="off"><span class="dhint" id="k-dhint"></span><button type="button" class="btn sm" data-d="0">오늘</button><button type="button" class="btn sm" data-d="-1">어제</button><button type="button" class="btn sm" id="k-cal" title="달력에서 고르기">📅</button><input type="date" id="k-dpick" tabindex="-1" style="position:absolute;opacity:0;width:1px;height:1px;pointer-events:none"></div></label>'+
+      '<label><span>상담유형</span><div class="cell"><select id="k-type" style="flex:1;min-width:90px">'+CS_TYPES.map(function(t){return '<option'+(t===c.type?' selected':'')+'>'+t+'</option>'}).join('')+'<option value="__own"'+(c.type&&CS_TYPES.indexOf(c.type)<0?' selected':'')+'>직접 입력</option></select><input id="k-type-own" placeholder="상담유형 직접 입력" value="'+esc(c.type&&CS_TYPES.indexOf(c.type)<0?c.type:'')+'" style="flex:1;min-width:120px"'+(c.type&&CS_TYPES.indexOf(c.type)<0?'':' hidden')+'></div></label>'+
       '<label class="full"><span>회사</span><input id="k-company" list="k-co-list" value="'+esc(c.company)+'" placeholder="회사명 (주소록·예전 상담 회사가 아래에 나옵니다. 없으면 그냥 적으세요)" autocomplete="off"></label>'+
       '<datalist id="k-co-list">'+names.map(function(n){return '<option value="'+esc(n)+'">'}).join('')+'</datalist>'+
       '<label class="full"><span>담당자 / 연락처</span><input id="k-contact" list="k-ct-list" value="'+esc(c.contact)+'" placeholder="예: 최세은 과장 010-0000-0000 (회사를 고르면 담당자가 아래에 나옵니다)" autocomplete="off"></label><datalist id="k-ct-list"></datalist>'+
-      '<div class="full" id="k-ct-pick" style="display:flex;flex-wrap:wrap;gap:6px"></div>'+
+      '<div class="pickrow" id="k-ct-pick" hidden></div>'+
       '<label><span>분야</span>'+sel('k-field',CS_FIELDS.slice(),c.field)+'</label>'+
-      '<label><span>보고서 분야</span><input id="k-rep" value="'+esc(repField(c.field))+'" disabled style="background:#f3f5f8;color:var(--muted)"></label>'+
+      '<label><span>비고</span><input id="k-note" value="'+esc(c.note)+'"></label>'+
       '<label class="full"><span>상담내용</span><textarea id="k-content" rows="4" placeholder="예: 일용직 4대보험 신고방법 문의">'+esc(c.content)+'</textarea></label>'+
-      '<label class="full"><span>비고</span><input id="k-note" value="'+esc(c.note)+'"></label>'+
       (isNew?'':'<label class="full"><span>변경 사유</span><input id="k-why" placeholder="예: 날짜 오기 수정 — 다른 구성원 알림 창에 함께 보입니다"></label>')+
     '</div>'+
     '<div class="act">'+(isNew?'':'<span class="left" id="k-delwrap"><button class="btn danger" id="k-del">삭제</button> <button class="btn" id="k-hist">수정이력</button></span>')+'<button class="btn" id="k-cancel">취소</button>'+(isNew?'<button class="btn" id="k-more">저장하고 계속 입력</button>':'')+'<button class="btn primary" id="k-save">저장</button></div>');
   if(!isNew)editStart(c.id,ov);
   var co=ov.querySelector('#k-company'),ct=ov.querySelector('#k-contact');
   function fillContacts(){var o=contactOptions(co.value);ov.querySelector('#k-ct-list').innerHTML=o.map(function(s){return '<option value="'+esc(s)+'">'}).join('');
-    ov.querySelector('#k-ct-pick').innerHTML=o.length?'<span style="font-size:13.5px;color:var(--muted);align-self:center">눌러서 넣기:</span>'+o.slice(0,6).map(function(s,i){return '<button type="button" class="btn sm" data-ct="'+i+'">'+esc(s)+'</button>'}).join(''):'';
+    var pk=ov.querySelector('#k-ct-pick');pk.hidden=!o.length;pk.innerHTML=o.length?'<span style="font-size:13.5px;color:var(--muted)">담당자 눌러서 넣기:</span>'+o.slice(0,6).map(function(s,i){return '<button type="button" class="btn sm" data-ct="'+i+'">'+esc(s)+'</button>'}).join(''):'';
     ov.querySelector('#k-ct-pick').onclick=function(e){var b=e.target.closest('[data-ct]');if(b){ct.value=o[+b.dataset.ct];ct.focus()}}}
   co.addEventListener('input',fillContacts);co.addEventListener('change',fillContacts);fillContacts();
-  ov.querySelector('#k-field').onchange=function(){ov.querySelector('#k-rep').value=repField(this.value)};
+  var dI=ov.querySelector('#k-date'),dP=ov.querySelector('#k-dpick'),dH=ov.querySelector('#k-dhint');
+  function showD(){var v=parseDay(dI.value);dH.textContent=v?'('+WD[new Date(+v.slice(0,4),+v.slice(5,7)-1,+v.slice(8,10)).getDay()]+')':(dI.value?'날짜 확인':'');dH.style.color=v||!dI.value?'':'var(--bad)'}
+  dI.addEventListener('input',showD);dI.addEventListener('blur',function(){var v=parseDay(dI.value);if(v)dI.value=v;showD()});showD();
+  ov.querySelectorAll('[data-d]').forEach(function(b){b.onclick=function(){var d=new Date();d.setDate(d.getDate()+(+b.dataset.d));dI.value=ymd(d);showD()}});
+  ov.querySelector('#k-cal').onclick=function(){dP.value=parseDay(dI.value)||today();try{dP.showPicker()}catch(e){dP.style.pointerEvents='auto';dP.focus();dP.click()}};
+  dP.onchange=function(){if(dP.value){dI.value=dP.value;showD()}};
+  var tS=ov.querySelector('#k-type'),tO=ov.querySelector('#k-type-own');
+  tS.onchange=function(){tO.hidden=tS.value!=='__own';if(!tO.hidden)tO.focus()};
   ov.querySelector('#k-cancel').onclick=closeModal;
   var hb=ov.querySelector('#k-hist');if(hb)hb.onclick=function(){companyHistory(c.id,csLabel(c))};
   var del=ov.querySelector('#k-del');
@@ -1007,11 +1034,12 @@ async function openConsult(c,preset){
       if(await csPut(c.id,body,true)){closeModal();toast('삭제했습니다. 「삭제된 상담」에서 되살릴 수 있습니다.');csLoad(CS.year,true)}}};
   async function save(again){
     var v=function(k){var el=ov.querySelector('#k-'+k);return el?el.value.trim():''};
-    if(!/^\d{4}-\d{2}-\d{2}$/.test(v('date'))){toast('날짜를 넣어 주세요.');ov.querySelector('#k-date').focus();return}
+    var dv=parseDay(v('date'));if(!dv){toast('날짜를 확인해 주세요 (예: 11/27, 2026-11-27).');ov.querySelector('#k-date').focus();return}
+    var tv=tS.value==='__own'?v('type-own'):tS.value;if(!tv){toast('상담유형을 적어 주세요.');tO.focus();return}
     if(!v('company')){toast('회사(또는 담당자 성함·연락처)를 넣어 주세요.');co.focus();return}
     if(!v('content')){toast('상담내용을 넣어 주세요.');ov.querySelector('#k-content').focus();return}
     var hit=addrCoByName(v('company'));
-    var body={_t:'k',date:v('date'),company:v('company'),cid:hit?hit.id:'',contact:v('contact'),type:v('type'),field:v('field'),content:v('content'),note:v('note'),
+    var body={_t:'k',date:dv,company:v('company'),cid:hit?hit.id:'',contact:v('contact'),type:tv,field:v('field'),content:v('content'),note:v('note'),
       by:isNew?ME.name:(c.by||ME.name),ts:isNew?Date.now():(c.ts||Date.now()),_why:isNew?'':v('why')};
     var y=+body.date.slice(0,4),key=c.id,ok;
     ov.querySelectorAll('.act button').forEach(function(b){b.disabled=true});
