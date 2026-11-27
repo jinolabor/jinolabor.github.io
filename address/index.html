@@ -99,6 +99,12 @@ td.note{min-width:110px;max-width:220px;white-space:pre-line;font-size:14.5px;co
 .stack>div{height:26px;line-height:26px;white-space:nowrap}
 .stack>div.gone{color:var(--faint)}
 .stack>div.gone .nm{text-decoration:line-through}
+th.refh{padding:0}
+.reftog{border:0;background:transparent;font:inherit;font-weight:700;color:inherit;cursor:pointer;padding:8px 11px;width:100%;min-height:0;white-space:nowrap}
+.reftog:hover,.reftog:focus-visible{background:#d5e2f5}
+td.ref>div{color:var(--warn);font-weight:500;font-size:14.5px;max-width:440px;overflow:hidden;text-overflow:ellipsis}
+td.ref.shut{text-align:center;padding-left:4px;padding-right:4px}
+td.ref.shut>div{font-size:11px}
  /* 경협 자문실적 탭: 초록 톤 */
 body.t-lv{--page:#f1effa;--navy:#3b2f7a;--blue:#5a46b8;--blue-dark:#4a3a9a;--head:#e4e0f6;--label:#efedf9;--rule:#c6c0e2;--rule-strong:#8d84bd;--ok:#5a46b8;--ok-soft:#ebe8fa}
 .tabs button[data-tab=lv]{color:#5a46b8}
@@ -653,6 +659,8 @@ function companies(){return data.companies.slice().sort(function(a,b){return nor
 function statusChip(c){return c.status==='자문중'?'<span class="chip ok">자문중</span>':'<span class="chip end">'+esc(c.status||'-')+'</span>'}
 
 /* ---------- 목록 ---------- */
+/* 목록의 「참고」 칸(담당자별 이메일 메모) 펼침 여부 — 이 PC에만 기억 */
+var REF_OPEN=false;try{REF_OPEN=localStorage.getItem('jino-addr-ref')==='1'}catch(e){}
 function renderAll(){
   var all=companies();
   var st=$('#f-status').value,gr=$('#f-group').value,ind=$('#f-ind').value;
@@ -686,19 +694,20 @@ function renderAll(){
   if(loadErr){box.innerHTML='<div class="empty"><b style="color:var(--bad)">주소록을 불러오지 못했습니다.</b><br>'+esc(loadErr)+'</div>';return}
   if(!all.length){box.innerHTML='<div class="empty">'+(!ME?'비밀번호를 넣으면 주소록이 열립니다.':loaded?'등록된 거래처가 없습니다. 대표님이 오른쪽 위 <b>주소록 가져오기</b>로 기존 주소록을 옮겨 주세요.':'주소록을 불러오는 중입니다…')+'</div>';return}
   if(!list.length){box.innerHTML='<div class="empty">조건에 맞는 회사가 없습니다. 검색어나 필터를 바꿔 보세요.</div>';return}
-  box.innerHTML='<div class="tablewrap"><table><thead><tr><th>연번</th><th>상태</th><th>회사명</th><th>사업자번호</th><th>업종</th><th>우리 담당</th><th>비고</th><th>실무 담당자</th><th>이메일</th><th>휴대폰</th><th>회사 전화</th><th>주소</th></tr></thead><tbody>'+
+  box.innerHTML='<div class="tablewrap"><table><thead><tr><th>연번</th><th>상태</th><th>회사명</th><th>사업자번호</th><th>업종</th><th>우리 담당</th><th>비고</th><th>실무 담당자</th><th>이메일</th><th class="refh"><button type="button" class="reftog" id="ref-tog" aria-expanded="'+(REF_OPEN?'true':'false')+'" title="'+(REF_OPEN?'참고 칸 접기':'참고 칸 펼치기 (이메일 메모)')+'">참고 '+(REF_OPEN?'◂ 접기':'▸')+'</button></th><th>휴대폰</th><th>회사 전화</th><th>주소</th></tr></thead><tbody>'+
     list.map(function(c,ix){
       var cs=c.contacts||[];var ps=cs.filter(activeContact).concat(cs.filter(function(p){return !activeContact(p)}));
       var cls=function(p){return activeContact(p)?'':' class="gone"'};
       return '<tr class="click" data-edit="'+esc(c.id)+'"><td class="no mono">'+(ix+1)+'</td><td class="c">'+statusChip(c)+'</td><td class="nowrap"><b>'+esc(c.name)+'</b>'+recentChip(c.id)+editChip(c.id)+'</td><td class="nowrap mono">'+esc(c.bizno||'')+'</td><td>'+(isConstruction(c)?'<span class="chip line">건설</span>':'<span class="chip info">비건설</span>')+'</td><td class="nowrap">'+esc(ownerKey(c.owner))+'</td><td class="note">'+esc(c.note)+'</td>'+
         '<td class="stack">'+ps.map(function(p){return '<div'+cls(p)+'><span class="nm">'+esc(p.name||'-')+'</span> <span style="color:var(--muted)">'+esc((p.title||'').replace(/\n/g,' '))+'</span>'+(activeContact(p)?'':' <span class="chip '+(p.status==='퇴사'?'end':'warn')+'">'+esc(p.status)+'</span>')+'</div>'}).join('')+'</td>'+
         '<td class="stack">'+ps.map(function(p){return '<div'+cls(p)+'>'+esc(emailsOf(p).join(', '))+'</div>'}).join('')+'</td>'+
+        '<td class="stack ref'+(REF_OPEN?'':' shut')+'">'+ps.map(function(p){var n=(p.emailNote||'').replace(/\s*\n\s*/g,' ').trim();return '<div'+cls(p)+(n?' title="'+esc(n)+'"':'')+'>'+(REF_OPEN?esc(n):(n?'●':''))+'</div>'}).join('')+'</td>'+
         '<td class="stack mono">'+ps.map(function(p){return '<div'+cls(p)+'>'+esc((p.phone||'').replace(/\s*\n\s*/g,' '))+'</div>'}).join('')+'</td>'+
         '<td class="nowrap mono">'+esc(c.tel)+'</td><td style="min-width:200px">'+esc(c.address)+'</td></tr>';
     }).join('')+'</tbody></table></div>';
 }
 ['#q','#f-status','#f-owner','#f-group','#f-ind'].forEach(function(s){$(s).addEventListener(s==='#q'?'input':'change',renderAll)});
-$('#list').addEventListener('click',function(e){var t=e.target.closest('[data-edit]');if(t)openCompany(data.companies.find(function(c){return c.id===t.dataset.edit}))});
+$('#list').addEventListener('click',function(e){if(e.target.closest('#ref-tog')){REF_OPEN=!REF_OPEN;try{localStorage.setItem('jino-addr-ref',REF_OPEN?'1':'0')}catch(x){}renderAll();var b=document.getElementById('ref-tog');if(b)b.focus();return}var t=e.target.closest('[data-edit]');if(t)openCompany(data.companies.find(function(c){return c.id===t.dataset.edit}))});
 $('#btn-add').onclick=function(){openCompany(null)};
 /* ---------- 수정 중 표시 ---------- */
 function ago(iso){var m=Math.max(0,Math.round((Date.now()-new Date(iso))/60000));return m<1?'방금':m+'분 전'}
@@ -917,7 +926,7 @@ function contactRow(p){
     '<button class="btn ghost sm" data-del-contact title="담당자 삭제" aria-label="담당자 삭제">✕</button>'+
     '<input class="s2" data-k="email" value="'+esc(p.email)+'" placeholder="이메일" aria-label="이메일">'+
     '<input data-k="phone" value="'+esc(p.phone)+'" placeholder="휴대폰" aria-label="휴대폰">'+
-    '<input class="s3" data-k="emailNote" value="'+esc(p.emailNote)+'" placeholder="이메일 메모 (예: 개인메일, 안내메일 수신x)" aria-label="이메일 메모">'+
+    '<input class="s3" data-k="emailNote" value="'+esc(p.emailNote)+'" placeholder="참고 · 이메일 메모 (예: 개인메일, 안내메일 수신x)" aria-label="참고(이메일 메모)">'+
   '</div>';
 }
 function openCompany(c){
