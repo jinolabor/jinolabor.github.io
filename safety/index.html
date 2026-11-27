@@ -1032,7 +1032,7 @@
                     base().in('module', ['hazard', 'hazard_ok']).is('record_date', null),
                     sb.from('records').select('item_key, data').eq('company_id', currentCompanyId).eq('module', 'notice').is('site_id', null),
                     sb.from('records').select('site_id, item_key, data').eq('company_id', currentCompanyId).eq('module', 'notice_ack'),
-                    sb.from('records').select('site_id, module, item_key, data').eq('company_id', currentCompanyId).in('module', ['patrol', 'patrol_ok'])
+                    sb.from('records').select('site_id, module, record_date').eq('company_id', currentCompanyId).in('module', ['patrol', 'patrol_ok'])
                 ]);
                 if (seq !== dashSeq) return;
                 const err = tbm.error || per.error || haz.error || ntcN.error || ntcA.error || pat.error; if (err) throw err;
@@ -1084,9 +1084,9 @@
                 const hzWait = hz.filter(r => !hzOk.has(r.item_key)).length;
                 // 순회점검: 이번 달 점검 일자 기준 건수와 본사 확인 대기 건수 (미실시 표시는 하지 않음)
                 const ptAll = d.pat.filter(r => r.site_id === s.id && r.module === 'patrol');
-                const ptOk = new Set(d.pat.filter(r => r.site_id === s.id && r.module === 'patrol_ok').map(r => r.item_key));
-                const ptMonth = ptAll.filter(r => ((r.data && r.data.date) || '').slice(0, 7) === today.slice(0, 7)).length;
-                const ptWait = ptAll.filter(r => !ptOk.has(r.item_key)).length;
+                const ptOk = new Set(d.pat.filter(r => r.site_id === s.id && r.module === 'patrol_ok').map(r => r.record_date));
+                const ptMonth = ptAll.filter(r => (r.record_date || '').slice(0, 7) === today.slice(0, 7)).length;
+                const ptWait = ptAll.filter(r => !ptOk.has(r.record_date)).length;
                 waitTotal += ptWait;
                 waitTotal += hzWait + ['checklist', 'drill', 'eval_staff'].filter(m => dashState(d.per, m, s.id, d.hDate, true)[1] === 'wait').length;
                 return `<div style="border:1px solid var(--slate-300); border-radius:10px; padding:12px; background:#fff;">
@@ -1098,7 +1098,7 @@
                     ${row('8. 관리자 평가', st('eval_staff', s.id, d.hDate, true, 8))}
                     ${isSiteBoss() ? '' : row('8. 현장소장 평가', st('eval_boss', s.id, d.hDate, true, 8))}
                     ${row('11. 본사 공지', dashNotice(d, s.id))}
-                    ${row('12. 순회점검 (' + d.month + '월)', dashBadge(ptMonth + '건 등록', 'info', 12, s.id) + (ptWait ? dashBadge('확인 대기 ' + ptWait + '건', 'wait', 12, s.id) : ''))}
+                    ${row('12. 순회점검 (' + d.month + '월)', dashBadge(ptMonth + '일 점검', 'info', 12, s.id) + (ptWait ? dashBadge('확인 대기 ' + ptWait + '건', 'wait', 12, s.id) : ''))}
                 </div>`;
             }).join('');
             const company = `<div style="border:1px solid var(--slate-300); border-radius:10px; padding:12px; background:var(--slate-50);">
@@ -3350,50 +3350,207 @@ function renderModule11() {
     return ntc.sel ? ntcDetailHtml(ntc.sel) : ntcListHtml();
 }
         // ====== [여기에 모듈 12 붙여넣기] ======
-// 순회점검 일지 (서버 저장판) — 현장 담당자가 작성한 순회점검 일지를 파일로 올리고, 건별로 본사 최종 확인
-// 서버 기록 한 건 = 순회점검 일지 한 건.  data = { date, inspector, note, photos:[{ path, caption }], files:[{ path, name, size }] }
-// 사진(휴대폰으로 찍은 종이 일지 등)은 '사진 보관함'(evidence), PDF·한글 등 문서 파일은 '서식 보관함'(forms)의 [회사]/[현장]/patrol/ 아래에 저장
+// 순회점검 일지 (서버 저장판) — TBM 일지처럼 달력에서 날짜를 고르고, 그날 작성한 일지를 파일로 올림
+// 서버 기록 한 건 = 현장·일자 하나.  data = { inspector, note, photos:[{ path, caption }], files:[{ path, name, size }] }
+// 본사 최종 확인 = patrol_ok 기록 (같은 현장·일자).  확인 뒤에는 현장에서 고칠 수 없음 (서버가 막음)
+// 사진은 '사진 보관함'(evidence), PDF·한글 등 문서는 '서식 보관함'(forms)의 [회사]/[현장]/patrol/ 아래에 저장
 const PAT_DOC_EXT = FORMS_EXT.filter(e => ['jpg', 'jpeg', 'png'].indexOf(e) < 0);
-function patIsImage(file) { return /^image\//.test(file.type) || /\.(jpe?g|png|webp|heic|heif)$/i.test(file.name); }
-// 고른 파일을 사진과 문서로 나누어 각각 올림
-function patAddFiles(files) {
-    if (!files.length) return;
-    const imgs = files.filter(patIsImage), docs = files.filter(f => !patIsImage(f));
-    if (imgs.length) rmUploadFiles('pat', 'photos', imgs);
-    if (docs.length) patUploadDocs(docs);
+
+// 현장별 보관: { 현장ID: { records: { 'YYYY-MM-DD': 일지 }, oks: { 'YYYY-MM-DD': 확인정보 }, months: { 'YYYY-MM': 상태 } } }
+let patBySite = {};
+let patUploading = 0;         // 올리는 중인 파일 수
+const patSaveChain = {};      // 같은 일지의 저장을 순서대로 처리
+const patDirty = {};          // 저장 버튼을 누르지 않은 변경 ('현장ID|일자')
+const patSavedAt = {};
+let patDirtySeq = 0;
+let patConfirmerDraft = '';
+let patSelectedDate = todayStr();
+let patCalMonth = patSelectedDate.slice(0, 7);
+
+function patSiteId() {
+    const id = currentSiteId === 'hq' ? (sitesData[0] || {}).id : currentSiteId;
+    if (!patBySite[id]) patBySite[id] = { records: {}, oks: {}, months: {} };
+    return id;
 }
+function patRec() { const b = patBySite[patSiteId()]; return b.records[patSelectedDate] || null; }
+function patOk() { const b = patBySite[patSiteId()]; return b.oks[patSelectedDate] || null; }
+function patLocked() { return !!patOk(); }            // 본사 확인이 끝나면 아무도 고칠 수 없음 (먼저 확인 취소)
+function patNormalize(d) {
+    d = d || {};
+    return { inspector: d.inspector || '', note: d.note || '', photos: normPhotos(d.photos), files: formsNormFiles(d.files) };
+}
+
+// 해당 월의 일지와 본사 확인 기록을 서버에서 한 번 불러옴
+function patEnsureMonth(siteId, month) {
+    const box = patBySite[siteId];
+    if (box.months[month]) return box.months[month];
+    box.months[month] = 'loading';
+    const p = month.split('-').map(Number);
+    const from = month + '-01', to = month + '-' + String(new Date(p[0], p[1], 0).getDate()).padStart(2, '0');
+    Promise.all([srvLoadRecords('patrol', siteId, from, to), srvLoadRecords('patrol_ok', siteId, from, to)]).then(async ([rows, oks]) => {
+        const paths = [];
+        Object.keys(box.records).forEach(k => { if (k.slice(0, 7) === month) delete box.records[k]; });
+        Object.keys(box.oks).forEach(k => { if (k.slice(0, 7) === month) delete box.oks[k]; });
+        rows.forEach(r => {
+            const rec = patNormalize(r.data);
+            box.records[r.record_date] = rec;
+            rec.photos.forEach(ph => paths.push(ph.path));
+        });
+        oks.forEach(r => { box.oks[r.record_date] = r.data || {}; });
+        await srvSignPhotos(paths);
+        box.months[month] = 'ready';
+    }).catch((err) => { console.error('순회점검 불러오기 실패:', err); box.months[month] = 'error'; })
+      .then(() => { if (activeModule === 12) renderActiveModule(); });
+    return 'loading';
+}
+function patReload() { const b = patBySite[patSiteId()]; b.months = {}; renderActiveModule(); }
+
+// ----- 저장 -----
+function patSave(siteId, date) {
+    const key = siteId + '|' + date;
+    patSaveChain[key] = (patSaveChain[key] || Promise.resolve()).then(async () => {
+        const rec = patBySite[siteId] && patBySite[siteId].records[date];
+        if (!rec) return false;
+        const seq = patDirty[key];
+        const ok = await srvSaveRecord('patrol', siteId, date, JSON.parse(JSON.stringify(rec)));
+        if (ok) {
+            if (patDirty[key] === seq) delete patDirty[key];
+            patSavedAt[key] = new Date();
+        }
+        patRefreshSaveBar();
+        return ok;
+    });
+    return patSaveChain[key];
+}
+function patMarkDirty() { patDirty[patSiteId() + '|' + patSelectedDate] = ++patDirtySeq; patRefreshSaveBar(); }
+function patSet(field, value) { const rec = patRec(); if (!rec || patLocked()) return; rec[field] = value; patMarkDirty(); }
+async function patSaveNow() {
+    const btn = document.getElementById('patSaveBtn');
+    if (btn) { btn.disabled = true; btn.innerText = '저장 중…'; }
+    await patSave(patSiteId(), patSelectedDate);
+    patRefreshSaveBar();
+}
+function patFlushDirty(exceptKey) {
+    Object.keys(patDirty).forEach(key => {
+        if (key === exceptKey) return;
+        const i = key.indexOf('|');
+        patSave(key.slice(0, i), key.slice(i + 1));
+    });
+}
+flushHooks.push(() => patFlushDirty());
+window.addEventListener('beforeunload', (e) => { if (Object.keys(patDirty).length) { e.preventDefault(); e.returnValue = ''; } });
+
+function patSaveBarInner(key) {
+    const dirty = !!patDirty[key], t = patSavedAt[key];
+    const when = t ? String(t.getHours()).padStart(2, '0') + ':' + String(t.getMinutes()).padStart(2, '0') + ' ' : '';
+    const msg = dirty ? '<span style="color:var(--amber-600); font-weight:800;">● 저장하지 않은 변경이 있습니다</span>'
+                      : `<span style="color:var(--emerald-700); font-weight:800;">✓ ${when}서버에 저장됨</span>`;
+    return `<div style="font-size:12.5px;">${msg}<div style="font-size:11px; color:var(--slate-500); margin-top:2px;">올린 일지 파일은 즉시 저장됩니다.</div></div>
+        <button id="patSaveBtn" class="btn ${dirty ? 'btn-emerald' : 'btn-outline'}" style="padding:10px 22px; font-size:14px;" onclick="patSaveNow()">💾 일지 저장</button>`;
+}
+function patRefreshSaveBar() {
+    if (uiLater('patBar', patRefreshSaveBar)) return;
+    const bar = document.getElementById('patSaveBar');
+    if (bar && sitesData.length) bar.innerHTML = patSaveBarInner(patSiteId() + '|' + patSelectedDate);
+}
+
+// ----- 날짜 고르기 -----
+function patSelectDate(date) { patSelectedDate = date; patCalMonth = date.slice(0, 7); renderActiveModule(); window.scrollTo(0, 0); }
+function patGoToday() { patSelectDate(todayStr()); }
+function patMoveMonth(delta) {
+    const p = patCalMonth.split('-').map(Number);
+    const d = new Date(p[0], p[1] - 1 + delta, 1);
+    patCalMonth = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0');
+    renderActiveModule();
+}
+function patCreate() {
+    const siteId = patSiteId(), b = patBySite[siteId];
+    if (b.records[patSelectedDate]) return;
+    const sObj = sitesData.find(s => s.id === siteId) || {};
+    const prev = Object.keys(b.records).sort();
+    const last = prev.length ? b.records[prev[prev.length - 1]] : null;   // 점검자는 가장 최근 일지 값을 기본으로
+    b.records[patSelectedDate] = { inspector: (last && last.inspector) || sObj.boss || '', note: '', photos: [], files: [] };
+    patSave(siteId, patSelectedDate);
+    renderActiveModule();
+}
+async function patDelete() {
+    const siteId = patSiteId(), date = patSelectedDate, b = patBySite[siteId];
+    const rec = b.records[date];
+    if (!rec || patLocked()) return;
+    if (!confirm(patDateLabel(date) + ' 순회점검 일지와 올린 파일을 삭제하시겠습니까?\n삭제하면 본사와 현장 모두에서 사라집니다.')) return;
+    const photos = rec.photos.map(p => p.path), files = rec.files.map(f => f.path);
+    delete b.records[date];
+    const key = siteId + '|' + date;
+    delete patDirty[key];
+    patSaveChain[key] = (patSaveChain[key] || Promise.resolve()).then(async () => {
+        const ok = await srvDeleteRecord('patrol', siteId, date);
+        if (ok) {
+            if (photos.length) await srvRemovePhotos(photos);
+            if (files.length) await sb.storage.from('forms').remove(files);
+        }
+    });
+    renderActiveModule();
+}
+function patDateLabel(date) {
+    const p = date.split('-').map(Number);
+    return p[0] + '년 ' + p[1] + '월 ' + p[2] + '일 (' + TBM_WEEK[new Date(p[0], p[1] - 1, p[2]).getDay()] + ')';
+}
+
+// ----- 파일 올리기 (사진·문서를 가리지 않고 한 칸에서 받음) -----
 function patPick(event) { const files = Array.from(event.target.files || []); event.target.value = ''; patAddFiles(files); }
 function patDrop(event, el) {
     if (!dzIsFileDrag(event)) return;
-    event.preventDefault(); el.style.outline = ''; el.style.outlineOffset = '';
+    event.preventDefault(); el.style.outline = ''; el.style.outlineOffset = ''; el.style.background = '';
     patAddFiles(Array.from(event.dataTransfer.files || []));
 }
-async function patUploadDocs(files) {
-    const c = rmCur('pat');
-    if (!files.length || c.fixed) return;
-    const bad = files.filter(f => PAT_DOC_EXT.indexOf((f.name.split('.').pop() || '').toLowerCase()) < 0);
-    if (bad.length) return alert('올릴 수 없는 파일 형식입니다: ' + bad.map(f => f.name).join(', ') + '\n\n올릴 수 있는 형식: 사진(JPG, PNG), ' + PAT_DOC_EXT.join(', '));
-    const big = files.filter(f => f.size > FORMS_MAX_BYTES);
-    if (big.length) return alert('파일 1개는 20MB 이하만 올릴 수 있습니다: ' + big.map(f => f.name).join(', '));
-    const M = c.M, siteId = c.siteId, key = c.key;
-    M.uploading += files.length; renderActiveModule();
-    for (const file of files) {
+function patIsImage(file) { return /^image\//.test(file.type) || /\.(jpe?g|png|webp|heic|heif)$/i.test(file.name); }
+function patAddFiles(files) {
+    if (!files.length || patLocked()) return;
+    const siteId = patSiteId(), date = patSelectedDate;
+    if (!(patBySite[siteId] && patBySite[siteId].records[date])) return;   // 일지가 없는 날짜에는 올리지 않음
+    const imgs = files.filter(patIsImage), docs = files.filter(f => !patIsImage(f));
+    const bad = docs.filter(f => PAT_DOC_EXT.indexOf((f.name.split('.').pop() || '').toLowerCase()) < 0);
+    if (bad.length) alert('올릴 수 없는 파일 형식입니다: ' + bad.map(f => f.name).join(', ') + '\n\n올릴 수 있는 형식: 사진(JPG, PNG), ' + PAT_DOC_EXT.join(', '));
+    const okDocs = docs.filter(f => bad.indexOf(f) < 0);
+    const big = okDocs.filter(f => f.size > FORMS_MAX_BYTES);
+    if (big.length) alert('파일 1개는 20MB 이하만 올릴 수 있습니다: ' + big.map(f => f.name).join(', '));
+    patUploadAll(siteId, date, imgs, okDocs.filter(f => big.indexOf(f) < 0));
+}
+async function patUploadAll(siteId, date, imgs, docs) {
+    if (!imgs.length && !docs.length) return;
+    patUploading += imgs.length + docs.length;
+    renderActiveModule();
+    for (const file of imgs) {
+        try {
+            const blob = await compressImage(file);
+            const path = await srvUploadPhoto('patrol', siteId, date, blob);
+            const rec = patBySite[siteId] && patBySite[siteId].records[date];
+            if (path && rec) {
+                await srvSignPhotos([path]);
+                rec.photos.push({ path: path, caption: file.name.replace(/\.[^/.]+$/, '') });
+                await patSave(siteId, date);
+            } else if (path) await srvRemovePhotos([path]);
+        } catch (err) { srvFail('사진 올리기', err); }
+        patUploading -= 1;
+        if (activeModule === 12) renderActiveModule();
+    }
+    for (const file of docs) {
         try {
             const ext = (file.name.split('.').pop() || 'bin').toLowerCase();
             const path = [currentCompanyId, siteId, 'patrol', srvRandomId() + '.' + ext].join('/');
             setSaveStatus('saving', '… 파일 올리는 중');
             const res = await sb.storage.from('forms').upload(path, file, { contentType: file.type || 'application/octet-stream', upsert: false });
-            const e = rmEntryAt(M, siteId, key);
+            const rec = patBySite[siteId] && patBySite[siteId].records[date];
             if (res.error) srvFail('파일 올리기', res.error);
-            else if (e) { e.rec.files.push({ path: path, name: file.name, size: file.size }); await rmSave('pat', siteId, key); }
-            else await sb.storage.from('forms').remove([path]);   // 그 사이 기록이 삭제된 경우 올린 파일 정리
+            else if (rec) { rec.files.push({ path: path, name: file.name, size: file.size }); await patSave(siteId, date); }
+            else await sb.storage.from('forms').remove([path]);
         } catch (err) { srvFail('파일 올리기', err); }
-        M.uploading -= 1;
-        if (activeModule === M.id) renderActiveModule();
+        patUploading -= 1;
+        if (activeModule === 12) renderActiveModule();
     }
 }
 async function patDownload(idx) {
-    const c = rmCur('pat'), f = c.entry && c.entry.rec.files[idx]; if (!f) return;
+    const rec = patRec(), f = rec && rec.files[idx]; if (!f) return;
     const res = await sb.storage.from('forms').createSignedUrl(f.path, 120, { download: f.name });
     if (res.error || !res.data || !res.data.signedUrl) return alert('파일을 내려받지 못했습니다.\n' + ((res.error && res.error.message) || '') + '\n\n잠시 뒤 다시 시도해 주세요.');
     const a = document.createElement('a');
@@ -3401,79 +3558,222 @@ async function patDownload(idx) {
     document.body.appendChild(a); a.click(); a.remove();
 }
 function patRemoveFile(idx) {
-    const c = rmCur('pat');
-    if (c.fixed || !c.entry.rec.files[idx]) return;
-    if (!confirm('"' + c.entry.rec.files[idx].name + '" 파일을 삭제하시겠습니까?')) return;
-    const path = c.entry.rec.files[idx].path;
-    c.entry.rec.files.splice(idx, 1);
-    rmSave('pat', c.siteId, c.key).then(() => sb.storage.from('forms').remove([path]));
+    const rec = patRec(); if (!rec || patLocked() || !rec.files[idx]) return;
+    if (!confirm('"' + rec.files[idx].name + '" 파일을 삭제하시겠습니까?')) return;
+    const path = rec.files[idx].path;
+    rec.files.splice(idx, 1);
+    patSave(patSiteId(), patSelectedDate).then(() => sb.storage.from('forms').remove([path]));
     renderActiveModule();
 }
+function patRemovePhoto(idx) {
+    const rec = patRec(); if (!rec || patLocked() || !rec.photos[idx]) return;
+    const path = rec.photos[idx].path;
+    rec.photos.splice(idx, 1);
+    patSave(patSiteId(), patSelectedDate).then(() => srvRemovePhotos([path]));
+    renderActiveModule();
+}
+function patCaption(idx, value) {
+    const rec = patRec(); if (!rec || patLocked() || !rec.photos[idx]) return;
+    rec.photos[idx].caption = value;
+    patSave(patSiteId(), patSelectedDate);
+}
 
-makeRecordModule({
-    id: 12, name: 'pat', module: 'patrol', mode: 'list', approval: true, photoKeys: ['photos'],
-    title: '🚶 12. 순회점검 일지 (일지 파일 등록)',
-    itemLabel: '순회점검 일지', newLabel: '+ 새 순회점검 일지 등록', saveLabel: '순회점검 일지 저장',
-    listTitle: '점검자 · 비고', listStatusTitle: '일지 파일',
-    printTitle: '🖨️ 12. 순회점검 일지 등록 확인서 (공식 A4)',
-    blank: () => ({ date: todayStr(), inspector: '', note: '', photos: [], files: [] }),
-    normalize: (d) => ({ date: d.date || '', inspector: d.inspector || '', note: d.note || '', photos: normPhotos(d.photos), files: formsNormFiles(d.files) }),
-    listCols: (r) => {
-        const n = r.photos.length + r.files.length;
-        return { date: r.date, text: r.inspector || '(점검자 미입력)', sub: r.note.split('\n')[0].slice(0, 60), status: n ? '첨부 ' + n + '개' : '파일 없음', statusColor: n ? 'var(--emerald-700)' : 'var(--red-700)' };
-    },
-    listCount: (r) => '📎 ' + (r.photos.length + r.files.length),
-    afterDelete: (rec) => { const paths = rec.files.map(f => f.path); if (paths.length) sb.storage.from('forms').remove(paths); },
-    confirmWarn: (r) => {
-        const w = [];
-        if (!r.photos.length && !r.files.length) w.push('올린 일지 파일이 없습니다');
-        if (!r.inspector.trim()) w.push('점검자가 비어 있습니다');
-        return w;
-    },
-    formHtml: (r, c) => `
-        <div class="section-box" style="border-left:4px solid var(--emerald-600);">
-            <div class="grid-2" style="margin-bottom:10px;">
-                ${rmInput(c.name, r, 'date', '점검 일자', c.dis, 'date')}
-                ${rmInput(c.name, r, 'inspector', '점검자', c.dis, 'text', '예: 홍길동 (관리감독자)')}
+// ----- 본사 최종 확인 -----
+async function patConfirm() {
+    if (isSiteBoss()) return;
+    const siteId = patSiteId(), date = patSelectedDate, rec = patRec();
+    if (!rec || patOk()) return;
+    const inp = document.getElementById('patConfirmer');
+    const who = ((inp && inp.value) || '').trim();
+    if (!who) { alert('확인자 이름을 입력해 주세요.'); if (inp) inp.focus(); return; }
+    const warn = [];
+    if (!rec.photos.length && !rec.files.length) warn.push('올린 일지 파일이 없습니다');
+    if (!rec.inspector.trim()) warn.push('점검자가 비어 있습니다');
+    if (!confirm((warn.length ? '⚠ ' + warn.join(', ') + '\n\n' : '') + patDateLabel(date) + ' 순회점검 일지를 본사 최종 확인으로 저장하시겠습니까?\n확인 후에는 현장에서 수정할 수 없습니다.')) return;
+    if (!await patSave(siteId, date)) return;
+    const data = { confirmedAt: todayStr(), confirmer: who };
+    if (!await srvSaveRecord('patrol_ok', siteId, date, data)) return;
+    patBySite[siteId].oks[date] = data;
+    patConfirmerDraft = '';
+    renderActiveModule();
+}
+async function patCancelConfirm() {
+    if (isSiteBoss()) return;
+    const siteId = patSiteId(), date = patSelectedDate;
+    if (!patOk()) return;
+    if (!confirm('본사 최종 확인을 취소하시겠습니까?\n취소하면 다시 수정할 수 있고, 인쇄물에서 도장이 빠집니다.')) return;
+    if (!await srvDeleteRecord('patrol_ok', siteId, date)) return;
+    delete patBySite[siteId].oks[date];
+    renderActiveModule();
+}
+function patApprovalBox() {
+    const mgr = !isSiteBoss(), ok = patOk();
+    if (ok) {
+        return `<div class="section-box" style="border:2px solid var(--emerald-600); background:var(--emerald-50); padding:12px; display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap;">
+                <div>
+                    <div style="font-size:14px; font-weight:900; color:var(--emerald-800);">✅ 본사 최종 확인 완료</div>
+                    <div style="font-size:12px; color:var(--slate-700); margin-top:3px;">확인일 ${esc(ok.confirmedAt)} · 확인자 ${esc(ok.confirmer)} · 확인이 끝난 자료는 수정할 수 없습니다.</div>
+                </div>
+                ${mgr ? `<div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">${sealPanelHtml()}<button class="btn btn-outline btn-sm" style="color:var(--red-700);" onclick="patCancelConfirm()">확인 취소</button></div>` : ''}
+            </div>`;
+    }
+    if (!mgr) return '<div style="background:var(--amber-50); border:1px solid var(--amber-500); border-radius:8px; padding:8px 12px; font-size:12px; font-weight:700; margin-bottom:14px;">⏳ 본사 확인 전입니다. 일지를 올리고 [일지 저장]을 누르면 본사가 확인합니다.</div>';
+    return `<div class="section-box" style="border-left:4px solid var(--purple-600); padding:12px;">
+            <div class="section-title" style="margin-bottom:8px;">🏛️ 본사 최종 확인</div>
+            <div style="display:flex; align-items:flex-end; gap:10px; flex-wrap:wrap;">
+                <div style="flex:1; min-width:200px;"><div class="form-label">확인자</div><input type="text" id="patConfirmer" class="form-input" placeholder="예: 대표이사 홍길동" value="${esc(patConfirmerDraft)}" oninput="patConfirmerDraft=this.value"></div>
+                <button class="btn btn-purple" style="padding:10px 18px; font-size:13.5px;" onclick="patConfirm()">✅ 본사 확인 후 저장</button>
             </div>
-            <div class="form-label">비고</div>
-            ${rmTextarea(c.name, r, 'note', '예: 지적사항 2건, 즉시 조치 완료 / 특이사항 없음', c.dis)}
-        </div>
-        <div class="section-box" style="border-left:4px solid var(--blue-600);" ${c.locked ? '' : 'ondragover="rmDragOver(event, this)" ondragleave="rmDragLeave(event, this)" ondrop="patDrop(event, this)"'}>
-            <div class="section-title" style="flex-wrap:wrap; gap:6px;">
-                <span>📎 순회점검 일지 파일 (사진 ${r.photos.length}장 · 문서 ${r.files.length}개)</span>
-                ${c.locked ? '' : `<span style="display:flex; gap:6px; flex-wrap:wrap;">
-                    ${rmUploadBtn(c.name, 'photos', '📷 + 일지 사진 올리기', 'btn-blue', false)}
-                    <label class="btn btn-outline btn-sm" style="cursor:pointer;">📄 + 문서 파일 올리기<input type="file" multiple class="hidden" accept="${PAT_DOC_EXT.map(e => '.' + e).join(',')}" onchange="patPick(event)"></label>
-                </span>`}
-            </div>
-            ${c.uploading > 0 ? `<div style="font-size:12px; font-weight:800; color:var(--blue-700); margin-bottom:6px;">⏳ 파일 ${c.uploading}개 올리는 중…</div>` : ''}
-            ${r.photos.length || r.files.length || c.uploading > 0 ? '' : `<div style="font-size:12px; color:var(--slate-500);">${c.locked ? '올린 일지 파일이 없습니다.' : (isTouchDevice() ? '종이 일지는 [사진 촬영]으로 바로 찍어 올리고, PDF·한글 파일은 [문서 파일 올리기]로 올립니다.' : '작성한 순회점검 일지를 올려 주세요. 사진(JPG, PNG)과 PDF·한글·엑셀 파일을 이 칸으로 끌어다 놓아도 됩니다 (문서 1개 20MB 이하).')}</div>`}
-            <div style="display:flex; flex-direction:column; gap:6px;">
-                ${r.files.map((f, idx) => `
-                    <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap; background:#fff; border:1px solid var(--slate-200); border-radius:8px; padding:8px 10px;">
-                        <span style="flex:1; min-width:160px; font-weight:800; font-size:13px; word-break:break-all;">📄 ${esc(f.name)} <span style="font-weight:600; font-size:11px; color:var(--slate-500);">(${formsSizeLabel(f.size)})</span></span>
-                        <button class="btn btn-emerald btn-sm" onclick="patDownload(${idx})">⬇ 내려받기</button>
-                        ${c.locked ? '' : `<button class="btn btn-red btn-sm" onclick="patRemoveFile(${idx})">삭제</button>`}
-                    </div>`).join('')}
-            </div>
-            ${r.photos.length ? rmPhotoGrid(c.name, 'photos', r.photos, c.locked) : ''}
-        </div>`,
-    printHtml: (r, p) => `
+            <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap; margin-top:10px;">${sealPanelHtml()}</div>
+            <div style="font-size:11px; color:var(--slate-500); margin-top:8px;">확인 후 저장하면 인쇄물의 '본사 최종 확인' 칸에 확인일·확인자와 도장이 들어가고, 현장에서는 더 이상 수정할 수 없습니다.</div>
+        </div>`;
+}
+
+function patPrint() {
+    const rec = patRec();
+    if (!rec) return alert(patDateLabel(patSelectedDate) + '에 작성된 순회점검 일지가 없습니다.');
+    document.getElementById('printModalTitle').innerText = '🖨️ 12. 순회점검 일지 등록 확인서 (공식 A4)';
+    document.getElementById('printSheetContent').innerHTML = `
         <div style="text-align:center; border-bottom:2px solid #0f172a; padding-bottom:10px; margin-bottom:14px;">
             <h1 style="font-size:20px; font-weight:900;">현장 순회점검 일지 등록 확인서</h1>
         </div>
         <table class="a4-table">
-            <tr><th style="width:18%;">현장 명칭</th><td style="width:32%; font-weight:800;">${p.siteLabel}</td><th style="width:18%;">점검 일자</th><td style="width:32%;">${esc(r.date)}</td></tr>
-            <tr><th>점검자</th><td colspan="3">${esc(r.inspector)}</td></tr>
-            <tr><th>비고</th><td colspan="3" style="white-space:pre-line;">${esc(r.note)}</td></tr>
-            <tr><th>첨부 문서</th><td colspan="3">${r.files.length ? r.files.map(f => esc(f.name)).join(', ') + '<div style="font-size:10px; color:#64748b; margin-top:2px;">※ 문서 파일은 프로그램에서 내려받아 함께 편철합니다.</div>' : '없음'}</td></tr>
+            <tr><th style="width:18%;">현장 명칭</th><td style="width:32%; font-weight:800;">${esc(getSiteLabelById(patSiteId()))}</td><th style="width:18%;">점검 일자</th><td style="width:32%; font-weight:800;">${patDateLabel(patSelectedDate)}</td></tr>
+            <tr><th>점검자</th><td colspan="3">${esc(rec.inspector)}</td></tr>
+            <tr><th>비고</th><td colspan="3" style="white-space:pre-line;">${esc(rec.note)}</td></tr>
+            <tr><th>첨부 문서</th><td colspan="3">${rec.files.length ? esc(rec.files.map(f => f.name).join(', ')) + '<div style="font-size:10px; color:#64748b; margin-top:2px;">※ 문서 파일은 프로그램에서 내려받아 함께 편철합니다.</div>' : '없음'}</td></tr>
         </table>
-        ${p.approvalRow}
-        ${r.photos.length ? `<div style="font-weight:800; font-size:12px; margin:10px 0 6px;">📸 순회점검 일지 (사진 ${r.photos.length}장)</div>
-        <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">${rmPrintPhotos(r.photos)}</div>` : ''}`
-});
-function renderModule12() { return rmRender('pat'); }
+        ${approvalPrintRow(patOk())}
+        ${rec.photos.length ? `<div style="font-weight:800; font-size:12px; margin:10px 0 6px;">📸 순회점검 일지 (사진 ${rec.photos.length}장)</div>
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">${rmPrintPhotos(rec.photos)}</div>` : ''}`;
+    document.getElementById('printModal').classList.remove('hidden');
+}
+
+// 달력: 일지가 있는 날은 초록색, 본사 확인이 끝난 날은 도장 표시
+function patCalendarHtml(siteId, status) {
+    const b = patBySite[siteId];
+    const p = patCalMonth.split('-').map(Number);
+    const firstDay = new Date(p[0], p[1] - 1, 1).getDay();
+    const lastDate = new Date(p[0], p[1], 0).getDate();
+    const today = todayStr();
+    let cells = '';
+    for (let i = 0; i < firstDay; i++) cells += '<div></div>';
+    for (let d = 1; d <= lastDate; d++) {
+        const date = patCalMonth + '-' + String(d).padStart(2, '0');
+        const rec = b.records[date], ok = b.oks[date], sel = date === patSelectedDate;
+        const dow = (firstDay + d - 1) % 7;
+        const border = sel ? '2px solid var(--emerald-700)' : (date === today ? '2px solid var(--blue-600)' : '1px solid var(--slate-200)');
+        const numColor = dow === 0 ? 'var(--red-600)' : (dow === 6 ? 'var(--blue-600)' : 'var(--slate-800)');
+        cells += `<button type="button" onclick="patSelectDate('${date}')" style="min-height:58px; padding:5px 6px; border:${border}; background:${rec ? 'var(--emerald-50)' : '#fff'}; border-radius:7px; cursor:pointer; text-align:left; font-family:inherit; display:flex; flex-direction:column; gap:2px;${sel ? ' box-shadow:0 0 0 2px var(--emerald-200);' : ''}">
+            <span style="font-size:12.5px; font-weight:800; color:${numColor};">${d}${date === today ? ' <span style="font-size:9.5px; color:var(--blue-600);">오늘</span>' : ''}</span>
+            ${rec ? `<span style="font-size:10.5px; font-weight:800; color:var(--emerald-700);">✓ 점검</span><span style="font-size:10px; color:var(--slate-600);">📎 ${rec.photos.length + rec.files.length}개${ok ? ' 🖋️' : ''}</span>` : ''}
+        </button>`;
+    }
+    const dates = Object.keys(b.records).filter(k => k.slice(0, 7) === patCalMonth);
+    const okCount = dates.filter(k => b.oks[k]).length;
+    const summary = status === 'loading' ? '⏳ 서버에서 불러오는 중…'
+        : (status === 'error' ? '<span style="color:var(--red-700);">⚠ 불러오지 못했습니다</span>' : `이번 달 점검 ${dates.length}일 · 본사 확인 ${okCount}일`);
+    return `
+        <div style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:8px; margin-bottom:10px;">
+            <div style="display:flex; align-items:center; gap:6px; flex-wrap:wrap;">
+                <button class="btn btn-outline btn-sm" onclick="patMoveMonth(-1)">◀ 이전 달</button>
+                <span style="font-size:15px; font-weight:900; min-width:96px; text-align:center;">${p[0]}년 ${p[1]}월</span>
+                <button class="btn btn-outline btn-sm" onclick="patMoveMonth(1)">다음 달 ▶</button>
+                <button class="btn btn-blue btn-sm" onclick="patGoToday()">오늘</button>
+                <button class="btn btn-outline btn-sm" onclick="patReload()">🔄 새로고침</button>
+            </div>
+            <div style="font-size:12px; font-weight:800; color:var(--emerald-800);">${summary}</div>
+        </div>
+        <div style="display:grid; grid-template-columns:repeat(7, 1fr); gap:4px; margin-bottom:4px;">
+            ${TBM_WEEK.map((w, i) => `<div style="text-align:center; font-size:11.5px; font-weight:800; padding:4px 0; color:${i === 0 ? 'var(--red-600)' : (i === 6 ? 'var(--blue-600)' : 'var(--slate-600)')};">${w}</div>`).join('')}
+        </div>
+        <div style="display:grid; grid-template-columns:repeat(7, 1fr); gap:4px;">${cells}</div>
+        <div style="margin-top:8px; font-size:11px; color:var(--slate-500);">초록색 칸 = 점검일 · 🖋️ = 본사 확인 완료 · 날짜를 누르면 그날 일지를 보거나 새로 올릴 수 있습니다. 다른 사람이 올린 내용은 [🔄 새로고침]을 누르면 보입니다.</div>`;
+}
+
+function renderModule12() {
+    if (!sitesData.length) return '<div class="card"><div style="padding:20px; font-weight:700; color:var(--slate-600);">현장이 없습니다. 2번 관리체계·조직도에서 현장을 먼저 등록해 주세요.</div></div>';
+    const siteId = patSiteId();
+    patFlushDirty(siteId + '|' + patSelectedDate);
+    sealEnsure();
+    const status = patEnsureMonth(siteId, patCalMonth);
+    const selStatus = patEnsureMonth(siteId, patSelectedDate.slice(0, 7));
+    const head = `
+        <div class="card">
+            <div class="section-title">
+                <h2>🚶 12. 순회점검 일지 (일자별 등록 · 달력 확인 · 일지 파일 업로드)</h2>
+                <button class="btn btn-amber" onclick="patPrint()">🖨️ 선택 일자 A4 프린트</button>
+            </div>
+            <div class="section-box" style="border-left:4px solid var(--emerald-600);">
+                <div style="max-width:420px; margin-bottom:12px;">
+                    <div class="form-label">현장 선택 (현장별·일자별 서버 저장)</div>
+                    <select class="form-select" onchange="selectGlobalSite(this.value)">
+                        ${sitesData.map(s => `<option value="${s.id}" ${s.id === siteId ? 'selected' : ''}>🏗️ ${esc(s.name)} (${esc(s.boss)})</option>`).join('')}
+                    </select>
+                </div>
+                ${patCalendarHtml(siteId, status)}
+            </div>`;
+    if (selStatus !== 'ready') {
+        return head + `<div class="section-box" style="text-align:center; padding:28px 16px; background:#fff;">
+                ${selStatus === 'error'
+                    ? '<div style="font-size:13px; font-weight:700; color:var(--red-700); margin-bottom:12px;">서버에서 일지를 불러오지 못했습니다. 인터넷 연결을 확인해 주세요.</div><button class="btn btn-blue" onclick="patReload()">🔄 다시 불러오기</button>'
+                    : '<div style="font-size:13px; font-weight:700; color:var(--slate-600);">⏳ 서버에서 일지를 불러오는 중입니다…</div>'}
+            </div></div>`;
+    }
+    const rec = patRec(), locked = patLocked();
+    const title = `
+            <div class="section-title" style="margin:4px 0 12px;">
+                <span style="font-size:15px;">🗓️ ${patDateLabel(patSelectedDate)} 순회점검 ${rec ? '<span style="font-size:11px; background:var(--emerald-100); color:var(--emerald-800); padding:2px 7px; border-radius:4px;">등록됨</span>' : '<span style="font-size:11px; background:var(--red-100); color:var(--red-700); padding:2px 7px; border-radius:4px;">미등록</span>'}</span>
+                ${rec && !locked ? '<button class="btn btn-outline btn-sm" style="color:var(--red-700);" onclick="patDelete()">🗑️ 이 날짜 일지 삭제</button>' : ''}
+            </div>`;
+    if (!rec) {
+        return head + title + `
+            <div class="section-box" style="text-align:center; padding:28px 16px; border:2px dashed var(--slate-300); background:#fff;">
+                <div style="font-size:13px; font-weight:700; color:var(--slate-600); margin-bottom:12px;">${patDateLabel(patSelectedDate)}에 등록된 순회점검 일지가 없습니다.</div>
+                <button class="btn btn-emerald" onclick="patCreate()">+ 이 날짜 순회점검 일지 등록</button>
+            </div>
+        </div>`;
+    }
+    const dis = locked ? 'disabled' : '';
+    const camera = (!locked && isTouchDevice()) ? `<label class="btn btn-emerald btn-sm" style="cursor:pointer;">📸 사진 촬영<input type="file" accept="image/*" capture="environment" class="hidden" onchange="patPick(event)"></label>` : '';
+    const pick = locked ? '' : `<label class="btn btn-blue btn-sm" style="cursor:pointer;">📎 + ${isTouchDevice() ? '앨범·파일에서 선택' : '일지 파일 올리기'}<input type="file" multiple class="hidden" accept="image/*,${PAT_DOC_EXT.map(e => '.' + e).join(',')}" onchange="patPick(event)"></label>`;
+    return head + title + patApprovalBox() + `
+            <div class="section-box" style="border-left:4px solid var(--emerald-600);">
+                <div class="grid-2">
+                    <div><div class="form-label">점검자</div><input type="text" class="form-input" placeholder="예: 홍길동 (관리감독자)" value="${esc(rec.inspector)}" ${dis} onchange="patSet('inspector', this.value)"></div>
+                    <div><div class="form-label">비고</div><input type="text" class="form-input" placeholder="예: 지적사항 2건, 즉시 조치 완료 / 특이사항 없음" value="${esc(rec.note)}" ${dis} onchange="patSet('note', this.value)"></div>
+                </div>
+            </div>
+            <div id="patDropZone" class="section-box" style="border-left:4px solid var(--purple-600);" ${locked ? '' : 'ondragover="rmDragOver(event, this)" ondragleave="rmDragLeave(event, this)" ondrop="patDrop(event, this)"'}>
+                <div class="section-title" style="flex-wrap:wrap; gap:6px;">
+                    <span>📎 순회점검 일지 파일 (사진 ${rec.photos.length}장 · 문서 ${rec.files.length}개)</span>
+                    <span style="display:flex; gap:6px; flex-wrap:wrap;">${camera}${pick}</span>
+                </div>
+                ${patUploading > 0 ? `<div style="font-size:12px; font-weight:800; color:var(--blue-700); margin-bottom:6px;">⏳ 파일 ${patUploading}개 올리는 중…</div>` : ''}
+                ${locked ? '' : `<div style="border:2px dashed var(--slate-300); border-radius:8px; padding:12px; margin-bottom:10px; text-align:center; font-size:12.5px; font-weight:700; color:var(--slate-500); background:#fff;">${isTouchDevice()
+                    ? '📸 [사진 촬영]으로 종이 일지를 바로 찍거나, [앨범·파일에서 선택]으로 PDF·한글 파일을 올립니다'
+                    : '🖱️ 작성한 일지 파일(사진·PDF·한글·엑셀)을 이 칸으로 끌어다 놓으면 바로 올라갑니다 (여러 개 가능, 문서 1개 20MB 이하)'}${rec.photos.length || rec.files.length || patUploading > 0 ? '' : '<div style="font-size:11.5px; font-weight:600; margin-top:3px;">아직 올린 일지 파일이 없습니다.</div>'}</div>`}
+                ${locked && !rec.photos.length && !rec.files.length ? '<div style="font-size:12px; color:var(--slate-500);">올린 일지 파일이 없습니다.</div>' : ''}
+                <div style="display:flex; flex-direction:column; gap:6px;">
+                    ${rec.files.map((f, idx) => `
+                        <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap; background:#fff; border:1px solid var(--slate-200); border-radius:8px; padding:8px 10px;">
+                            <span style="flex:1; min-width:160px; font-weight:800; font-size:13px; word-break:break-all;">📄 ${esc(f.name)} <span style="font-weight:600; font-size:11px; color:var(--slate-500);">(${formsSizeLabel(f.size)})</span></span>
+                            <button class="btn btn-emerald btn-sm" onclick="patDownload(${idx})">⬇ 내려받기</button>
+                            ${locked ? '' : `<button class="btn btn-red btn-sm" onclick="patRemoveFile(${idx})">삭제</button>`}
+                        </div>`).join('')}
+                </div>
+                <div class="photo-grid">
+                    ${rec.photos.map((p, idx) => `
+                        <div class="photo-card">
+                            <img src="${photoUrl(p.path)}">
+                            ${locked ? '' : `<div class="photo-actions"><button class="btn btn-red btn-sm" onclick="patRemovePhoto(${idx})">✕ 삭제</button></div>`}
+                            <input type="text" class="photo-caption-input" placeholder="사진 설명" value="${esc(p.caption)}" ${dis} onchange="patCaption(${idx}, this.value)">
+                        </div>`).join('')}
+                </div>
+            </div>
+            ${locked ? '' : `<div id="patSaveBar" style="position:sticky; bottom:0; z-index:5; background:#fff; border:2px solid var(--emerald-600); border-radius:10px; padding:10px 14px; display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap; box-shadow:0 -2px 10px rgba(0,0,0,0.08);">${patSaveBarInner(siteId + '|' + patSelectedDate)}</div>`}
+        </div>`;
+}
    // ====== [로그인 · 권한 — 서버 연결판] ======
         const ROLE_LABELS = {
             jino_admin: '👑 지노 관리자',
