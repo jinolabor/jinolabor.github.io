@@ -9,6 +9,7 @@
 | `contract/` | 근로계약서 작성 | dhkim0629-ops/config-files `contract/` |
 | `forms/` | 스마트지노 문서작성 | dhkim0629-ops/config-files `forms/` |
 | `safety/` | 지노 중처법 이행관리 (안전보건 통합관리) | dhkim0629-ops/jino-safety |
+| `leave/` | TEAM JINO 연차 관리 (시범 · 주소록과 같은 로그인, 서버 함수 `leave_*`, 주소록에 붙일지 검토 중) | 없음 (새로 만듦) |
 
 다른 프로그램: 보험료정산은 `jinolabor/settlement`, 페이롤은 `jinolabor/payroll` (https://jinolabor.github.io/payroll/).
 

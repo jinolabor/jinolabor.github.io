@@ -1,0 +1,590 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>TEAM JINO 연차 관리</title>
+<meta name="robots" content="noindex,nofollow">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&display=swap">
+<style>
+/* 공공기관 대장 서식: 남색 제목 띠 + 검색조건 표 + 격자형 목록 */
+:root{
+  --page:#eef2f7; --paper:#ffffff; --navy:#0b3a75; --blue:#1d5fb4; --blue-dark:#164a8c;
+  --head:#dfe8f4; --label:#eef3fa; --rule:#b8c5d6; --rule-strong:#7f94b1;
+  --fg:#1b2533; --muted:#556275; --faint:#8a97a8;
+  --ok:#1d5fb4; --ok-soft:#e3edfa; --bad:#b3261e; --bad-soft:#fbe9e7; --warn:#a15c00; --warn-soft:#fff3dc;
+  --font-body:"Noto Sans KR","Malgun Gothic","맑은 고딕","Apple SD Gothic Neo",sans-serif;
+  --font-mono:"Malgun Gothic","맑은 고딕",Consolas,monospace;
+  color-scheme:light;
+}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--page);color:var(--fg);font-family:var(--font-body);font-size:15.5px;line-height:1.5;padding:0 16px 48px}
+[hidden]{display:none!important}
+.wrap{max-width:1680px;margin:0 auto}
+button,input,select,textarea{font:inherit;color:inherit}
+.mono{font-variant-numeric:tabular-nums;letter-spacing:.01em}
+:focus-visible{outline:2px solid var(--blue);outline-offset:1px}
+
+header.top{position:sticky;top:0;z-index:5;margin:0 -16px;padding:0 16px;background:var(--navy);color:#fff;border-bottom:3px solid var(--blue)}
+header.top .in{max-width:1680px;margin:0 auto;display:flex;gap:14px;align-items:center;flex-wrap:wrap;padding:12px 0}
+header .emblem{width:36px;height:36px;border:2px solid #fff;display:grid;place-items:center;font-weight:700;font-size:15px;letter-spacing:-.02em}
+header h1{font-size:22px;margin:0;font-weight:700;letter-spacing:-.01em}
+header .sub{font-size:14.5px;opacity:.8;border-left:1px solid rgba(255,255,255,.4);padding-left:12px}
+.savebox{margin-left:auto;display:flex;gap:8px;align-items:center;font-size:14.5px;color:#cfdcf0}
+.savebox.dirty #savetext{color:#ffd88a;font-weight:600}
+header .btn{background:transparent;color:#fff;border-color:rgba(255,255,255,.6)}
+header .btn:hover{background:rgba(255,255,255,.12);border-color:#fff}
+header .btn.primary{background:#fff;color:var(--navy);border-color:#fff}
+
+.paper{background:var(--paper);border:1px solid var(--rule);margin-top:18px;padding:18px 20px 22px}
+.doc-title{display:flex;align-items:flex-end;gap:12px;flex-wrap:wrap;padding-bottom:10px;border-bottom:2px solid var(--navy);margin-bottom:14px}
+.doc-title h2{margin:0;font-size:20.5px;font-weight:700;color:var(--navy)}
+.doc-title .ref{margin-left:auto;font-size:14px;color:var(--muted)}
+
+.searchbox{display:grid;grid-template-columns:125px minmax(0,1fr) 125px minmax(0,1fr);border-top:2px solid var(--navy);border-left:1px solid var(--rule);margin-bottom:12px}
+.searchbox>*{border-right:1px solid var(--rule);border-bottom:1px solid var(--rule);padding:6px 10px;min-width:0;display:flex;align-items:center}
+.searchbox .lb{background:var(--label);font-weight:600;color:var(--navy);font-size:14.5px;justify-content:center;text-align:center}
+.searchbox .wide{grid-column:span 3}
+@media (max-width:760px){.searchbox{grid-template-columns:90px minmax(0,1fr)}.searchbox .wide{grid-column:auto}}
+input,select,textarea{background:#fff;border:1px solid var(--rule-strong);border-radius:2px;padding:6px 9px;min-height:37px;width:100%}
+textarea{min-height:80.5px;resize:vertical}
+
+.summary{display:flex;flex-wrap:wrap;border:1px solid var(--rule);margin-bottom:12px}
+.summary>div{flex:1 1 140px;display:flex;justify-content:space-between;align-items:baseline;gap:8px;padding:8px 12px;border-right:1px solid var(--rule);font-size:14.5px;color:var(--muted)}
+.summary>div:last-child{border-right:0}
+.summary b{font-size:19.5px;color:var(--navy);font-weight:700;font-variant-numeric:tabular-nums}
+.summary small{font-size:14px;color:var(--muted);margin-left:2px}
+
+.toolbar{display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-bottom:8px}
+.btn{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--rule-strong);background:#fff;border-radius:2px;padding:6px 13px;min-height:37px;cursor:pointer;white-space:nowrap;width:auto;font-size:15px}
+.btn:hover{border-color:var(--blue);color:var(--blue)}
+.btn.primary{background:var(--blue);color:#fff;border-color:var(--blue);font-weight:600}
+.btn.primary:hover{background:var(--blue-dark);color:#fff}
+.btn.ghost{background:transparent;border-color:transparent;color:var(--muted)}
+.btn.danger{color:var(--bad);border-color:#e3b3ae}
+.btn.sm{min-height:30px;padding:2px 9px;font-size:14px}
+.seg{display:inline-flex;border:1px solid var(--rule-strong);flex-wrap:wrap}
+.seg button{border:0;border-right:1px solid var(--rule);background:#fff;padding:6px 12px;cursor:pointer;min-height:37px}
+.seg button:last-child{border-right:0}
+.seg button[aria-pressed="true"]{background:var(--blue);color:#fff;font-weight:600}
+
+.chip{display:inline-block;font-size:13px;font-weight:600;padding:0 6px;border:1px solid var(--rule-strong);border-radius:2px;background:#fff;color:var(--muted);white-space:nowrap;line-height:22px}
+.chip.ok{border-color:#9bbbe3;background:var(--ok-soft);color:var(--ok)}
+.chip.end{border-color:#e3b3ae;background:var(--bad-soft);color:var(--bad)}
+.chip.warn{border-color:#e9c98f;background:var(--warn-soft);color:var(--warn)}
+.chip.info{border-color:#b9c6d6;background:#f2f5f9;color:#3e4f66}
+.cnt{display:inline-block;margin-left:5px;min-width:20px;padding:0 5px;border-radius:10px;background:#d93025;color:#fff;font-size:12px;line-height:20px;text-align:center}
+.chip.new{border-color:#e9c98f;background:#fff4d6;color:#8a5a00;font-weight:600;margin-left:6px}
+tr.unseen td{background:#fffbea}
+.chg-sum summary{cursor:pointer;color:var(--blue)}
+.why{color:#6b4e00;background:#fff8e1;border-left:3px solid #e9c98f;padding:1px 6px;margin-top:3px;font-size:14px}
+.chip.editing{border-color:#d98b8b;background:#fdecec;color:#a52a2a;font-weight:600;margin-left:6px}
+.edit-warn{background:#fdecec;border:1px solid #e3b3ae;color:#8a1f1f;padding:8px 10px;border-radius:4px;font-size:15px;margin-bottom:8px}
+.chip.line{border-color:#9bbbe3;color:var(--blue)}
+
+.tablewrap{overflow-x:auto;border-top:2px solid var(--navy)}
+table{border-collapse:collapse;width:100%;font-size:15px}
+th,td{padding:8px 11px;border:1px solid var(--rule);vertical-align:top;text-align:left}
+th{background:var(--head);font-weight:700;color:#24364f;font-size:14.5px;white-space:nowrap;text-align:center;vertical-align:middle}
+tbody tr:nth-child(even){background:#f8fafd}
+tbody tr:hover{background:#e9f1fc}
+tbody tr.click{cursor:pointer}
+td.no{text-align:center;color:var(--muted);width:44px}
+td.c{text-align:center}
+td.nowrap{white-space:nowrap}
+td.note{min-width:110px;max-width:220px;white-space:pre-line;font-size:14.5px;color:var(--warn);font-weight:500}
+.stack>div{height:26px;line-height:26px;white-space:nowrap}
+.stack>div.gone{color:var(--faint)}
+.stack>div.gone .nm{text-decoration:line-through}
+.tabs{display:flex;gap:4px;margin:14px 0 0;padding:0 2px}
+.tabs button{font:inherit;font-size:16.5px;font-weight:700;padding:10px 26px;border:1px solid var(--rule);border-bottom:0;background:#e9eef5;color:var(--muted);cursor:pointer;border-radius:3px 3px 0 0}
+.tabs button.on{background:#fff;color:var(--navy);border-top:3px solid var(--navy);padding-top:8px}
+.tabs+.paper,.tabs~.paper{margin-top:0}
+.fsum{display:flex;flex-wrap:wrap;gap:6px 18px;align-items:center;border:1px solid var(--rule);background:#f7f9fc;padding:8px 12px;margin:-4px 0 12px;font-size:14.5px;color:var(--muted)}
+.fsum .lb{font-weight:700;color:var(--navy)}.fsum b{color:var(--navy);font-variant-numeric:tabular-nums}
+.form label>.cell{display:flex;flex-wrap:wrap;align-items:center;gap:6px;padding:5px 8px;border-right:1px solid var(--rule);border-bottom:1px solid var(--rule);min-height:43.5px;min-width:0}
+.form label.full>.cell{grid-column:span 3}
+.form label>.cell input,.form label>.cell select{min-height:34px}
+.form .pickrow{grid-column:1/-1;display:flex;flex-wrap:wrap;gap:6px;align-items:center;padding:6px 10px;background:#f7f9fc;border-right:1px solid var(--rule);border-bottom:1px solid var(--rule)}
+.form .pickrow[hidden]{display:none}
+.dhint{font-size:13.5px;color:var(--muted);white-space:nowrap}
+th.sortable{cursor:pointer;user-select:none}th.sortable:hover{text-decoration:underline}
+@media (max-width:620px){.form label.full>.cell{grid-column:auto}}
+td.cs-ct{min-width:230px}
+td.cs-content{min-width:260px;white-space:pre-line}
+.empty{padding:40px 16px;text-align:center;color:var(--muted);border:1px solid var(--rule);border-top:2px solid var(--navy)}
+.banner{margin-top:14px;padding:9px 14px;border:1px solid #e9c98f;background:var(--warn-soft);color:var(--warn);font-size:15px;display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.foot{margin-top:10px;font-size:14px;color:var(--muted)}
+
+.overlay{position:fixed;inset:0;background:rgba(11,25,45,.5);z-index:50;display:flex;align-items:flex-start;justify-content:center;overflow-y:auto;padding:24px 12px}
+.sheet{background:#fff;border:1px solid var(--rule-strong);width:100%;max-width:920px;display:flex;flex-direction:column;min-width:0;box-shadow:0 8px 30px rgba(11,25,45,.25)}
+.sheet h2{margin:0;font-size:17px;background:var(--navy);color:#fff;padding:11px 18px;font-weight:700}
+.sheet .body{padding:16px 18px;display:flex;flex-direction:column;gap:14px}
+.form{display:grid;grid-template-columns:115px minmax(0,1fr) 115px minmax(0,1fr);border-top:2px solid var(--navy);border-left:1px solid var(--rule)}
+.form label{display:contents}
+.form label>span{background:var(--label);font-weight:600;color:var(--navy);font-size:14.5px;display:flex;align-items:center;justify-content:center;text-align:center;padding:6px 8px;border-right:1px solid var(--rule);border-bottom:1px solid var(--rule)}
+.form label>input,.form label>select,.form label>textarea{border:0;border-right:1px solid var(--rule);border-bottom:1px solid var(--rule);border-radius:0;min-height:43.5px}
+.form label.full>input,.form label.full>textarea{grid-column:span 3}
+@media (max-width:620px){.form{grid-template-columns:90px minmax(0,1fr)}.form label.full>input,.form label.full>textarea{grid-column:auto}}
+.subhead{display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-weight:700;color:var(--navy);font-size:15.5px}
+.subhead::before{content:"";width:4px;height:14px;background:var(--blue)}
+.crows{display:flex;flex-direction:column;gap:0;border-top:2px solid var(--navy)}
+.crow{display:grid;grid-template-columns:repeat(6,minmax(0,1fr)) 34px;gap:5px;align-items:center;padding:7px 8px;border:1px solid var(--rule);border-top:0;background:#fff}
+.crow:nth-child(even){background:#f8fafd}
+.crow input,.crow select{min-height:34.5px;padding:3px 7px;font-size:15px}
+.crow .s2{grid-column:span 2}.crow .s3{grid-column:span 3}
+.crow select[data-k=status]{font-weight:600}
+.crow select[data-k=status].off{color:var(--bad);border-color:var(--bad)}
+@media (max-width:560px){.crow{grid-template-columns:1fr 1fr 34px}.crow .s2,.crow .s3{grid-column:1/-1}}
+.sheet .act{display:flex;gap:6px;justify-content:center;flex-wrap:wrap;align-items:center;border-top:1px solid var(--rule);padding:12px 18px;background:#f6f8fb}
+.sheet .act .left{margin-right:auto}
+.confirm{display:flex;gap:8px;align-items:center;font-size:15px;color:var(--bad)}
+.out{font-family:var(--font-mono);font-size:14px;min-height:172.5px}
+.note-p{margin:0;color:var(--muted);font-size:14.5px;border:1px solid var(--rule);background:#f6f8fb;padding:8px 10px}
+.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:20px;background:var(--navy);color:#fff;padding:9px 16px;z-index:60;font-size:15px;box-shadow:0 4px 16px rgba(11,25,45,.3)}
+.login{position:fixed;inset:0;z-index:40;background:var(--page);display:grid;place-items:center;padding:16px}
+.lbox{background:#fff;border:1px solid var(--rule-strong);border-top:4px solid var(--navy);width:min(400px,100%);padding:26px 26px 20px;display:flex;flex-direction:column;gap:12px;box-shadow:0 8px 30px rgba(11,25,45,.12)}
+.lhead{display:flex;gap:10px;align-items:center;color:var(--navy);font-size:19px}
+.lhead .emblem{border-color:var(--navy);color:var(--navy)}
+.lbox p{margin:0;color:var(--muted);font-size:14px;line-height:1.6}
+.lmsg{min-height:20px;font-size:14px;color:var(--muted)}.lmsg.err{color:var(--bad);font-weight:600}
+.lfoot{font-size:12.5px;color:var(--faint)}
+#who{margin-left:6px}
+
+.lv-tabs{display:flex;gap:4px;margin:6px 0 12px;border-bottom:2px solid var(--navy)}
+.lv-tabs button{font:inherit;font-size:15.5px;font-weight:700;padding:9px 20px;border:1px solid var(--rule);border-bottom:0;background:#e9eef5;color:var(--muted);cursor:pointer;border-radius:3px 3px 0 0;margin-bottom:-2px}
+.lv-tabs button.on{background:var(--navy);color:#fff;border-color:var(--navy)}
+.st{display:inline-block;font-size:13px;font-weight:700;padding:0 7px;border-radius:2px;line-height:22px;border:1px solid}
+.st.s-신청{background:#fff4d6;border-color:#e9c98f;color:#8a5a00}
+.st.s-승인{background:#e8f0fb;border-color:#9bbbe3;color:#174a8c}
+.st.s-사용완료{background:#eef0f3;border-color:#c5ccd6;color:#5b6675}
+.st.s-반려{background:#fdecec;border-color:#e3b3ae;color:#a52a2a}
+.st.s-취소{background:#f4f4f4;border-color:#ddd;color:#999;text-decoration:line-through}
+.late{font-size:12px;color:#a52a2a;font-weight:700;margin-left:4px}
+td.num{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+.left-big{font-size:18px;font-weight:800;color:var(--navy)}
+.cal{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));border-top:2px solid var(--navy);border-left:1px solid var(--rule)}
+.cal>div{border-right:1px solid var(--rule);border-bottom:1px solid var(--rule);min-height:92px;padding:4px 5px;font-size:13.5px;background:#fff}
+.cal>.h{min-height:0;background:var(--label);font-weight:700;color:var(--navy);text-align:center;padding:6px}
+.cal>.off{background:#f7f8fa;color:#aab}
+.cal .dn{font-weight:700;color:#334}.cal .sun .dn,.cal>.sun .dn{color:#c0392b}.cal>.sat .dn{color:#1f5fbf}
+.cal>.today{outline:2px solid var(--navy);outline-offset:-2px}
+.ev{display:block;margin-top:3px;padding:1px 5px;border-radius:2px;background:#e8f0fb;color:#174a8c;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ev.t-오전반차,.ev.t-오후반차{background:#eaf6ee;color:#1d6b3a}.ev.t-외출{background:#f3ecfb;color:#5b2d91}.ev.pend{background:#fff;border:1px dashed #e9c98f;color:#8a5a00}
+.calnav{display:flex;align-items:center;gap:10px;margin-bottom:8px}.calnav b{font-size:18px;color:var(--navy)}
+.notice{border:1px solid var(--rule);background:#f7f9fc;padding:10px 14px;font-size:14px;color:#445;line-height:1.7;margin-bottom:12px}
+</style>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+</head>
+<body>
+<header class="top"><div class="in">
+  <span class="emblem">지노</span>
+  <h1>TEAM JINO 연차 관리</h1>
+  <span class="sub">노무그룹지노 · 시범 운영</span>
+  <span class="savebox" id="savebox"><span id="savetext"></span><b id="who" style="color:#fff"></b><button class="btn sm" id="btn-pending" hidden>승인 대기<b id="pend-n" class="cnt" hidden></b></button><button class="btn sm" id="btn-refresh">새로고침</button><button class="btn primary sm" id="btn-lock">잠그기</button></span>
+</div></header>
+<input type="file" id="lv-file" accept=".xlsx,.xls" hidden>
+<div class="wrap">
+<div class="paper">
+  <div class="doc-title"><h2>연차 사용 관리대장</h2><span class="ref" id="ref"></span></div>
+  <div class="notice">
+    · 연차 1일 = 8시간 · <b>오전반차</b> 3시간(09:30~13:30, 점심 포함) = 3/8일 · <b>오후반차</b> 5시간(12:30~18:30, 점심 포함) = 5/8일 · <b>외출</b> 2시간권 = 2/8일 (연 8회)<br>
+    · 연차 사용 전 원활한 업무 공유를 부탁드립니다. <span style="color:var(--bad)">비밀번호는 이 프로그램에 적지 마세요.</span>
+  </div>
+  <div class="toolbar" style="margin-top:0">
+    <span class="lb" style="font-weight:700;color:var(--navy)">연도</span><select id="lv-year" style="width:auto"></select>
+    <span style="flex:1"></span>
+    <button class="btn" id="lv-import" hidden>예전 연차대장 옮기기</button>
+    <button class="btn" id="lv-xlsx" hidden>연차대장 엑셀</button>
+    <button class="btn primary" id="lv-add">연차 신청</button>
+  </div>
+  <div id="lv-sum"></div>
+  <div class="lv-tabs" id="lv-tabs"><button data-v="list" class="on">신청·사용 기록</button><button data-v="pend" id="tab-pend" hidden>승인 대기</button><button data-v="cal">팀 달력</button></div>
+  <div class="toolbar" id="lv-filter" style="margin-top:0">
+    <span id="lv-count" style="color:var(--muted);font-size:14.5px"></span><span style="flex:1"></span>
+    <select id="lv-who" style="width:auto" hidden></select>
+    <select id="lv-st" style="width:auto"><option value="">상태 전체</option><option>신청</option><option>승인</option><option>사용완료</option><option>반려</option><option>취소</option></select>
+    <select id="lv-sort" style="width:auto"><option value="desc">최근 날짜부터</option><option value="asc">오래된 날짜부터</option></select>
+  </div>
+  <div id="lv-body"></div>
+  <div class="foot">※ 구성원은 본인 기록만 보고, 팀 달력에서는 다른 구성원의 승인된 연차 날짜·종류만 보입니다. 승인·반려와 발생일수 설정은 팀장·대표만 할 수 있습니다. 모든 신청서는 처리 결과와 함께 보관되어 <b>신청서</b> 버튼으로 언제든 다시 열고 인쇄할 수 있습니다.</div>
+</div>
+</div>
+<div id="login" class="login"><form class="lbox" id="lform" autocomplete="off">
+  <div class="lhead"><span class="emblem">지노</span><b>TEAM JINO 연차 관리</b></div>
+  <p><b>본인의</b> TEAM JINO 비밀번호를 넣어 주세요.<br><span style="color:var(--bad);font-weight:600">비밀번호는 다른 사람에게 알려 주거나 함께 쓰지 마세요.</span></p>
+  <input type="password" id="pw" placeholder="비밀번호" autocomplete="current-password" autofocus>
+  <button class="btn primary" id="lgo" type="submit" style="width:100%;justify-content:center">열기</button>
+  <div class="lmsg" id="lmsg" role="status"></div>
+  <div class="lfoot">노무그룹지노 · 비밀번호는 서버에 저장되지 않습니다.</div>
+</form></div>
+<div id="modal-root"></div>
+<div class="toast" id="toast" hidden></div>
+<script>
+(function(){
+"use strict";
+var $=function(s){return document.querySelector(s)};
+var esc=function(v){return String(v==null?'':v).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]})};
+var clone=function(o){return JSON.parse(JSON.stringify(o))};
+function toast(msg){var t=$('#toast');t.textContent=msg;t.hidden=false;clearTimeout(toast._t);toast._t=setTimeout(function(){t.hidden=true},3500)}
+function fmtDate(iso){var d=new Date(iso);return isNaN(d)?'':d.getFullYear()+'. '+(d.getMonth()+1)+'. '+d.getDate()+'.'}
+function hm(d){return d.getHours()+':'+String(d.getMinutes()).padStart(2,'0')}
+function when(iso){if(!iso)return '';var d=new Date(iso);return fmtDate(iso)+' '+hm(d)}
+
+/* ---------- JINO 열쇠 · Supabase (주소록과 같은 로그인) ---------- */
+var SB_URL='https://vsbddasoslqmcvoppvuj.supabase.co', SB_KEY='sb_publishable__6dfg59E_kmUEO9nkLNA_Q_gxt1jidT';
+var KEY_URL='https://raw.githubusercontent.com/jinolabor/config-files/main/key.json', KEY_URLS=[KEY_URL,'https://raw.githubusercontent.com/dhkim0629-ops/config-files/main/key.json'], RECHECK=10*60*1000;
+var ME=null,TOKEN='',LKEY=null,watchT=null;
+var unb64=function(s){return Uint8Array.from(atob(s),function(c){return c.charCodeAt(0)})};
+function b64(u){var s='';for(var i=0;i<u.length;i+=8192)s+=String.fromCharCode.apply(null,u.subarray(i,i+8192));return btoa(s)}
+async function fetchKeys(){var last=null;for(var i=0;i<KEY_URLS.length;i++){try{var r=await fetch(KEY_URLS[i]+'?t='+Date.now(),{cache:'no-store'});if(!r.ok)throw new Error('열쇠 파일을 불러오지 못했습니다 (HTTP '+r.status+')');return await r.json()}catch(e){last=e}}throw last||new Error('열쇠 파일을 불러오지 못했습니다')}
+async function unwrap(pw,e){
+  var base=await crypto.subtle.importKey('raw',new TextEncoder().encode(pw),'PBKDF2',false,['deriveKey']);
+  var wk=await crypto.subtle.deriveKey({name:'PBKDF2',salt:unb64(e.salt),iterations:e.iter||150000,hash:'SHA-256'},base,{name:'AES-GCM',length:256},false,['decrypt']);
+  return new Uint8Array(await crypto.subtle.decrypt({name:'AES-GCM',iv:unb64(e.iv)},wk,unb64(e.wk)));
+}
+async function mtoken(id,pw){var h=new Uint8Array(await crypto.subtle.digest('SHA-256',new TextEncoder().encode('jino-payroll-member|'+id+'|'+pw)));return btoa(String.fromCharCode.apply(null,h))}
+async function leaveKey(k){var base=await crypto.subtle.importKey('raw',k,'HKDF',false,['deriveKey']);
+  return crypto.subtle.deriveKey({name:'HKDF',hash:'SHA-256',salt:new TextEncoder().encode('jino-leave'),info:new TextEncoder().encode('jino-leave-v1')},base,{name:'AES-GCM',length:256},false,['encrypt','decrypt'])}
+async function enc(obj){var iv=crypto.getRandomValues(new Uint8Array(12));var ct=await crypto.subtle.encrypt({name:'AES-GCM',iv:iv},LKEY,new TextEncoder().encode(JSON.stringify(obj)));return {iv:b64(iv),data:b64(new Uint8Array(ct))}}
+async function dec(iv,d){var pt=await crypto.subtle.decrypt({name:'AES-GCM',iv:unb64(iv)},LKEY,unb64(d));return JSON.parse(new TextDecoder().decode(pt))}
+async function decSafe(iv,d){if(!iv||!d)return null;try{return await dec(iv,d)}catch(e){return null}}
+function lkey(y){var a=crypto.getRandomValues(new Uint8Array(8));return 'l_'+y+'_'+Array.from(a,function(x){return x.toString(16).padStart(2,'0')}).join('')}
+async function rpc(fn,args){
+  var r=await fetch(SB_URL+'/rest/v1/rpc/'+fn,{method:'POST',headers:{'apikey':SB_KEY,'Content-Type':'application/json'},body:JSON.stringify(Object.assign({p_token:TOKEN},args||{}))});
+  var t=await r.text(),j=null;try{j=t?JSON.parse(t):null}catch(e){}
+  if(!r.ok){var msg=(j&&j.message)||('서버 오류 (HTTP '+r.status+')');if(msg==='denied'){msg='권한이 없습니다';if(fn==='leave_whoami')lockOut('사용이 중지된 비밀번호이거나 권한이 없습니다.')}throw new Error(msg)}
+  return j;
+}
+function status(text,warn){$('#savetext').textContent=text;$('#savebox').classList.toggle('dirty',!!warn)}
+function modal(html){var root=$('#modal-root');var m=html.match(/^<h2>[\s\S]*?<\/h2>/);var h2=m?m[0]:'';var rest=html.slice(h2.length);var ai=rest.lastIndexOf('<div class="act">');
+  root.innerHTML='<div class="overlay"><div class="sheet" role="dialog" aria-modal="true">'+h2+'<div class="body">'+(ai>=0?rest.slice(0,ai):rest)+'</div>'+(ai>=0?rest.slice(ai):'')+'</div></div>';var ov=root.firstChild;ov.addEventListener('mousedown',function(e){if(e.target===ov)closeModal()});document.addEventListener('keydown',escClose);var f=ov.querySelector('input:not([type=hidden]),select,textarea');if(f)f.focus();return ov}
+function escClose(e){if(e.key==='Escape')closeModal()}
+function closeModal(){$('#modal-root').innerHTML='';document.removeEventListener('keydown',escClose)}
+
+/* ---------- 날짜·계산 ---------- */
+var TYPES=['연차','오전반차','오후반차','외출'],W={'연차':1,'오전반차':3/8,'오후반차':5/8,'외출':2/8},OUT_MAX=8;
+var WD=['일','월','화','수','목','금','토'];
+function ymd(d){return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')}
+function today(){return ymd(new Date())}
+function pd(s){var p=String(s).split('-');return new Date(+p[0],+p[1]-1,+p[2])}
+function dayK(s){if(!s)return '';var d=pd(s);return (d.getMonth()+1)+'. '+d.getDate()+'.('+WD[d.getDay()]+')'}
+function weekdays(a,b){var n=0,d=pd(a),e=pd(b);if(e<d)return 0;for(;d<=e;d.setDate(d.getDate()+1)){var w=d.getDay();if(w!==0&&w!==6)n++}return n}
+function parseDay(s,baseY){s=String(s||'').trim();if(!s)return '';var now=new Date(),y=baseY||now.getFullYear(),m,d,mt;
+  if(mt=s.match(/^(\d{4})\s*[-./년]\s*(\d{1,2})\s*[-./월]\s*(\d{1,2})/)){y=+mt[1];m=+mt[2];d=+mt[3]}
+  else if(mt=s.match(/^(\d{2})[-./](\d{1,2})[-./](\d{1,2})/)){y=2000+(+mt[1]);m=+mt[2];d=+mt[3]}
+  else if(mt=s.match(/^(\d{1,2})\s*[-./월]\s*(\d{1,2})\s*일?$/)){m=+mt[1];d=+mt[2]}
+  else if(mt=s.match(/^(\d{8})$/)){y=+s.slice(0,4);m=+s.slice(4,6);d=+s.slice(6)}
+  else if(mt=s.match(/^(\d{3,4})$/)){m=+s.slice(0,s.length-2);d=+s.slice(-2)}
+  else if(mt=s.match(/^(\d{1,2})\s*일?$/)){m=now.getMonth()+1;d=+mt[1]}
+  else return '';
+  var dt=new Date(y,m-1,d);if(dt.getFullYear()!==y||dt.getMonth()!==m-1||dt.getDate()!==d)return '';return ymd(dt)}
+function useOf(c){return c.type==='연차'?(+c.days||0):(W[c.type]||0)}
+function fmtN(n){n=Math.round(n*1000)/1000;return (Math.abs(n-Math.round(n))<1e-9?String(Math.round(n)):n.toFixed(3).replace(/0+$/,''))}
+function dispSt(r){return r.status==='승인'&&r.c&&(r.c.end||r.c.start)<today()?'사용완료':r.status}
+function stChip(r){var s=dispSt(r);return '<span class="st s-'+s+'">'+s+'</span>'}
+
+/* ---------- 상태 ---------- */
+var L={year:new Date().getFullYear(),rows:[],members:[],quota:{},view:'list',calM:null};
+function isMgr(){return ME&&ME.is_mgr}
+
+/* ---------- 로그인 ---------- */
+function lockOut(msg){ME=null;TOKEN='';LKEY=null;L.rows=[];if(watchT){clearInterval(watchT);watchT=null}closeModal();$('#login').hidden=false;$('#pw').value='';say(msg||'',!!msg);$('#lv-body').innerHTML='';$('#lv-sum').innerHTML='';setTimeout(function(){$('#pw').focus()},50)}
+function say(t,err){var m=$('#lmsg');m.textContent=t;m.className='lmsg'+(err?' err':'')}
+$('#lform').onsubmit=async function(ev){
+  ev.preventDefault();var pw=$('#pw').value.trim();if(!pw){say('비밀번호를 넣어 주세요.',true);return}
+  $('#lgo').disabled=true;say('확인하는 중…');
+  try{
+    var d=await fetchKeys(),list=(d&&d.entries)||[],hit=null;
+    for(var i=0;i<list.length&&!hit;i++){try{hit={id:list[i].id,k:await unwrap(pw,list[i])}}catch(e){}}
+    if(!hit){say('비밀번호가 맞지 않거나 사용이 중지된 비밀번호입니다.',true);return}
+    TOKEN=await mtoken(hit.id,pw);
+    var who;try{who=await rpc('leave_whoami')}catch(e){TOKEN='';say('구성원 명단에 없거나 사용이 중지된 비밀번호입니다.',true);return}
+    ME=who;LKEY=await leaveKey(hit.k);
+    $('#login').hidden=true;$('#who').textContent=ME.name+' 님'+(ME.is_mgr?' (관리)':'');
+    ['#btn-pending','#tab-pend','#lv-import','#lv-xlsx','#lv-who'].forEach(function(s){$(s).hidden=!ME.is_mgr});
+    await loadAll();
+    if(ME.is_mgr&&ME.pending>0){setView('pend');toast('승인을 기다리는 신청이 '+ME.pending+'건 있습니다.')}
+    watchT=setInterval(async function(){try{var k=await fetchKeys();if(!(k.entries||[]).some(function(e){return e.id===hit.id}))lockOut('이 비밀번호는 더 이상 쓸 수 없습니다.')}catch(e){}},RECHECK);
+  }catch(e){say('열지 못했습니다: '+(e&&e.message||e),true)}
+  finally{$('#lgo').disabled=false}
+};
+$('#btn-lock').onclick=function(){lockOut('')};
+$('#btn-refresh').onclick=function(){loadAll()};
+setInterval(function(){if(ME&&!document.hidden&&!$('#modal-root').firstChild)loadAll(true)},90000);
+
+/* ---------- 불러오기 ---------- */
+(function(){var y=new Date().getFullYear(),h='';for(var i=y+1;i>=2025;i--)h+='<option value="'+i+'"'+(i===y?' selected':'')+'>'+i+'년</option>';$('#lv-year').innerHTML=h})();
+$('#lv-year').onchange=function(){L.year=+this.value;L.calM=null;loadAll()};
+async function loadAll(quiet){
+  if(!ME)return;if(!quiet)status('불러오는 중…');
+  try{
+    var x=await Promise.all([rpc('leave_list',{p_year:L.year}),rpc('leave_members'),rpc('leave_quota_list',{p_year:L.year}),rpc('leave_whoami')]);
+    var rows=[];for(var i=0;i<x[0].length;i++){var r=x[0][i];r.c=r.full_view?await decSafe(r.iv,r.data):null;r.cal=await decSafe(r.cal_iv,r.cal_data);if(!r.c&&r.cal)r.c=r.cal;if(r.c)rows.push(r)}
+    L.rows=rows;L.members=x[1];L.quota={};x[2].forEach(function(q){L.quota[q.member_id]=q});ME.pending=x[3].pending;
+    var pn=$('#pend-n');pn.hidden=!ME.pending;pn.textContent=ME.pending;
+    $('#ref').textContent='조회일: '+fmtDate(new Date());
+    var w=$('#lv-who'),cur=w.value;w.innerHTML='<option value="">구성원 전체</option>'+L.members.map(function(m){return '<option value="'+esc(m.id)+'">'+esc(m.name)+'</option>'}).join('');w.value=cur;
+    status('연결됨 · '+hm(new Date())+' 기준');render();
+  }catch(e){status('불러오지 못했습니다',true);if(!quiet)toast(e.message||'불러오지 못했습니다.')}
+}
+function mine(r){return r.owner_id===ME.id}
+function fullRows(){return L.rows.filter(function(r){return r.full_view})}
+
+/* ---------- 화면 ---------- */
+function setView(v){L.view=v;document.querySelectorAll('#lv-tabs button').forEach(function(b){b.classList.toggle('on',b.dataset.v===v)});$('#lv-filter').hidden=v==='cal';render()}
+document.querySelectorAll('#lv-tabs button').forEach(function(b){b.onclick=function(){setView(b.dataset.v)}});
+$('#btn-pending').onclick=function(){setView('pend')};
+['#lv-who','#lv-st','#lv-sort'].forEach(function(s){$(s).onchange=render});
+function summary(){
+  var ms=isMgr()?L.members:L.members.filter(function(m){return m.id===ME.id});
+  var t=today();
+  var rows=ms.map(function(m){var q=L.quota[m.id],my=fullRows().filter(function(r){return r.owner_id===m.id});
+    var used=0,plan=0,req=0,out=0;my.forEach(function(r){var u=useOf(r.c);if(r.status==='승인'){if((r.c.end||r.c.start)<t)used+=u;else plan+=u;if(r.c.type==='외출')out++}else if(r.status==='신청')req+=u});
+    var left=q?q.days-used-plan:null;
+    return '<tr'+(isMgr()?' class="click" data-q="'+esc(m.id)+'"':'')+'><td class="nowrap"><b>'+esc(m.name)+'</b>'+(m.is_mgr?' <span class="chip info">팀장·대표</span>':'')+'</td>'+
+      '<td class="num">'+(q?fmtN(q.days)+'일'+(q.label?' <span style="color:var(--muted);font-size:13px">('+esc(q.label)+')</span>':''):'<span style="color:var(--bad)">미설정</span>')+'</td>'+
+      '<td class="num">'+fmtN(used)+'</td><td class="num">'+fmtN(plan)+'</td><td class="num">'+(req?'<span style="color:#8a5a00">'+fmtN(req)+'</span>':'0')+'</td>'+
+      '<td class="num"><span class="left-big">'+(left==null?'-':fmtN(left))+'</span></td><td class="num">'+out+' / '+OUT_MAX+'회</td></tr>'}).join('');
+  $('#lv-sum').innerHTML='<table class="grid" style="margin-bottom:14px"><thead><tr><th>'+(isMgr()?'구성원':'이름')+'</th><th>'+L.year+'년 발생</th><th>사용완료</th><th>사용 예정(승인)</th><th>신청 중</th><th>남은 연차</th><th>외출 사용</th></tr></thead><tbody>'+(rows||'<tr><td colspan="7" class="c">구성원 정보가 없습니다.</td></tr>')+'</tbody></table>'+(isMgr()?'<div style="font-size:13.5px;color:var(--muted);margin:-8px 0 12px">※ 구성원 줄을 누르면 '+L.year+'년 발생 일수를 정할 수 있습니다. 남은 연차 = 발생 − 사용완료 − 사용 예정</div>':'');
+}
+function render(){
+  if(!ME)return;summary();
+  if(L.view==='cal')return renderCal();
+  var list=fullRows();
+  if(L.view==='pend')list=list.filter(function(r){return r.status==='신청'&&!mine(r)});
+  var who=$('#lv-who').value,st=$('#lv-st').value;
+  if(L.view==='list'){if(who)list=list.filter(function(r){return r.owner_id===who});if(st)list=list.filter(function(r){return dispSt(r)===st})}
+  var asc=$('#lv-sort').value==='asc';list.sort(function(a,b){var x=a.c.start,y=b.c.start;return x<y?(asc?-1:1):x>y?(asc?1:-1):0});
+  $('#lv-count').textContent='총 '+list.length+'건';
+  if(!list.length){$('#lv-body').innerHTML='<div class="empty">'+(L.view==='pend'?'승인을 기다리는 신청이 없습니다.':L.year+'년 기록이 없습니다. <b>연차 신청</b>으로 올려 주세요.')+'</div>';return}
+  $('#lv-body').innerHTML='<table class="grid"><thead><tr>'+(isMgr()?'<th>신청인</th>':'')+'<th>사용일</th><th>종류</th><th>일수</th><th>사유</th><th>업무 대행</th><th>상태</th><th>신청일</th><th>처리</th><th></th></tr></thead><tbody>'+
+    list.map(function(r){var c=r.c;
+      var period=dayK(c.start)+(c.end&&c.end!==c.start?' ~ '+dayK(c.end):'')+(c.time?' <span style="color:var(--muted)">'+esc(c.time)+'</span>':'');
+      var act='<button class="btn sm" data-doc="'+esc(r.key)+'">신청서</button>';
+      if(isMgr()&&r.status==='신청'&&(!mine(r)||ME.is_master))act='<button class="btn primary sm" data-ok="'+esc(r.key)+'">승인</button> <button class="btn sm" data-no="'+esc(r.key)+'">반려</button> '+act;
+      return '<tr class="click" data-edit="'+esc(r.key)+'">'+(isMgr()?'<td class="nowrap"><b>'+esc(r.owner_name)+'</b></td>':'')+'<td class="nowrap">'+period+(c.late?'<span class="late">사후</span>':'')+'</td><td class="c">'+esc(c.type)+'</td><td class="num">'+fmtN(useOf(c))+'</td><td>'+esc(c.reason||'')+(r.status==='반려'&&c.reject?'<div style="color:var(--bad);font-size:13.5px">반려 사유: '+esc(c.reject)+'</div>':'')+'</td><td>'+esc(c.handover||'')+'</td><td class="c">'+stChip(r)+'</td><td class="nowrap mono" style="font-size:13.5px">'+fmtDate(c.applied_at||r.created_at)+'</td><td class="nowrap" style="font-size:13.5px">'+(r.decided_by?esc(r.decided_by)+(r.decided_by==='예전 연차대장'?'':'<br><span style="color:var(--muted)">'+fmtDate(r.decided_at)+'</span>'):'')+'</td><td class="nowrap">'+act+'</td></tr>'}).join('')+'</tbody></table>';
+}
+$('#lv-body').addEventListener('click',function(e){
+  var t;
+  if(t=e.target.closest('[data-doc]')){e.stopPropagation();openDoc(byKey(t.dataset.doc));return}
+  if(t=e.target.closest('[data-ok]')){e.stopPropagation();decide(byKey(t.dataset.ok),'승인');return}
+  if(t=e.target.closest('[data-no]')){e.stopPropagation();decide(byKey(t.dataset.no),'반려');return}
+  if(t=e.target.closest('[data-cal-prev]')){L.calM=shiftM(-1);renderCal();return}
+  if(t=e.target.closest('[data-cal-next]')){L.calM=shiftM(1);renderCal();return}
+  if(t=e.target.closest('[data-cal-day]')){openForm(null,{start:t.dataset.calDay});return}
+  if(t=e.target.closest('[data-edit]')){var r=byKey(t.dataset.edit);if(r&&r.full_view)openForm(r)}
+});
+$('#lv-sum').addEventListener('click',function(e){var t=e.target.closest('[data-q]');if(t&&isMgr())openQuota(t.dataset.q)});
+function byKey(k){return L.rows.find(function(r){return r.key===k})}
+
+/* ---------- 팀 달력 ---------- */
+function shiftM(n){var m=L.calM||defaultM();var d=new Date(m.y,m.m+n,1);return {y:d.getFullYear(),m:d.getMonth()}}
+function defaultM(){var n=new Date();return n.getFullYear()===L.year?{y:L.year,m:n.getMonth()}:{y:L.year,m:0}}
+function renderCal(){
+  var m=L.calM||defaultM();if(m.y!==L.year){L.year=m.y;$('#lv-year').value=m.y;L.calM=m;loadAll();return}
+  var first=new Date(m.y,m.m,1),start=new Date(first);start.setDate(1-first.getDay());
+  var evs={};L.rows.forEach(function(r){if(r.status!=='승인'&&!(r.status==='신청'&&(mine(r)||isMgr())))return;var c=r.c;var d=pd(c.start),e=pd(c.end||c.start);
+    for(;d<=e;d.setDate(d.getDate()+1)){var w=d.getDay();if(c.type==='연차'&&(w===0||w===6))continue;var k=ymd(d);(evs[k]=evs[k]||[]).push(r)}});
+  var h='<div class="calnav"><button class="btn sm" data-cal-prev>◀</button><b>'+m.y+'년 '+(m.m+1)+'월</b><button class="btn sm" data-cal-next>▶</button><span style="font-size:13.5px;color:var(--muted);margin-left:8px">점선은 승인 전 신청입니다. 빈 날짜를 누르면 그날로 신청 창이 열립니다.</span></div><div class="cal">'+WD.map(function(w){return '<div class="h">'+w+'</div>'}).join('');
+  for(var i=0;i<42;i++){var d=new Date(start);d.setDate(start.getDate()+i);var k=ymd(d),cls=[];if(d.getMonth()!==m.m)cls.push('off');if(d.getDay()===0)cls.push('sun');if(d.getDay()===6)cls.push('sat');if(k===today())cls.push('today');
+    h+='<div class="'+cls.join(' ')+'" data-cal-day="'+k+'"><span class="dn">'+d.getDate()+'</span>'+(evs[k]||[]).map(function(r){return '<span class="ev t-'+esc(r.c.type)+(r.status==='신청'?' pend':'')+'" title="'+esc(r.owner_name+' '+r.c.type+(r.c.time?' '+r.c.time:''))+'">'+esc(r.owner_name)+' '+esc(r.c.type==='연차'?'연차':r.c.type)+'</span>'}).join('')+'</div>';
+    if(i===34&&new Date(start.getTime()+35*864e5).getMonth()!==m.m)break}
+  $('#lv-body').innerHTML=h+'</div>';
+}
+
+/* ---------- 신청·수정 ---------- */
+$('#lv-add').onclick=function(){openForm(null)};
+function openForm(r,preset){
+  var isNew=!r,c=r?clone(r.c):Object.assign({type:'연차',start:'',end:'',days:'',time:'',reason:'',handover:'',shared:false},preset||{});
+  var owner=r?r.owner_id:ME.id;
+  var canEdit=isNew||isMgr()||(mine(r)&&(r.status==='신청'||r.status==='반려'));
+  var ownerSel=isMgr()&&isNew?'<select id="f-owner">'+L.members.map(function(m){return '<option value="'+esc(m.id)+'"'+(m.id===owner?' selected':'')+'>'+esc(m.name)+'</option>'}).join('')+'</select>':'<input value="'+esc(r?r.owner_name:ME.name)+'" disabled style="background:#f3f5f8">';
+  var ov=modal('<h2>'+(isNew?'연차 신청':'연차 신청 내용')+(r?' <span style="font-size:14px">'+stChip(r)+'</span>':'')+'</h2>'+
+    (canEdit?'':'<p class="note-p" style="color:var(--bad)">승인된 신청은 본인이 고칠 수 없습니다. 바꿔야 하면 팀장·대표에게 요청해 주세요.</p>')+
+    '<div class="form">'+
+      '<label><span>신청인</span>'+ownerSel+'</label>'+
+      '<label><span>종류</span><select id="f-type">'+TYPES.map(function(t){return '<option'+(t===c.type?' selected':'')+'>'+t+'</option>'}).join('')+'</select></label>'+
+      '<label><span>사용일</span><input id="f-start" value="'+esc(c.start)+'" placeholder="예: 12/3, 1203" autocomplete="off"></label>'+
+      '<label id="f-endw"><span>끝나는 날</span><input id="f-end" value="'+esc(c.end&&c.end!==c.start?c.end:'')+'" placeholder="하루면 비워 두세요" autocomplete="off"></label>'+
+      '<label id="f-daysw"><span>사용 일수</span><input id="f-days" value="'+esc(c.type==='연차'?(c.days||''):'')+'" placeholder="주말 빼고 자동 계산" autocomplete="off"></label>'+
+      '<label id="f-timew"><span>외출 시간</span><input id="f-time" value="'+esc(c.time||'')+'" placeholder="예: 14:00~16:00"></label>'+
+      '<label class="full"><span>사유</span><input id="f-reason" value="'+esc(c.reason||'')+'" placeholder="예: 개인 사정, 병원 진료"></label>'+
+      '<label class="full"><span>업무 대행</span><input id="f-handover" value="'+esc(c.handover||'')+'" placeholder="예: 급여 업무 — 정연이, 거래처 전화 — 유재경"></label>'+
+    '</div>'+
+    '<label style="display:flex;gap:8px;align-items:center;margin-top:10px;font-size:15px"><input type="checkbox" id="f-shared" style="width:auto;min-height:0"'+(c.shared?' checked':'')+'> 연차 전에 진행 중인 업무를 공유했습니다 <span style="color:var(--bad);font-size:13.5px">(비밀번호는 여기에 적지 마세요)</span></label>'+
+    '<p class="note-p" id="f-info" style="margin-top:8px"></p>'+
+    (r&&r.status==='반려'&&c.reject?'<p class="note-p" style="color:var(--bad)">반려 사유: '+esc(c.reject)+'</p>':'')+
+    '<div class="act"><span class="left">'+(r?'<button class="btn" id="f-hist">처리 이력</button> <button class="btn" id="f-doc">신청서</button>':'')+
+      (r&&mine(r)&&r.status==='신청'?' <button class="btn danger" id="f-cancel">신청 취소</button>':'')+(r&&isMgr()&&r.status!=='취소'?' <button class="btn danger" id="f-del">삭제</button>':'')+'</span>'+
+      '<button class="btn" id="f-close">닫기</button>'+(canEdit?'<button class="btn primary" id="f-save">'+(isNew?'신청하기':(isMgr()&&r.status==='승인'?'저장':'다시 신청'))+'</button>':'')+'</div>');
+  var q=function(s){return ov.querySelector(s)};
+  if(!canEdit)ov.querySelectorAll('.form input,.form select,#f-shared').forEach(function(i){i.disabled=true});
+  function sync(){var t=q('#f-type').value;q('#f-endw').style.display=t==='연차'?'':'none';q('#f-daysw').style.display=t==='연차'?'':'none';q('#f-timew').style.display=t==='외출'?'':'none';
+    var s=parseDay(q('#f-start').value,L.year),e=parseDay(q('#f-end').value,L.year)||s,info=[];
+    if(t==='연차'&&s){var n=weekdays(s,e);if(!q('#f-days').dataset.touched)q('#f-days').value=n||'';info.push('사용일 '+dayK(s)+(e!==s?' ~ '+dayK(e):'')+' · 주말 뺀 '+n+'일 (공휴일이 끼면 사용 일수를 고쳐 주세요)')}
+    else if(s)info.push('사용일 '+dayK(s)+' · '+fmtN(W[t])+'일 차감');
+    if(s&&s<today())info.push('<b style="color:#a52a2a">지난 날짜라 사후 신청으로 표시됩니다.</b>');
+    q('#f-info').innerHTML=info.join('<br>')}
+  ['#f-type','#f-start','#f-end'].forEach(function(s){q(s).addEventListener('input',sync);q(s).addEventListener('change',sync)});
+  q('#f-days').addEventListener('input',function(){this.dataset.touched='1'});
+  ['#f-start','#f-end'].forEach(function(s){q(s).addEventListener('blur',function(){var v=parseDay(this.value,L.year);if(v)this.value=v})});
+  sync();
+  q('#f-close').onclick=closeModal;
+  if(q('#f-hist'))q('#f-hist').onclick=function(){openHist(r)};
+  if(q('#f-doc'))q('#f-doc').onclick=function(){openDoc(r)};
+  if(q('#f-cancel'))q('#f-cancel').onclick=async function(){if(this.dataset.sure!=='1'){this.dataset.sure='1';this.textContent='한 번 더 누르면 취소합니다';return}if(await put(r,r.c,'취소')){closeModal();toast('신청을 취소했습니다.');loadAll(true)}};
+  if(q('#f-del'))q('#f-del').onclick=async function(){if(this.dataset.sure!=='1'){this.dataset.sure='1';this.textContent='한 번 더 누르면 삭제합니다';return}if(await put(r,r.c,r.status,true)){closeModal();toast('삭제했습니다.');loadAll(true)}};
+  if(q('#f-save'))q('#f-save').onclick=async function(){
+    var t=q('#f-type').value,s=parseDay(q('#f-start').value,L.year),e=t==='연차'?(parseDay(q('#f-end').value,L.year)||s):s;
+    if(!s){toast('사용일을 확인해 주세요 (예: 12/3).');q('#f-start').focus();return}
+    if(e<s){toast('끝나는 날이 사용일보다 앞입니다.');q('#f-end').focus();return}
+    if(t==='연차'&&String(s).slice(0,4)!==String(e).slice(0,4)){toast('연도가 바뀌는 연차는 연도별로 나눠 신청해 주세요.');return}
+    var days=t==='연차'?parseFloat(q('#f-days').value):W[t];if(t==='연차'&&!(days>0)){toast('사용 일수를 확인해 주세요.');q('#f-days').focus();return}
+    var own=q('#f-owner')?q('#f-owner').value:owner;
+    var body={type:t,start:s,end:e,days:t==='연차'?days:'',time:t==='외출'?q('#f-time').value.trim():'',reason:q('#f-reason').value.trim(),handover:q('#f-handover').value.trim(),shared:q('#f-shared').checked,
+      late:s<today(),applied_at:isNew?new Date().toISOString():(c.applied_at||r.created_at),applicant:isNew?(L.members.find(function(m){return m.id===own})||{name:ME.name}).name:c.applicant,entered_by:isNew?ME.name:(c.entered_by||ME.name)};
+    var stNew='신청';
+    if(isMgr()&&r&&r.status==='승인')stNew='승인';
+    var direct=isMgr()&&isNew&&own!==ME.id;
+    if(direct)stNew='승인';
+    this.disabled=true;
+    var ok=await put(r||{key:lkey(s.slice(0,4)),owner_id:own,rev:0,status:'신청'},body,stNew);
+    this.disabled=false;if(!ok)return;
+    closeModal();toast(direct?'등록하고 바로 승인했습니다.':isNew?'신청했습니다. 팀장·대표의 승인을 기다립니다.':'저장했습니다.');loadAll(true);
+  };
+}
+async function put(r,body,st,del){
+  try{var x=await enc(body),cal=await enc({type:body.type,start:body.start,end:body.end,days:body.days,time:body.time});
+    var res=await rpc('leave_put',{p_key:r.key,p_expected_rev:r.rev||0,p_owner_id:r.owner_id,p_year:+String(body.start).slice(0,4),p_status:st,p_iv:x.iv,p_data:x.data,p_cal_iv:cal.iv,p_cal_data:cal.data,p_deleted:!!del});
+    if(res&&res.conflict){toast((res.updated_by||'다른 사람')+' 님이 방금 고쳤습니다. 다시 열어 확인해 주세요.');closeModal();loadAll(true);return false}
+    return !!(res&&res.ok);
+  }catch(e){toast(e.message||'저장하지 못했습니다.');return false}
+}
+async function decide(r,st){
+  if(!r)return;
+  if(st==='반려'){
+    var ov=modal('<h2>반려</h2><p class="note-p"><b>'+esc(r.owner_name)+'</b> · '+dayK(r.c.start)+' '+esc(r.c.type)+'</p><div class="form"><label class="full"><span>반려 사유</span><input id="rj" placeholder="예: 같은 날 다른 구성원 연차, 일정 조정 요청"></label></div><div class="act"><button class="btn" id="rj-c">취소</button><button class="btn danger" id="rj-ok">반려하기</button></div>');
+    ov.querySelector('#rj-c').onclick=closeModal;
+    ov.querySelector('#rj-ok').onclick=async function(){var why=ov.querySelector('#rj').value.trim();if(!why){toast('반려 사유를 적어 주세요.');return}var b=clone(r.c);b.reject=why;this.disabled=true;if(await put(r,b,'반려')){closeModal();toast('반려했습니다.');loadAll(true)}else this.disabled=false};
+    return;
+  }
+  var b=clone(r.c);delete b.reject;if(await put(r,b,'승인')){toast(r.owner_name+' 님 '+dayK(r.c.start)+' '+r.c.type+' — 승인했습니다.');loadAll(true)}
+}
+async function openHist(r){
+  var ov=modal('<h2>처리 이력</h2><div id="hb" class="note-p">불러오는 중…</div><div class="act"><button class="btn primary" id="hc">닫기</button></div>');ov.querySelector('#hc').onclick=closeModal;
+  try{var h=await rpc('leave_history_list',{p_key:r.key}),out=[];for(var i=0;i<h.length;i++){var b=await decSafe(h[i].iv,h[i].data);out.push('<tr><td class="mono nowrap">'+when(h[i].updated_at)+'</td><td>'+esc(h[i].updated_by)+'</td><td class="c"><span class="st s-'+esc(h[i].deleted?'취소':h[i].status)+'">'+(h[i].deleted?'삭제':esc(h[i].status))+'</span></td><td>'+(b?dayK(b.start)+(b.end&&b.end!==b.start?' ~ '+dayK(b.end):'')+' '+esc(b.type)+' '+fmtN(useOf(b))+'일'+(b.reject?' · 반려 사유: '+esc(b.reject):''):'')+'</td></tr>')}
+    ov.querySelector('#hb').innerHTML='<table><thead><tr><th>일시</th><th>처리한 사람</th><th>상태</th><th>내용</th></tr></thead><tbody>'+out.join('')+'</tbody></table>'}
+  catch(e){ov.querySelector('#hb').textContent='불러오지 못했습니다: '+e.message}
+}
+
+/* ---------- 신청서 (보관·인쇄) ---------- */
+function openDoc(r){
+  if(!r||!r.full_view)return;var c=r.c,st=dispSt(r);
+  var period=c.start+(c.end&&c.end!==c.start?' ~ '+c.end:'')+(c.time?' ('+c.time+')':'');
+  var html='<!doctype html><html lang="ko"><head><meta charset="utf-8"><title>휴가 신청서 - '+esc(r.owner_name)+' '+esc(c.start)+'</title><style>'+
+    'body{font-family:"Malgun Gothic","맑은 고딕",sans-serif;color:#111;margin:0;background:#eef1f5}.pg{width:180mm;min-height:250mm;margin:10mm auto;background:#fff;padding:18mm 16mm;box-sizing:border-box;position:relative}'+
+    'h1{text-align:center;font-size:26pt;letter-spacing:12px;margin:0 0 10mm;border-bottom:3px double #0b3a75;padding-bottom:5mm;color:#0b3a75}'+
+    '.appr{border-collapse:collapse;margin:0 0 6mm auto}.appr td{border:1px solid #333;width:24mm;text-align:center;font-size:10pt;padding:2mm 1mm}.appr .s{height:14mm;font-size:9.5pt;color:#174a8c}'+
+    'table.f{width:100%;border-collapse:collapse;margin-top:14mm}table.f th,table.f td{border:1px solid #333;padding:4mm 3mm;font-size:11.5pt;text-align:left}table.f th{width:32mm;background:#eef3fa;text-align:center}'+
+    '.stamp{display:inline-block;border:2px solid #b3261e;color:#b3261e;font-weight:700;padding:1mm 4mm;transform:rotate(-6deg);font-size:12pt}.stamp.ok{border-color:#174a8c;color:#174a8c}'+
+    '.decl{margin:14mm 0 6mm;text-align:center;font-size:12.5pt;line-height:2}.foot{text-align:center;font-size:13pt;margin-top:12mm;font-weight:700}.meta{font-size:9pt;color:#666;margin-top:14mm;border-top:1px solid #ccc;padding-top:3mm}'+
+    '.bar{text-align:center;margin:10px}.bar button{font-size:14px;padding:8px 18px;margin:0 4px;cursor:pointer}@media print{body{background:#fff}.bar{display:none}.pg{margin:0;width:auto;min-height:0}}</style></head><body>'+
+    '<div class="bar"><button onclick="print()">인쇄 / PDF로 저장</button><button onclick="close()">닫기</button></div><div class="pg">'+
+    '<table class="appr"><tr><td>신청인</td><td>승인</td></tr><tr><td class="s">'+esc(r.owner_name)+'<br>(전자 신청)</td><td class="s">'+(r.status==='승인'?esc(r.decided_by||'')+'<br>(전자 승인)':r.status==='반려'?'<span style="color:#b3261e">반려<br>'+esc(r.decided_by||'')+'</span>':'')+'</td></tr></table>'+
+    '<h1>휴 가 신 청 서</h1>'+
+    '<table class="f"><tr><th>소 속</th><td>노무그룹지노 TEAM JINO</td><th>성 명</th><td>'+esc(r.owner_name)+'</td></tr>'+
+    '<tr><th>휴가 종류</th><td>'+esc(c.type)+'</td><th>사용 일수</th><td>'+fmtN(useOf(c))+'일</td></tr>'+
+    '<tr><th>기 간</th><td colspan="3">'+esc(period)+(c.late?' <b style="color:#b3261e">(사후 신청)</b>':'')+'</td></tr>'+
+    '<tr><th>사 유</th><td colspan="3">'+esc(c.reason||'')+'</td></tr>'+
+    '<tr><th>업무 대행</th><td colspan="3">'+esc(c.handover||'')+'<br><span style="font-size:10pt;color:#444">업무 공유: '+(c.shared?'완료':'미확인')+'</span></td></tr>'+
+    '<tr><th>처리 결과</th><td colspan="3"><span class="stamp'+(r.status==='승인'?' ok':'')+'">'+esc(st)+'</span>'+(r.decided_at?' &nbsp; '+esc(r.decided_by||'')+(r.decided_by==='예전 연차대장'?'':' · '+when(r.decided_at)):'')+(c.reject?'<br>반려 사유: '+esc(c.reject):'')+'</td></tr></table>'+
+    '<p class="decl">위와 같이 휴가를 신청합니다.</p><p class="decl">'+fmtDate(c.applied_at||r.created_at)+'</p><p class="decl">신청인 : '+esc(r.owner_name)+' &nbsp;(전자 신청)</p>'+
+    '<p class="foot">노무그룹지노 대표 귀하</p>'+
+    '<div class="meta">문서번호 '+esc(r.key)+' · 신청 '+when(c.applied_at||r.created_at)+(c.entered_by&&c.entered_by!==r.owner_name?' (등록: '+esc(c.entered_by)+')':'')+' · 최종 처리 '+when(r.decided_at||r.updated_at)+' · TEAM JINO 연차 관리에서 출력</div></div></body></html>';
+  var w=window.open('','_blank');if(!w){toast('팝업이 막혀 있습니다. 브라우저 주소창 오른쪽에서 팝업을 허용해 주세요.');return}w.document.open();w.document.write(html);w.document.close();
+}
+
+/* ---------- 발생 일수 (관리자) ---------- */
+function openQuota(id){
+  var m=L.members.find(function(x){return x.id===id}),q=L.quota[id]||{};
+  var ov=modal('<h2>'+esc(m.name)+' — '+L.year+'년 연차 발생 일수</h2><div class="form"><label><span>발생 일수</span><input id="q-days" value="'+esc(q.days!=null?q.days:'')+'" placeholder="예: 17"></label><label><span>표시 (선택)</span><input id="q-label" value="'+esc(q.label||'')+'" placeholder="예: 17-2"></label></div>'+
+    '<p class="note-p">※ 지금 연차대장의 "17-2"처럼 적고 싶으면 표시 칸에 넣으세요. 근속 3년 이상은 2년마다 1일씩 늘어납니다(근로기준법 제60조 제4항).</p><div class="act"><button class="btn" id="q-c">취소</button><button class="btn primary" id="q-ok">저장</button></div>');
+  ov.querySelector('#q-c').onclick=closeModal;
+  ov.querySelector('#q-ok').onclick=async function(){var d=parseFloat(ov.querySelector('#q-days').value);if(!(d>=0)){toast('일수를 숫자로 넣어 주세요.');return}
+    try{await rpc('leave_quota_set',{p_member_id:id,p_year:L.year,p_days:d,p_label:ov.querySelector('#q-label').value.trim()});closeModal();toast('저장했습니다.');loadAll(true)}catch(e){toast(e.message)}};
+}
+
+/* ---------- 예전 연차대장 옮기기 (관리자) ---------- */
+$('#lv-import').onclick=function(){var i=$('#lv-file');i.value='';i.click()};
+$('#lv-file').addEventListener('change',function(e){var f=e.target.files[0];if(!f)return;var rd=new FileReader();
+  rd.onload=async function(){try{
+    var wb=XLSX.read(new Uint8Array(rd.result),{type:'array',cellDates:true}),recs=[],quotas=[],unknown={};
+    var byName={};L.members.forEach(function(m){byName[m.name]=m});
+    wb.SheetNames.forEach(function(sn){var ym=sn.match(/(\d{2})년/);if(!ym)return;var Y=2000+(+ym[1]);
+      var a=XLSX.utils.sheet_to_json(wb.Sheets[sn],{header:1,raw:true,defval:''});
+      var hr=a.findIndex(function(r){return r.some(function(x){return /\(\d+(-\d+)?\)/.test(String(x))})});if(hr<0)return;
+      a[hr].forEach(function(v,ci){var mt=String(v).trim().match(/^([가-힣]{2,4})\s*\((\d+)(?:-(\d+))?\)/);if(!mt)return;var name=mt[1],m=byName[name];
+        if(!m){unknown[name]=1;return}
+        quotas.push({id:m.id,name:name,year:Y,days:+mt[2],label:mt[2]+(mt[3]?'-'+mt[3]:'')});
+        for(var r=hr+3;r<a.length;r++){var dv=a[r][ci],tp=String(a[r][ci+1]||'').trim();if(!dv||!tp)continue;var ds='';
+          if(dv instanceof Date)ds=ymd(new Date(dv.getTime()+12*3600e3));else ds=parseDay(String(dv).replace(/\(.*\)/,'').trim(),Y);
+          if(!ds||TYPES.indexOf(tp)<0)continue;
+          recs.push({owner_id:m.id,name:name,year:+ds.slice(0,4),c:{type:tp,start:ds,end:ds,days:tp==='연차'?1:'',time:'',reason:'',handover:'',shared:true,late:false,applied_at:ds+'T00:00:00',applicant:name,entered_by:ME.name+' (예전 연차대장)'}})}
+      })});
+    if(!recs.length)throw new Error('이 파일에서 연차 기록을 찾지 못했습니다.');
+    var have={};
+    var years={};recs.forEach(function(x){years[x.year]=1});
+    for(var yy in years){var rows=await rpc('leave_list',{p_year:+yy});for(var i=0;i<rows.length;i++){if(!rows[i].full_view)continue;var b=await decSafe(rows[i].iv,rows[i].data);if(b)have[rows[i].owner_id+'|'+b.start+'|'+b.type]=(have[rows[i].owner_id+'|'+b.start+'|'+b.type]||0)+1}}
+    var seen={},add=[],dup=0;recs.forEach(function(x){var k=x.owner_id+'|'+x.c.start+'|'+x.c.type;seen[k]=(seen[k]||0)+1;if((have[k]||0)>=seen[k]){dup++;return}add.push(x)});
+    var per={};add.forEach(function(x){var k=x.year+'년 '+x.name;per[k]=(per[k]||0)+1});
+    var ov=modal('<h2>예전 연차대장 옮기기</h2><p class="note-p"><b>'+esc(f.name)+'</b>에서 기록 <b>'+recs.length+'</b>건을 읽었습니다.</p><table><tbody>'+
+      '<tr><th style="width:170px">새로 옮길 기록</th><td><b>'+add.length+'</b>건<br><span style="font-size:13.5px">'+Object.keys(per).sort().map(function(k){return esc(k)+' '+per[k]}).join(' · ')+'</span></td></tr>'+
+      '<tr><th>이미 있어서 건너뜀</th><td>'+dup+'건</td></tr>'+
+      '<tr><th>발생 일수</th><td style="font-size:13.5px">'+quotas.map(function(q){return q.year+'년 '+esc(q.name)+' '+q.days+'일('+esc(q.label)+')'}).join(' · ')+'</td></tr>'+
+      (Object.keys(unknown).length?'<tr><th>구성원 명단에 없음</th><td style="color:var(--bad)">'+Object.keys(unknown).map(esc).join(', ')+' — 건너뜁니다</td></tr>':'')+
+      '</tbody></table><p class="note-p">옮긴 기록은 모두 "승인"으로 들어가고, 지난 날짜는 "사용완료"로 보입니다. 발생 일수도 함께 저장합니다.</p><p class="note-p" id="im-p" hidden></p>'+
+      '<div class="act"><button class="btn" id="im-c">취소</button><button class="btn primary" id="im-ok"'+(add.length||quotas.length?'':' disabled')+'>옮기기</button></div>');
+    ov.querySelector('#im-c').onclick=closeModal;
+    ov.querySelector('#im-ok').onclick=async function(){this.disabled=true;var p=ov.querySelector('#im-p');p.hidden=false;var n=0;
+      try{for(var i=0;i<quotas.length;i++){p.textContent='발생 일수 저장 중…';await rpc('leave_quota_set',{p_member_id:quotas[i].id,p_year:quotas[i].year,p_days:quotas[i].days,p_label:quotas[i].label})}
+        for(var s=0;s<add.length;s+=200){var part=[];for(var j=s;j<Math.min(add.length,s+200);j++){var x=add[j],e1=await enc(x.c),e2=await enc({type:x.c.type,start:x.c.start,end:x.c.end,days:x.c.days,time:''});part.push({key:lkey(x.year),owner_id:x.owner_id,year:x.year,iv:e1.iv,data:e1.data,cal_iv:e2.iv,cal_data:e2.data})}
+          p.textContent='옮기는 중… '+Math.min(add.length,s+200)+' / '+add.length;var res=await rpc('leave_import',{p_docs:part});n+=res.count||0}
+        closeModal();toast(n+'건을 옮겼습니다.');loadAll()}
+      catch(err){toast('옮기지 못했습니다: '+err.message+' (옮긴 '+n+'건은 저장됨)');this.disabled=false}};
+  }catch(err){toast(err.message||'파일을 읽지 못했습니다.')}};rd.readAsArrayBuffer(f)});
+
+/* ---------- 연차대장 엑셀 (관리자) ---------- */
+function loadExcelJS(){if(window.ExcelJS)return Promise.resolve(window.ExcelJS);var urls=['https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.4.0/exceljs.min.js','https://cdn.jsdelivr.net/npm/exceljs@4.4.0/dist/exceljs.min.js'];
+  return new Promise(function(res,rej){(function next(i){if(i>=urls.length)return rej(new Error('엑셀 도구를 불러오지 못했습니다.'));var s=document.createElement('script');s.src=urls[i];s.onload=function(){window.ExcelJS?res(window.ExcelJS):next(i+1)};s.onerror=function(){s.remove();next(i+1)};document.head.appendChild(s)})(0)})}
+$('#lv-xlsx').onclick=async function(){
+  var b=this;b.disabled=true;
+  try{var EJ=await loadExcelJS(),wb=new EJ.Workbook(),ws=wb.addWorksheet(String(L.year).slice(2)+'년 연차사용대장',{pageSetup:{paperSize:9,orientation:'landscape',fitToPage:true,fitToWidth:1,fitToHeight:0},views:[{state:'frozen',ySplit:6,showGridLines:false}]});
+    var F='맑은 고딕',thin={style:'thin',color:{argb:'FF7F8FA6'}},B={top:thin,left:thin,bottom:thin,right:thin},HEAD={type:'pattern',pattern:'solid',fgColor:{argb:'FFDCE6F2'}},LAB={type:'pattern',pattern:'solid',fgColor:{argb:'FFF2F5F9'}},DONE={type:'pattern',pattern:'solid',fgColor:{argb:'FFE3E6EA'}};
+    function cell(r,c,v,st){var x=ws.getCell(r,c);x.value=v;st=st||{};x.font={name:F,size:st.sz||11,bold:!!st.b,color:st.color?{argb:st.color}:undefined};x.alignment={horizontal:st.h||'center',vertical:'middle',wrapText:true};x.border=B;if(st.fill)x.fill=st.fill;if(st.fmt)x.numFmt=st.fmt;return x}
+    var ms=L.members,cols=ms.length*2+1;
+    ws.mergeCells(1,1,1,cols);var t=ws.getCell(1,1);t.value=L.year+'년 TEAM JINO 연차 사용대장';t.font={name:F,size:18,bold:true,color:{argb:'FF0B3A75'}};t.alignment={horizontal:'center',vertical:'middle'};ws.getRow(1).height=40;
+    ws.getColumn(1).width=14;cell(2,1,'이름',{b:true,fill:LAB});cell(3,1,'발생',{b:true,fill:LAB});cell(4,1,'사용(완료+예정)',{b:true,fill:LAB});cell(5,1,'남은 연차',{b:true,fill:LAB});cell(6,1,'구분',{b:true,fill:HEAD});
+    var maxN=0,t0=today();
+    ms.forEach(function(m,i){var c0=2+i*2;ws.getColumn(c0).width=16;ws.getColumn(c0+1).width=11;var q=L.quota[m.id];
+      ws.mergeCells(2,c0,2,c0+1);cell(2,c0,m.name+(q&&q.label?'('+q.label+')':''),{b:true,fill:HEAD});
+      var my=fullRows().filter(function(r){return r.owner_id===m.id&&r.status==='승인'}).sort(function(a,b){return a.c.start<b.c.start?-1:1});
+      var used=my.reduce(function(s,r){return s+useOf(r.c)},0);
+      ws.mergeCells(3,c0,3,c0+1);cell(3,c0,q?q.days:'',{b:true});ws.mergeCells(4,c0,4,c0+1);cell(4,c0,Math.round(used*1000)/1000,{b:true,fmt:'0.###'});ws.mergeCells(5,c0,5,c0+1);cell(5,c0,q?Math.round((q.days-used)*1000)/1000:'',{b:true,fmt:'0.###',color:'FF0B3A75'});
+      cell(6,c0,'연차사용일',{b:true,fill:HEAD});cell(6,c0+1,'유형',{b:true,fill:HEAD});
+      my.forEach(function(r,j){var done=(r.c.end||r.c.start)<t0,fl=done?DONE:undefined;cell(7+j,c0,r.c.start+(r.c.end&&r.c.end!==r.c.start?' ~ '+r.c.end.slice(5):''),{fill:fl});cell(7+j,c0+1,r.c.type+(r.c.type==='연차'&&r.c.days!==1?' '+r.c.days+'일':''),{fill:fl})});
+      maxN=Math.max(maxN,my.length)});
+    for(var r=7;r<7+maxN;r++){cell(r,1,'',{});ws.getRow(r).height=19}
+    var nr=8+maxN;ws.mergeCells(nr,1,nr,cols);var n=ws.getCell(nr,1);n.value='※ 회색 = 사용 완료 · 오전반차 3/8일, 오후반차 5/8일, 외출 2/8일로 계산 · '+fmtDate(new Date())+' 기준, TEAM JINO 연차 관리에서 만듦';n.font={name:F,size:10,color:{argb:'FF666666'}};
+    var buf=await wb.xlsx.writeBuffer(),a=document.createElement('a');a.href=URL.createObjectURL(new Blob([buf],{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'}));a.download='TEAM_JINO_연차사용대장_'+L.year+'년.xlsx';document.body.appendChild(a);a.click();setTimeout(function(){URL.revokeObjectURL(a.href);a.remove()},1500);toast('내려받았습니다 (다운로드 폴더).');
+  }catch(e){toast(e.message||'만들지 못했습니다.')}b.disabled=false;
+};
+
+setTimeout(function(){$('#pw').focus()},50);
+})();
+</script>
+</body>
+</html>
