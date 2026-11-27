@@ -351,7 +351,7 @@ async function loadAll(quiet){
     var x=await Promise.all([rpc('leave_list',{p_year:L.year}),rpc('leave_members'),rpc('leave_quota_list',{p_year:L.year}),rpc('leave_whoami'),rpc('team_names'),rpc('event_list',{p_year:L.year})]);
     L.names=x[4];var evs=[];for(var ei=0;ei<x[5].length;ei++){var er=x[5][ei],ec=await decSafe(er.iv,er.data);if(ec){er.c=ec;evs.push(er)}}L.events=evs;
     var rows=[];for(var i=0;i<x[0].length;i++){var r=x[0][i];r.c=r.full_view?await decSafe(r.iv,r.data):null;r.cal=await decSafe(r.cal_iv,r.cal_data);if(!r.c&&r.cal)r.c=r.cal;if(r.c)rows.push(r)}
-    L.rows=rows;L.members=x[1];L.quota={};x[2].forEach(function(q){L.quota[q.member_id]=q});ME.pending=x[3].pending;
+    L.rows=rows;L.members=byOrder(x[1]);L.names=byOrder(L.names);L.quota={};x[2].forEach(function(q){L.quota[q.member_id]=q});ME.pending=x[3].pending;
     var pn=$('#pend-n');pn.hidden=!ME.pending;pn.textContent=ME.pending;
     $('#ref').textContent='조회일: '+fmtDate(new Date());
     var w=$('#lv-who'),cur=w.value;w.innerHTML='<option value="">구성원 전체</option>'+L.members.map(function(m){return '<option value="'+esc(m.id)+'">'+esc(m.name)+'</option>'}).join('');w.value=cur;
@@ -359,6 +359,10 @@ async function loadAll(quiet){
     lnNotice();
   }catch(e){status('불러오지 못했습니다',true);if(!quiet)toast(e.message||'불러오지 못했습니다.')}
 }
+// 화면에 보이는 구성원 순서 (대표 → 팀장 → 구성원). 명단에 없는 새 구성원은 맨 뒤에 이름순
+var ORDER=['master','대표','안수지','유재경','이다애','정연이','천유림','김선경','장수현'];
+function ordIdx(m){var i=ORDER.indexOf(m.id);if(i<0)i=ORDER.indexOf(m.name);return i<0?99:i}
+function byOrder(list){return (list||[]).slice().sort(function(a,b){return ordIdx(a)-ordIdx(b)||String(a.name).localeCompare(String(b.name),'ko')})}
 function mine(r){return r.owner_id===ME.id}
 function fullRows(){return L.rows.filter(function(r){return r.full_view})}
 
