@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>거래처 주소록 · TEAM JINO</title>
+<title>TEAM JINO 업무공간 · 노무그룹지노</title>
 <meta name="robots" content="noindex,nofollow">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -201,13 +201,45 @@ td.cs-content{min-width:260px;white-space:pre-line}
 .out{font-family:var(--font-mono);font-size:14px;min-height:172.5px}
 .note-p{margin:0;color:var(--muted);font-size:14.5px;border:1px solid var(--rule);background:#f6f8fb;padding:8px 10px}
 .toast{position:fixed;left:50%;transform:translateX(-50%);bottom:20px;background:var(--navy);color:#fff;padding:9px 16px;z-index:60;font-size:15px;box-shadow:0 4px 16px rgba(11,25,45,.3)}
-.login{position:fixed;inset:0;z-index:40;background:var(--page);display:grid;place-items:center;padding:16px}
-.lbox{background:#fff;border:1px solid var(--rule-strong);border-top:4px solid var(--navy);width:min(400px,100%);padding:26px 26px 20px;display:flex;flex-direction:column;gap:12px;box-shadow:0 8px 30px rgba(11,25,45,.12)}
-.lhead{display:flex;gap:10px;align-items:center;color:var(--navy);font-size:19px}
-.lhead .emblem{border-color:var(--navy);color:var(--navy)}
-.lbox p{margin:0;color:var(--muted);font-size:14px;line-height:1.6}
-.lmsg{min-height:20px;font-size:14px;color:var(--muted)}.lmsg.err{color:var(--bad);font-weight:600}
-.lfoot{font-size:12.5px;color:var(--faint)}
+.login{position:fixed;inset:0;z-index:40;background:#e9eef5;overflow-y:auto;display:flex;flex-direction:column}
+.lg-top{background:#0b2a55;color:#dfe8f5;text-align:center;font-size:14px;font-weight:600;padding:11px 16px;letter-spacing:.02em}
+.lg-main{flex:1;display:flex;align-items:center;justify-content:center;padding:32px 16px}
+.lg-card{display:grid;grid-template-columns:minmax(0,1.05fr) minmax(0,.95fr);width:min(1040px,100%);background:#fff;box-shadow:0 10px 40px rgba(11,25,45,.14);border:1px solid #d4dce7}
+.lg-side{position:relative;overflow:hidden;background:#123a73;color:#fff;padding:44px 42px 40px}
+.lg-side::after{content:"";position:absolute;right:-120px;bottom:-140px;width:340px;height:340px;border-radius:50%;border:56px solid rgba(255,255,255,.05)}
+.lg-badge{display:inline-block;border:1px solid #e9c46a;color:#f3d27a;font-size:12.5px;font-weight:700;padding:4px 10px;letter-spacing:.03em}
+.lg-side h1{margin:18px 0 10px;font-size:31px;line-height:1.3;font-weight:700;letter-spacing:-.02em}
+.lg-lead{margin:0 0 26px;color:#cfdcf0;font-size:15px;line-height:1.7}
+.lg-cap{font-size:13.5px;color:#9fb6d8;font-weight:600;padding-bottom:10px;border-bottom:1px solid rgba(255,255,255,.18)}
+.lg-list{list-style:none;margin:0;padding:0;position:relative;z-index:1}
+.lg-list button{display:flex;gap:14px;align-items:center;width:100%;text-align:left;background:transparent;border:0;border-bottom:1px solid rgba(255,255,255,.12);color:#fff;padding:14px 10px 14px 0;cursor:pointer;font:inherit}
+.lg-list button:hover{background:rgba(255,255,255,.04)}
+.lg-ico{flex:none;width:40px;height:40px;border-radius:50%;display:grid;place-items:center;background:rgba(255,255,255,.1)}
+.lg-ico svg{width:20px;height:20px}
+.lg-list b{display:block;font-size:16.5px;margin-bottom:2px}
+.lg-list small{display:block;color:#b9c9e2;font-size:13.5px;line-height:1.5}
+.lg-list .lg-pick{margin-left:auto;flex:none;font-size:12px;color:#f3d27a;font-weight:700;opacity:0}
+.lg-list button.on .lg-pick{opacity:1}
+.lg-list button.on b{color:#f3d27a}
+.lg-tip{margin-top:12px;font-size:12.5px;color:#9fb6d8;position:relative;z-index:1}
+.lbox{padding:44px 40px 32px;display:flex;flex-direction:column;gap:12px;min-width:0}
+.lhead{display:flex;gap:10px;align-items:center;color:#0b3a75;font-size:14px;font-weight:600}
+.lhead .emblem{width:36px;height:36px;border:2px solid #0b3a75;color:#0b3a75;display:grid;place-items:center;font-weight:700;font-size:14px}
+.lbox h2{margin:12px 0 0;font-size:24px;color:#1b2533}
+.lbox p{margin:0;color:#556275;font-size:14.5px;line-height:1.7}
+.lbox label{font-weight:700;font-size:14.5px;color:#0b3a75;margin-top:8px}
+.lbox input{background:#fff;border:1px solid #9aa9bd;border-radius:3px;padding:10px 14px;min-height:50px;width:100%;font-size:17px}
+.lbox input:focus{border-color:#0b3a75;outline:2px solid rgba(11,58,117,.15)}
+.lbox #lgo{min-height:50px;font-size:16.5px;background:#0b3a75;border-color:#0b3a75}
+.lmsg{min-height:20px;font-size:14px;color:#556275}.lmsg.err{color:#b3261e;font-weight:600}
+.lg-help{border:1px solid #d4dce7;border-top:3px solid #0b3a75;background:#f6f8fb;padding:14px 18px;margin-top:6px}
+.lg-help b.t{display:block;color:#0b3a75;font-size:15.5px;margin-bottom:6px}
+.lg-help ul{list-style:none;margin:0;padding:0}
+.lg-help li{display:flex;gap:12px;padding:8px 0;border-top:1px solid #e2e8f0;font-size:14px;color:#334155}
+.lg-help li span{flex:none;width:118px;color:#556275}
+.lg-warn{font-size:13.5px;color:#b3261e;font-weight:600}
+.lfoot{text-align:center;font-size:12.5px;color:#7a8799;padding:0 16px 22px}
+@media (max-width:860px){.lg-card{grid-template-columns:1fr}.lbox{order:-1}.lg-main{padding:16px 12px}.lg-side{padding:30px 24px 26px}.lg-side h1{font-size:25px}.lbox{padding:30px 24px 26px}}
 #who{margin-left:6px}
 
 /* TEAM JINO 커뮤니티 탭 (주황 톤) */
@@ -319,14 +351,34 @@ body.t-jc .jc-cover .jc-ph{color:#cf9c7c}
   <div class="foot">※ 행을 누르면 수정 창이 열립니다. 저장하면 TEAM JINO 모두의 화면에 반영되고, 고친 내용은 수정이력·최근 30일 변경에 남습니다. <b>분기 보고서 내려받기</b>는 협회 제출 양식(분야별 건수·비율 표 포함)으로 만들어 줍니다.</div>
 </div>
 </div>
-<div id="login" class="login"><form class="lbox" id="lform" autocomplete="off">
-  <div class="lhead"><span class="emblem">지노</span><b>거래처 주소록 관리대장</b></div>
-  <p><b>본인의</b> TEAM JINO 비밀번호를 넣어 주세요.<br><span style="color:var(--bad);font-weight:600">비밀번호는 다른 사람에게 알려 주거나 함께 쓰지 마세요.</span></p>
-  <input type="password" id="pw" placeholder="비밀번호" autocomplete="current-password" autofocus>
-  <button class="btn primary" id="lgo" type="submit" style="width:100%;justify-content:center">열기</button>
-  <div class="lmsg" id="lmsg" role="status"></div>
-  <div class="lfoot">노무그룹지노 · 비밀번호는 서버에 저장되지 않습니다.</div>
-</form></div>
+<div id="login" class="login">
+<div class="lg-top">노무그룹지노 TEAM JINO 구성원 전용</div>
+<div class="lg-main"><div class="lg-card">
+  <section class="lg-side" aria-label="이곳에서 할 수 있는 일">
+    <span class="lg-badge">TEAM JINO ONLY · 구성원 전용</span>
+    <h1>TEAM JINO<br>업무공간</h1>
+    <p class="lg-lead">거래처 관리부터 연차, 우리들의 이야기까지<br>한 번 로그인으로 함께 씁니다.</p>
+    <div class="lg-cap">이곳에서 할 수 있는 일</div>
+    <ul class="lg-list"><li><button type="button" data-go="addr"><span class="lg-ico" style="background:#1d5fb4"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h13a3 3 0 0 1 3 3v13H7a3 3 0 0 1-3-3z"/><path d="M8 9h8M8 13h6"/></svg></span><span><b>거래처 주소록</b><small>자문회사 연락처·담당자·사업자번호, 수정이력과 휴지통</small></span><span class="lg-pick">먼저 열기</span></button></li><li><button type="button" data-go="cs"><span class="lg-ico" style="background:#1f8a4f"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg></span><span><b>경협 자문실적</b><small>대한건설협회 경기도회 상담 기록과 분기별 실적보고서</small></span><span class="lg-pick">먼저 열기</span></button></li><li><button type="button" data-go="lv"><span class="lg-ico" style="background:#5a46b8"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg></span><span><b>연차 · 팀달력</b><small>연차 신청·승인, 남은 연차, 외근·출장 일정을 한 달력에</small></span><span class="lg-pick">먼저 열기</span></button></li><li><button type="button" data-go="jc"><span class="lg-ico" style="background:#c2571c"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 15a2 2 0 0 1-2 2H8l-4 4V5a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2z"/></svg></span><span><b>TEAM JINO 커뮤니티</b><small>함께 했던 시간을 사진·지도로 남기고, 오늘의 한마디</small></span><span class="lg-pick">먼저 열기</span></button></li></ul>
+    <div class="lg-tip">항목을 누르면 로그인 뒤 그 화면부터 열립니다.</div>
+  </section>
+  <form class="lbox" id="lform" autocomplete="off">
+    <div class="lhead"><span class="emblem">지노</span>노무그룹지노</div>
+    <h2>TEAM JINO 로그인</h2>
+    <p><b>본인의</b> TEAM JINO 비밀번호로 로그인해 주세요.<br>급여대행 프로그램과 같은 비밀번호입니다.</p>
+    <label for="pw">비밀번호</label>
+    <input type="password" id="pw" placeholder="비밀번호" autocomplete="current-password" autofocus>
+    <div class="lg-warn">비밀번호는 다른 사람에게 알려 주거나 함께 쓰지 마세요.</div>
+    <button class="btn primary" id="lgo" type="submit" style="width:100%;justify-content:center">열기</button>
+    <div class="lmsg" id="lmsg" role="status"></div>
+    <div class="lg-help"><b class="t">로그인이 안 되면</b><ul>
+      <li><span>비밀번호 분실</span>대표님께 다시 받아 주세요</li>
+      <li><span>화면이 예전 모습</span>Ctrl + Shift + R 로 새로고침</li>
+      <li><span>그 밖의 문의</span>팀장님께 알려 주세요</li></ul></div>
+  </form>
+</div></div>
+<div class="lfoot">© 노무그룹지노 · 비밀번호는 서버에 저장되지 않습니다.</div>
+</div>
 <div id="modal-root"></div>
 <div class="toast" id="toast" hidden></div>
 
@@ -383,7 +435,7 @@ function lockOut(msg){
   if(window.JinoLeave)window.JinoLeave.stop();jcStop();
   ME=null;TOKEN='';AKEY=null;docs={};data={companies:[],at:''};loaded=false;CS.year=null;CS.docs={};CS.del=[];$('#cs-list').innerHTML='';
   if(watchT){clearInterval(watchT);watchT=null}
-  closeModal();$('#login').hidden=false;$('#pw').value='';say(msg||'',!!msg);renderAll();setTimeout(function(){$('#pw').focus()},50);
+  closeModal();$('#login').hidden=false;$('#pw').value='';lgMark();say(msg||'',!!msg);renderAll();setTimeout(function(){$('#pw').focus()},50);
 }
 function say(t,err){var m=$('#lmsg');m.textContent=t;m.className='lmsg'+(err?' err':'')}
 $('#lform').onsubmit=async function(ev){
@@ -402,12 +454,17 @@ $('#lform').onsubmit=async function(ev){
     $('#btn-admin').hidden=!ME.is_master;$('#btn-backup').hidden=!ME.is_master;$('#btn-import').hidden=!ME.is_master;$('#btn-bizno').hidden=!ME.is_master;$('#btn-xlsx').hidden=!ME.can_export;
     status('불러오는 중…');await load();
     showChanges(true);pollEditing();
-    try{var _t=/^#(leave|lv)/.test(location.hash)?'lv':/^#(community|jc)/.test(location.hash)?'jc':localStorage.getItem('jino-addr-tab');if(_t==='cs'||_t==='lv'||_t==='jc')setTab(_t)}catch(e){}
+    try{var _t=/^#(leave|lv)/.test(location.hash)?'lv':/^#(community|jc)/.test(location.hash)?'jc':/^#cs/.test(location.hash)?'cs':/^#addr/.test(location.hash)?'addr':localStorage.getItem('jino-addr-tab');if(_t==='cs'||_t==='lv'||_t==='jc')setTab(_t);else setTab('addr')}catch(e){}
     watchT=setInterval(async function(){try{var k=await fetchKeys();if(!(k.entries||[]).some(function(e){return e.id===hit.id}))lockOut('이 비밀번호는 더 이상 쓸 수 없습니다.')}catch(e){}},RECHECK);
   }catch(e){say('열지 못했습니다: '+(e&&e.message||e),true)}
   finally{$('#lgo').disabled=false}
 };
 $('#btn-lock').onclick=function(){lockOut('')};
+/* 첫 화면: 항목을 누르면 로그인 뒤 그 화면부터 엽니다 */
+function lgMark(){var t='addr';try{t=/^#(leave|lv)/.test(location.hash)?'lv':/^#(community|jc)/.test(location.hash)?'jc':/^#cs/.test(location.hash)?'cs':/^#addr/.test(location.hash)?'addr':(localStorage.getItem('jino-addr-tab')||'addr')}catch(e){}
+  document.querySelectorAll('.lg-list [data-go]').forEach(function(b){b.classList.toggle('on',b.dataset.go===t)})}
+document.querySelectorAll('.lg-list [data-go]').forEach(function(b){b.onclick=function(){try{localStorage.setItem('jino-addr-tab',b.dataset.go);history.replaceState(null,'',location.pathname+location.search)}catch(e){}lgMark();$('#pw').focus()}});
+lgMark();
 
 /* ---------- 불러오기 · 저장 ---------- */
 async function load(){
