@@ -105,6 +105,7 @@ td.note{min-width:110px;max-width:220px;white-space:pre-line;font-size:14.5px;co
 .tabs+.paper,.tabs~.paper{margin-top:0}
 .fsum{display:flex;flex-wrap:wrap;gap:6px 18px;align-items:center;border:1px solid var(--rule);background:#f7f9fc;padding:8px 12px;margin:-4px 0 12px;font-size:14.5px;color:var(--muted)}
 .fsum .lb{font-weight:700;color:var(--navy)}.fsum b{color:var(--navy);font-variant-numeric:tabular-nums}
+td.cs-ct{min-width:230px}
 td.cs-content{min-width:260px;white-space:pre-line}
 .empty{padding:40px 16px;text-align:center;color:var(--muted);border:1px solid var(--rule);border-top:2px solid var(--navy)}
 .banner{margin-top:14px;padding:9px 14px;border:1px solid #e9c98f;background:var(--warn-soft);color:var(--warn);font-size:15px;display:flex;gap:10px;align-items:center;flex-wrap:wrap}
@@ -897,6 +898,7 @@ function diffConsult(a,b,del,prevDel){
   var out=[];[['date','날짜'],['company','회사'],['contact','담당자/연락처'],['type','상담유형'],['field','분야'],['content','상담내용'],['note','비고']].forEach(function(f){var x=a[f[0]]||'',y=b[f[0]]||'';if(x!==y)out.push(f[1]+': '+(x?'<s>'+esc(short(x))+'</s> → ':'')+(y?esc(short(y)):'<i>(지움)</i>'))});
   return out.length?out:['(바뀐 내용 없음)'];
 }
+function ctHtml(s){return esc(s).replace(/(\+?\d[\d\-\s)(]{6,}\d)/g,function(m){return '<span style="white-space:nowrap">'+m.trim()+'</span>'})}
 function csRecs(){return Object.keys(CS.docs).map(function(k){var c=CS.docs[k].c;c.id=k;return c}).sort(function(a,b){return a.date<b.date?-1:a.date>b.date?1:(a.ts||0)-(b.ts||0)})}
 function addrCoByName(n){var k=normCo(n);if(!k)return null;return data.companies.find(function(c){return normCo(c.name)===k})||null}
 
@@ -954,7 +956,7 @@ function renderCs(){
   var mcount={};
   $('#cs-list').innerHTML='<table class="grid cs"><thead><tr><th style="width:52px">연번</th><th style="width:96px">날짜</th><th>회사</th><th>담당자 / 연락처</th><th style="width:84px">상담유형</th><th style="width:110px">분야</th><th>상담내용</th><th>비고</th><th style="width:70px">입력</th></tr></thead><tbody>'+
     list.map(function(c,i){var d=CS.docs[c.id];
-      return '<tr class="click" data-cs="'+esc(c.id)+'"><td class="no mono">'+(i+1)+'</td><td class="nowrap mono">'+csDay(c.date)+'</td><td class="nowrap"><b>'+esc(c.company)+'</b>'+editChip(c.id)+'</td><td>'+esc(c.contact)+'</td><td class="c">'+esc(c.type)+'</td><td class="c nowrap">'+esc(c.field)+'</td><td class="cs-content">'+esc(c.content)+'</td><td class="note">'+esc(c.note)+'</td><td class="c" style="font-size:13.5px;color:var(--muted)" title="'+esc(d?when(d.at)+' '+d.by:'')+'">'+esc(String(c.by||'').replace(/\s*\(.*\)$/,''))+'</td></tr>'}).join('')+'</tbody></table>';
+      return '<tr class="click" data-cs="'+esc(c.id)+'"><td class="no mono">'+(i+1)+'</td><td class="nowrap mono">'+csDay(c.date)+'</td><td class="nowrap"><b>'+esc(c.company)+'</b>'+editChip(c.id)+'</td><td class="cs-ct">'+ctHtml(c.contact)+'</td><td class="c">'+esc(c.type)+'</td><td class="c nowrap">'+esc(c.field)+'</td><td class="cs-content">'+esc(c.content)+'</td><td class="note">'+esc(c.note)+'</td><td class="c" style="font-size:13.5px;color:var(--muted)" title="'+esc(d?when(d.at)+' '+d.by:'')+'">'+esc(String(c.by||'').replace(/\s*\(.*\)$/,''))+'</td></tr>'}).join('')+'</tbody></table>';
 }
 $('#cs-list').addEventListener('click',function(e){var t=e.target.closest('[data-cs]');if(t&&CS.docs[t.dataset.cs])openConsult(CS.docs[t.dataset.cs].c)});
 
@@ -1057,7 +1059,7 @@ async function companyConsults(co){
   try{var rows=await rpc('consult_list',{p_year:null}),list=[];
     for(var i=0;i<rows.length;i++){if(rows[i].deleted)continue;var b=await decSafe(rows[i].iv,rows[i].data);if(b&&(b.cid===co.id||normCo(b.company)===normCo(co.name))){b.id=rows[i].key;list.push(b)}}
     list.sort(function(a,b){return a.date<b.date?1:-1});
-    ov.querySelector('#kc-box').innerHTML=list.length?'<p class="note-p" style="margin-top:0">모두 <b>'+list.length+'</b>건 (최근 순)</p><table><thead><tr><th>날짜</th><th>담당자 / 연락처</th><th>유형</th><th>분야</th><th>상담내용</th></tr></thead><tbody>'+list.map(function(c){return '<tr><td class="mono nowrap">'+esc(c.date)+'</td><td>'+esc(c.contact)+'</td><td class="c">'+esc(c.type)+'</td><td class="c">'+esc(c.field)+'</td><td>'+esc(c.content)+'</td></tr>'}).join('')+'</tbody></table>':'경협 상담 기록이 없습니다.';
+    ov.querySelector('#kc-box').innerHTML=list.length?'<p class="note-p" style="margin-top:0">모두 <b>'+list.length+'</b>건 (최근 순)</p><table><thead><tr><th>날짜</th><th>담당자 / 연락처</th><th>유형</th><th>분야</th><th>상담내용</th></tr></thead><tbody>'+list.map(function(c){return '<tr><td class="mono nowrap">'+esc(c.date)+'</td><td class="cs-ct">'+ctHtml(c.contact)+'</td><td class="c">'+esc(c.type)+'</td><td class="c">'+esc(c.field)+'</td><td>'+esc(c.content)+'</td></tr>'}).join('')+'</tbody></table>':'경협 상담 기록이 없습니다.';
   }catch(e){ov.querySelector('#kc-box').textContent='불러오지 못했습니다: '+e.message}
 }
 
