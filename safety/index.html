@@ -2831,12 +2831,40 @@ function renderModule8() {
         // ====== [여기에 모듈 9 붙여넣기] ======
 // 안전보건 예산관리 (서버 저장판) — 회사 공통·연도별.  본사·지노 계정만 볼 수 있고, 본사 최종 확인
 // 서버 기록 한 건 = 회사·연도 하나.  data = { date(작성일), writer, rows:[{ cat, name, plan, exec, note }], photos }
-function mod9Num(v) { const n = Number(v); return isFinite(n) && n > 0 ? Math.round(n) : 0; }
+function mod9Num(v) { const n = Number(String(v == null ? '' : v).replace(/[^0-9.-]/g, '')); return isFinite(n) && n > 0 ? Math.round(n) : 0; }
 function mod9Sum(rows) {
     const plan = rows.reduce((a, b) => a + mod9Num(b.plan), 0);
     const exec = rows.reduce((a, b) => a + mod9Num(b.exec), 0);
-    return { plan: plan, exec: exec, rate: plan > 0 ? ((exec / plan) * 100).toFixed(1) : '0.0' };
+    return { plan: plan, exec: exec, left: plan - exec, rate: mod9Rate(plan, exec) };
 }
+// 집행률: 편성액이 0이면 계산할 수 없으므로 '–'로 둠 (0으로 나눠 엉뚱한 숫자가 나오지 않도록)
+function mod9Rate(plan, exec) { return mod9Num(plan) > 0 ? ((mod9Num(exec) / mod9Num(plan)) * 100).toFixed(1) + '%' : '–'; }
+function mod9Fmt(n) { return mod9Num(n).toLocaleString(); }
+// 금액을 '1억 2,345만원'처럼 한 번 더 보여 줌 (0을 하나 더 치거나 덜 친 실수를 바로 알아보도록)
+function mod9Words(v) {
+    const n = mod9Num(v);
+    if (!n) return '';
+    const eok = Math.floor(n / 100000000), man = Math.floor((n % 100000000) / 10000), rest = n % 10000;
+    let s = '';
+    if (eok) s += eok.toLocaleString() + '억 ';
+    if (man) s += man.toLocaleString() + '만 ';
+    if (rest) s += rest.toLocaleString();
+    return s.trim() + '원';
+}
+// 금액 칸: 치는 동안 천 단위 쉼표를 자동으로 넣고, 커서 자리를 지켜 줌
+function mod9Typing(el, idx, sub) {
+    const caret = el.selectionStart == null ? el.value.length : el.selectionStart;
+    const digitsBefore = el.value.slice(0, caret).replace(/[^0-9]/g, '').length;
+    const digits = el.value.replace(/[^0-9]/g, '').slice(0, 15);
+    el.value = digits ? Number(digits).toLocaleString() : '';
+    let pos = 0, seen = 0;
+    while (pos < el.value.length && seen < digitsBefore) { if (el.value.charCodeAt(pos) >= 48 && el.value.charCodeAt(pos) <= 57) seen++; pos++; }
+    try { el.setSelectionRange(pos, pos); } catch (err) { /* 일부 브라우저에서 커서 이동 불가 */ }
+    const w = document.getElementById('budWord_' + idx + '_' + sub);
+    if (w) w.innerText = mod9Words(digits);
+}
+function mod9MoneySet(el, idx, sub) { rmRowSet('bud', 'rows', idx, sub, mod9Num(el.value), true); }
+const MOD9_CATEGORIES = ['안전보건 평가 및 측정비', '안전보건 교육 자료 구비', '안전보건용품 구입비', '안전 보건 회의 및 행사비', '안전보건 인력 인건비', '안전시설비', '개인보호구', '근로자 건강보호', '기타'];
 makeRecordModule({
     id: 9, name: 'bud', module: 'budget', mode: 'year', scope: 'company', approval: true, managerOnly: true, photoKeys: ['photos'],
     title: '💰 9. 안전보건 예산 편성 및 집행 관리대장',
@@ -2845,7 +2873,7 @@ makeRecordModule({
     printTitle: '🖨️ 9. 안전보건 예산 편성 및 집행 실적 보고서 (공식 A4)',
     blank: () => ({
         date: todayStr(), writer: '',
-        rows: ['안전시설비', '개인보호구', '안전보건교육·진단', '근로자 건강보호'].map(c => ({ cat: c, name: '', plan: 0, exec: 0, note: '' })),
+        rows: ['안전보건 평가 및 측정비', '안전보건 교육 자료 구비', '안전보건용품 구입비', '안전 보건 회의 및 행사비', '안전보건 인력 인건비'].map(c => ({ cat: c, name: '', plan: 0, exec: 0, note: '' })),
         photos: []
     }),
     normalize: (d) => {
@@ -2861,36 +2889,67 @@ makeRecordModule({
     },
     formHtml: (r, c) => {
         const s = mod9Sum(r.rows);
-        const cell = (idx, sub, type, rerender) => `<input type="${type}" class="form-input" ${type === 'number' ? 'min="0" step="1000"' : ''} value="${esc(r.rows[idx][sub])}" ${c.dis} onchange="rmRowSet('${c.name}', 'rows', ${idx}, '${sub}', ${type === 'number' ? 'mod9Num(this.value)' : 'this.value'}, ${rerender})">`;
+        const missing = r.rows.filter(row => mod9Num(row.exec) > 0 && !mod9Num(row.plan)).length;
+        const txt = (idx, sub, ph) => `<input type="text" class="form-input" placeholder="${ph || ''}" ${sub === 'cat' ? 'list="mod9CatList"' : ''} value="${esc(r.rows[idx][sub])}" ${c.dis} onchange="rmRowSet('${c.name}', 'rows', ${idx}, '${sub}', this.value, false)">`;
+        const money = (idx, sub) => `
+            <input type="text" inputmode="numeric" class="form-input" style="text-align:right; font-weight:700;" placeholder="0"
+                   value="${mod9Num(r.rows[idx][sub]) ? mod9Fmt(r.rows[idx][sub]) : ''}" ${c.dis}
+                   oninput="mod9Typing(this, ${idx}, '${sub}')" onchange="mod9MoneySet(this, ${idx}, '${sub}')">
+            <div id="budWord_${idx}_${sub}" style="font-size:10.5px; font-weight:700; color:var(--slate-500); text-align:right; margin-top:2px; min-height:13px;">${mod9Words(r.rows[idx][sub])}</div>`;
+        const sumCell = (v, color) => `<td style="text-align:right; font-weight:900; ${color ? 'color:' + color + ';' : ''}">${v}</td>`;
         return `
+        <datalist id="mod9CatList">${MOD9_CATEGORIES.map(x => `<option value="${esc(x)}">`).join('')}</datalist>
         <div class="section-box" style="border-left:4px solid var(--emerald-600);">
             <div class="grid-2" style="margin-bottom:10px;">
                 ${rmInput(c.name, r, 'date', '작성일', c.dis, 'date')}
                 ${rmInput(c.name, r, 'writer', '작성자', c.dis, 'text', '예: 홍길동 과장')}
             </div>
-            <div class="grid-3">
-                <div><div class="form-label">총 편성 예산액</div><input type="text" class="form-input" value="${s.plan.toLocaleString()} 원" readonly style="font-weight:800;"></div>
-                <div><div class="form-label">총 집행 실적액</div><input type="text" class="form-input" value="${s.exec.toLocaleString()} 원" readonly style="font-weight:800; color:var(--blue-700);"></div>
-                <div><div class="form-label">예산 집행률</div><input type="text" class="form-input" value="${s.rate} %" readonly style="font-weight:900; color:var(--emerald-700);"></div>
+            <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(150px, 1fr)); gap:10px;">
+                <div><div class="form-label">총 편성 예산액</div><input type="text" class="form-input" style="text-align:right; font-weight:800;" value="${mod9Fmt(s.plan)} 원" readonly><div style="font-size:10.5px; font-weight:700; color:var(--slate-500); text-align:right; margin-top:2px;">${mod9Words(s.plan)}</div></div>
+                <div><div class="form-label">총 집행 실적액</div><input type="text" class="form-input" style="text-align:right; font-weight:800; color:var(--blue-700);" value="${mod9Fmt(s.exec)} 원" readonly><div style="font-size:10.5px; font-weight:700; color:var(--slate-500); text-align:right; margin-top:2px;">${mod9Words(s.exec)}</div></div>
+                <div><div class="form-label">잔액 (편성 − 집행)</div><input type="text" class="form-input" style="text-align:right; font-weight:800; color:${s.left < 0 ? 'var(--red-700)' : 'var(--slate-800)'};" value="${s.left.toLocaleString()} 원" readonly><div style="font-size:10.5px; font-weight:700; color:${s.left < 0 ? 'var(--red-700)' : 'var(--slate-500)'}; text-align:right; margin-top:2px;">${s.left < 0 ? '편성액보다 ' + mod9Words(-s.left) + ' 더 집행' : mod9Words(s.left)}</div></div>
+                <div><div class="form-label">예산 집행률</div><input type="text" class="form-input" style="text-align:right; font-weight:900; color:var(--emerald-700);" value="${s.rate}" readonly><div style="font-size:10.5px; font-weight:700; color:var(--slate-500); text-align:right; margin-top:2px;">${s.plan > 0 ? '편성액 대비' : '편성액이 없어 계산할 수 없습니다'}</div></div>
             </div>
         </div>
+        ${missing ? `<div style="background:var(--amber-50); border:1px solid var(--amber-500); border-radius:8px; padding:9px 12px; font-size:12.5px; font-weight:700; color:var(--amber-600); margin-bottom:10px;">⚠ 집행액은 있는데 편성액이 비어 있는 항목이 ${missing}건 있습니다. 편성액을 적어야 집행률이 바르게 계산됩니다.</div>` : ''}
         <div class="law-table-wrap" style="margin-bottom:8px;">
-            <table class="law-table">
-                <thead><tr><th style="width:130px;">항목 구분</th><th>세부 내역 (직접 수정)</th><th style="width:135px;">편성 예산(원)</th><th style="width:135px;">집행 금액(원)</th><th style="width:170px;">비고</th>${c.locked ? '' : '<th style="width:65px;">관리</th>'}</tr></thead>
+            <table class="law-table" style="min-width:880px;">
+                <thead><tr>
+                    <th style="width:175px;">항목 구분</th>
+                    <th>세부 내역 (직접 수정)</th>
+                    <th style="width:150px;">편성 예산(원)</th>
+                    <th style="width:150px;">집행 금액(원)</th>
+                    <th style="width:120px;">잔액 / 집행률</th>
+                    <th style="width:150px;">비고</th>
+                    ${c.locked ? '' : '<th style="width:65px;">관리</th>'}
+                </tr></thead>
                 <tbody>
-                    ${r.rows.map((row, idx) => `
+                    ${r.rows.map((row, idx) => {
+                        const left = mod9Num(row.plan) - mod9Num(row.exec);
+                        return `
                         <tr>
-                            <td>${cell(idx, 'cat', 'text', false)}</td>
-                            <td>${cell(idx, 'name', 'text', false)}</td>
-                            <td>${cell(idx, 'plan', 'number', true)}</td>
-                            <td>${cell(idx, 'exec', 'number', true)}</td>
-                            <td>${cell(idx, 'note', 'text', false)}</td>
+                            <td>${txt(idx, 'cat', '예: 안전보건용품 구입비')}</td>
+                            <td>${txt(idx, 'name', '예: 안전화, 안전장갑 등 소모품')}</td>
+                            <td>${money(idx, 'plan')}</td>
+                            <td>${money(idx, 'exec')}</td>
+                            <td style="text-align:right; font-size:11.5px; font-weight:800; color:${left < 0 ? 'var(--red-700)' : 'var(--slate-600)'};">${mod9Num(row.plan) || mod9Num(row.exec) ? left.toLocaleString() + '<div style="font-weight:700; color:var(--emerald-700);">' + mod9Rate(row.plan, row.exec) + '</div>' : ''}</td>
+                            <td>${txt(idx, 'note', '')}</td>
                             ${c.locked ? '' : `<td style="text-align:center;"><button class="btn btn-red btn-sm" onclick="rmRowDel('${c.name}', 'rows', ${idx})">삭제</button></td>`}
-                        </tr>`).join('')}
+                        </tr>`; }).join('')}
                 </tbody>
+                <tfoot><tr style="background:var(--slate-100);">
+                    <td colspan="2" style="text-align:center; font-weight:900;">합계</td>
+                    ${sumCell(mod9Fmt(s.plan))}
+                    ${sumCell(mod9Fmt(s.exec), 'var(--blue-700)')}
+                    ${sumCell(s.left.toLocaleString() + '<div style="font-weight:700; color:var(--emerald-700);">' + s.rate + '</div>', s.left < 0 ? 'var(--red-700)' : '')}
+                    <td ${c.locked ? '' : 'colspan="2"'}></td>
+                </tr></tfoot>
             </table>
         </div>
-        ${c.locked ? '' : `<div style="margin-bottom:16px;"><button class="btn btn-emerald btn-sm" onclick="rmRowAdd('${c.name}', 'rows', { cat: '', name: '', plan: 0, exec: 0, note: '' })">+ 예산 항목 추가</button></div>`}
+        ${c.locked ? '' : `<div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap; margin-bottom:16px;">
+            <button class="btn btn-emerald btn-sm" onclick="mod9AddRow('${c.name}')">+ 예산 항목 추가</button>
+            <span style="font-size:11.5px; color:var(--slate-500);">금액 칸은 숫자만 치면 쉼표가 자동으로 붙고, 칸 아래에 '○○만원'으로 한 번 더 보여 줍니다.</span>
+        </div>`}
         <div class="section-box" style="border-left:4px solid var(--blue-600);" ${rmDropAttrs(c.name, 'photos', c.locked)}>
             <div class="section-title">
                 <span>📸 안전보건 예산 집행 증빙 사진 (세금계산서·반입사진·지급대장 등)</span>
@@ -2903,18 +2962,43 @@ makeRecordModule({
     },
     printHtml: (r, p) => {
         const s = mod9Sum(r.rows);
+        // 같은 항목 구분이 이어지면 칸을 하나로 합쳐서 보기 좋게 함
+        const span = r.rows.map((row, i) => {
+            if (i > 0 && r.rows[i - 1].cat === row.cat) return 0;
+            let n = 1;
+            while (i + n < r.rows.length && r.rows[i + n].cat === row.cat) n++;
+            return n;
+        });
         return `
         <div style="text-align:center; border-bottom:2px solid #0f172a; padding-bottom:10px; margin-bottom:14px;">
             <h1 style="font-size:20px; font-weight:900;">${p.siteLabel} 안전보건 예산 편성 및 집행 관리대장</h1>
         </div>
         <table class="a4-table">
             <tr><th style="width:20%;">예산 연도</th><td><b>${p.halfLabel}</b></td><th style="width:20%;">작성일 / 작성자</th><td>${esc(r.date)} / ${esc(r.writer)}</td></tr>
-            <tr><th>총 집행률</th><td colspan="3" style="font-weight:900; color:#047857;">${s.rate}% (${s.exec.toLocaleString()}원 / ${s.plan.toLocaleString()}원)</td></tr>
+            <tr><th>총 편성액 / 총 집행액</th><td><b>${mod9Fmt(s.plan)}원</b> / <b>${mod9Fmt(s.exec)}원</b></td><th>집행률 (잔액)</th><td style="font-weight:900; color:#047857;">${s.rate} <span style="color:${s.left < 0 ? '#b91c1c' : '#334155'};">(${s.left.toLocaleString()}원)</span></td></tr>
         </table>
         <table class="a4-table">
-            <thead><tr><th style="width:110px;">구분</th><th>세부 편성 및 집행 내역</th><th style="width:110px;">편성액(원)</th><th style="width:110px;">집행액(원)</th><th style="width:150px;">비고</th></tr></thead>
+            <thead><tr><th style="width:105px;">구분</th><th>세부 편성 및 집행 내역</th><th style="width:95px;">편성액(원)</th><th style="width:95px;">집행액(원)</th><th style="width:95px;">잔액(원)</th><th style="width:55px;">집행률</th><th style="width:110px;">비고</th></tr></thead>
             <tbody>
-                ${r.rows.map(row => `<tr><td style="text-align:center; font-weight:700;">${esc(row.cat)}</td><td>${esc(row.name)}</td><td style="text-align:right;">${mod9Num(row.plan).toLocaleString()}</td><td style="text-align:right; font-weight:800;">${mod9Num(row.exec).toLocaleString()}</td><td>${esc(row.note)}</td></tr>`).join('')}
+                ${r.rows.map((row, i) => {
+                    const left = mod9Num(row.plan) - mod9Num(row.exec);
+                    return `<tr>
+                        ${span[i] ? `<td rowspan="${span[i]}" style="text-align:center; font-weight:700; vertical-align:middle;">${esc(row.cat)}</td>` : ''}
+                        <td>${esc(row.name)}</td>
+                        <td style="text-align:right;">${mod9Fmt(row.plan)}</td>
+                        <td style="text-align:right; font-weight:800;">${mod9Fmt(row.exec)}</td>
+                        <td style="text-align:right; ${left < 0 ? 'color:#b91c1c; font-weight:800;' : ''}">${mod9Num(row.plan) || mod9Num(row.exec) ? left.toLocaleString() : ''}</td>
+                        <td style="text-align:center;">${mod9Num(row.plan) || mod9Num(row.exec) ? mod9Rate(row.plan, row.exec) : ''}</td>
+                        <td>${esc(row.note)}</td>
+                    </tr>`; }).join('')}
+                <tr style="background:#e2e8f0;">
+                    <td colspan="2" style="text-align:center; font-weight:900;">합계</td>
+                    <td style="text-align:right; font-weight:900;">${mod9Fmt(s.plan)}</td>
+                    <td style="text-align:right; font-weight:900;">${mod9Fmt(s.exec)}</td>
+                    <td style="text-align:right; font-weight:900; ${s.left < 0 ? 'color:#b91c1c;' : ''}">${s.left.toLocaleString()}</td>
+                    <td style="text-align:center; font-weight:900;">${s.rate}</td>
+                    <td></td>
+                </tr>
             </tbody>
         </table>
         ${p.approvalRow}
@@ -2922,6 +3006,13 @@ makeRecordModule({
         <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">${rmPrintPhotos(r.photos)}</div>`;
     }
 });
+// 항목을 추가하면 바로 위 줄의 '항목 구분'을 그대로 이어받음 (같은 구분을 여러 줄 적는 일이 많아서)
+function mod9AddRow(name) {
+    const c = rmCur(name);
+    if (c.fixed) return;
+    const rows = c.entry.rec.rows;
+    rmRowAdd(name, 'rows', { cat: rows.length ? rows[rows.length - 1].cat : '', name: '', plan: 0, exec: 0, note: '' });
+}
 function renderModule9() { return rmRender('bud'); }
         // ====== [여기에 모듈 10 붙여넣기] ======
 // 서식 게시판 (서버 저장판) — 회사 공통.  본사·지노 계정이 서식 파일을 올리고, 현장 계정은 열람·내려받기만
