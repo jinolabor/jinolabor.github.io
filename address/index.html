@@ -1425,13 +1425,13 @@ function rowAct(r){var a='<a href="#" class="doclink" data-doc="'+esc(r.key)+'">
   if(isMgr()&&r.status==='신청')a='<button class="btn primary sm" data-ok="'+esc(r.key)+'">승인</button> <button class="btn sm" data-no="'+esc(r.key)+'">반려</button> '+a;return a}
 function rowHtml(r,showName){var c=r.c;
   var period=dayK(c.start)+(c.end&&c.end!==c.start?' ~ '+dayK(c.end):'');
-  var memo=[c.reason,c.handover?'대행: '+c.handover:'',r.status==='반려'&&c.reject?'<span style="color:var(--bad)">반려 사유: '+esc(c.reject)+'</span>':''].filter(Boolean);
+  var memo=[c.reason,r.status==='반려'&&c.reject?'<span style="color:var(--bad)">반려 사유: '+esc(c.reject)+'</span>':''].filter(Boolean);
   return '<tr class="click" data-edit="'+esc(r.key)+'">'+(showName?'<td class="nowrap"><b>'+esc(r.owner_name)+'</b></td>':'')+
     '<td class="nowrap">'+period+(c.late?'<span class="late">사후</span>':'')+'</td>'+
     '<td class="nowrap">'+esc(c.type)+(c.time?' <span class="mut">'+esc(c.time)+'</span>':'')+' <span class="mut">· '+fmtN(useOf(c))+'일</span></td>'+
     '<td class="memo">'+memo.map(function(x,i){return i===memo.length-1&&/^<span/.test(x)?x:esc(x)}).join(' · ')+'</td>'+
     '<td class="c">'+stChip(r)+'</td><td class="nowrap mut">'+(r.decided_by?esc(r.decided_by):'')+'</td><td class="nowrap r">'+rowAct(r)+'</td></tr>'}
-function listHead(showName){return '<thead><tr>'+(showName?'<th style="width:90px">신청인</th>':'')+'<th style="width:150px">사용일</th><th style="width:170px">종류 · 일수</th><th>사유 · 업무 대행</th><th style="width:84px">상태</th><th style="width:80px">처리</th><th style="width:140px"></th></tr></thead>'}
+function listHead(showName){return '<thead><tr>'+(showName?'<th style="width:90px">신청인</th>':'')+'<th style="width:150px">사용일</th><th style="width:170px">종류 · 일수</th><th>사유</th><th style="width:84px">상태</th><th style="width:80px">처리</th><th style="width:140px"></th></tr></thead>'}
 function renderPend(){var list=fullRows().filter(function(r){return r.status==='신청'&&!mine(r)}).sort(function(a,b){return a.c.start<b.c.start?-1:1});
   $('#pend-cnt').textContent=list.length?list.length+'건':'';
   $('#pend-body').innerHTML=list.length?'<table class="grid lv">'+listHead(true)+'<tbody>'+list.map(function(r){return rowHtml(r,true)}).join('')+'</tbody></table>':'<div class="empty" style="padding:16px">승인을 기다리는 신청이 없습니다.</div>'}
@@ -1445,7 +1445,7 @@ function render(){
   $('#lv-mode').hidden=!isMgr();
   if(!list.length){$('#lv-body').innerHTML='<div class="empty">'+(L.year+'년 기록이 없습니다. <b>연차 신청</b>으로 올려 주세요.')+'</div>';return}
   var showName=isMgr(),head=listHead(showName);
-  var _unused='<thead><tr>'+(showName?'<th style="width:90px">신청인</th>':'')+'<th style="width:150px">사용일</th><th style="width:170px">종류 · 일수</th><th>사유 · 업무 대행</th><th style="width:84px">상태</th><th style="width:80px">처리</th><th style="width:140px"></th></tr></thead>';
+  var _unused='<thead><tr>'+(showName?'<th style="width:90px">신청인</th>':'')+'<th style="width:150px">사용일</th><th style="width:170px">종류 · 일수</th><th>사유</th><th style="width:84px">상태</th><th style="width:80px">처리</th><th style="width:140px"></th></tr></thead>';
   if(isMgr()&&mode==='person'){
     // 사람별 한눈에: 한 사람 한 줄, 사용일을 작은 칸으로
     var ms=L.members.filter(function(m){return !who||m.id===who});
@@ -1576,7 +1576,7 @@ function openEvent(e,preset){
 /* ---------- 신청·수정 ---------- */
 $('#lv-add').onclick=function(){openForm(null)};
 function openForm(r,preset){
-  var isNew=!r,c=r?clone(r.c):Object.assign({type:'연차',start:'',end:'',days:'',time:'',reason:'',handover:'',shared:false},preset||{});
+  var isNew=!r,c=r?clone(r.c):Object.assign({type:'연차',start:'',end:'',days:'',time:'',reason:''},preset||{});
   var owner=r?r.owner_id:(isMgr()?'':ME.id);
   var canEdit=isNew||isMgr()||(mine(r)&&(r.status==='신청'||r.status==='반려'));
   var ownerSel=isMgr()&&isNew?'<select id="f-lvowner"><option value="">구성원 선택</option>'+L.members.map(function(m){return '<option value="'+esc(m.id)+'"'+(m.id===owner?' selected':'')+'>'+esc(m.name)+'</option>'}).join('')+'</select>':'<input value="'+esc(r?r.owner_name:ME.name)+'" disabled style="background:#f3f5f8">';
@@ -1590,8 +1590,6 @@ function openForm(r,preset){
       '<label id="f-daysw"><span>사용 일수</span><input id="f-days" value="'+esc(c.type==='연차'?(c.days||''):'')+'" placeholder="주말 빼고 자동 계산" autocomplete="off"></label>'+
       '<label id="f-timew"><span>외출 시간</span><input id="f-time" value="'+esc(c.time||'')+'" placeholder="예: 14:00~16:00"></label>'+
       '<label class="full"><span>사유</span><input id="f-reason" value="'+esc(c.reason||'')+'" placeholder="예: 개인 사정, 병원 진료"></label>'+
-      '<label class="full"><span>업무 대행</span><input id="f-handover" value="'+esc(c.handover||'')+'" placeholder="예: 급여 업무 — 정연이, 거래처 전화 — 유재경"></label>'+
-      '<label class="full"><span>업무 공유</span><div class="cell"><span style="display:flex;gap:8px;align-items:center;font-size:15px;cursor:pointer"><input type="checkbox" id="f-shared" style="width:18px;height:18px;min-height:0"'+(c.shared?' checked':'')+'> 연차 전에 진행 중인 업무를 공유했습니다</span><span style="color:var(--bad);font-size:13.5px">(비밀번호는 여기에 적지 마세요)</span></div></label>'+
     '</div>'+
     '<div class="f-info" id="f-info" hidden></div>'+
     (r&&r.status==='반려'&&c.reject?'<p class="note-p" style="color:var(--bad)">반려 사유: '+esc(c.reject)+'</p>':'')+
@@ -1599,7 +1597,7 @@ function openForm(r,preset){
       (r&&mine(r)&&r.status==='신청'?' <button class="btn danger" id="f-cancel">신청 취소</button>':'')+(r&&isMgr()&&r.status!=='취소'?' <button class="btn danger" id="f-del">삭제</button>':'')+'</span>'+
       '<button class="btn" id="f-close">닫기</button>'+(canEdit?'<button class="btn primary" id="f-save">'+(isNew?(isMgr()?'등록 (바로 승인)':'신청하기'):(isMgr()&&r.status==='승인'?'저장':'다시 신청'))+'</button>':'')+'</div>');
   var q=function(s){return ov.querySelector(s)};
-  if(!canEdit)ov.querySelectorAll('.form input,.form select,#f-shared').forEach(function(i){i.disabled=true});
+  if(!canEdit)ov.querySelectorAll('.form input,.form select').forEach(function(i){i.disabled=true});
   function sync(){var t=q('#f-type').value,fe=q('#f-end'),fd=q('#f-days'),ft=q('#f-time');
     if(canEdit){fe.disabled=t!=='연차';fe.placeholder=t==='연차'?'하루면 비워 두세요':'연차만 해당';if(t!=='연차')fe.value='';
       fd.readOnly=t!=='연차';if(t!=='연차'){fd.value=fmtN(W[t])+'일 ('+(t==='외출'?'2시간':t==='오전반차'?'3시간':'5시간')+')';delete fd.dataset.touched}else if(/일/.test(fd.value))fd.value='';
@@ -1625,7 +1623,7 @@ function openForm(r,preset){
     if(t==='연차'&&String(s).slice(0,4)!==String(e).slice(0,4)){toast('연도가 바뀌는 연차는 연도별로 나눠 신청해 주세요.');return}
     var days=t==='연차'?parseFloat(String(q('#f-days').value).replace(/[^\d.]/g,'')):W[t];if(t==='연차'&&!(days>0)){toast('사용 일수를 확인해 주세요.');q('#f-days').focus();return}
     var own=q('#f-lvowner')?q('#f-lvowner').value:owner;if(!own){toast('구성원을 골라 주세요.');q('#f-lvowner').focus();return}
-    var body={type:t,start:s,end:e,days:t==='연차'?days:'',time:t==='외출'?q('#f-time').value.trim():'',reason:q('#f-reason').value.trim(),handover:q('#f-handover').value.trim(),shared:q('#f-shared').checked,
+    var body={type:t,start:s,end:e,days:t==='연차'?days:'',time:t==='외출'?q('#f-time').value.trim():'',reason:q('#f-reason').value.trim(),
       late:s<today(),applied_at:isNew?new Date().toISOString():(c.applied_at||r.created_at),applicant:isNew?(L.members.find(function(m){return m.id===own})||{name:ME.name}).name:c.applicant,entered_by:isNew?ME.name:(c.entered_by||ME.name)};
     var stNew='신청';
     if(isMgr()&&r&&r.status==='승인')stNew='승인';
@@ -1681,7 +1679,7 @@ async function lnNotice(force){
     '<p class="note-p" style="margin-top:0">'+(mgr?'구성원이 올린 신청입니다. 여기서 바로 승인·반려할 수 있습니다.':'팀장·대표가 처리한 내 연차 신청입니다.')+'</p>'+
     '<div class="ln-list">'+items.map(function(r){var c=r.c,ok=r.status==='승인';
       var when2=dayK(c.start)+(c.end&&c.end!==c.start?' ~ '+dayK(c.end):'')+' '+esc(c.type)+' '+fmtN(useOf(c))+'일'+(c.time?' ('+esc(c.time)+')':'');
-      if(mgr)return '<div class="ln-it" data-k="'+esc(r.key)+'"><div><b>'+esc(r.owner_name)+'</b> · '+when2+(c.late?'<span class="late">사후</span>':'')+(c.reason?'<div class="mut">사유: '+esc(c.reason)+(c.handover?' · 대행: '+esc(c.handover):'')+'</div>':'')+'</div><div class="nowrap"><button class="btn primary sm" data-ln-ok="'+esc(r.key)+'">승인</button> <button class="btn sm" data-ln-no="'+esc(r.key)+'">반려</button></div></div>';
+      if(mgr)return '<div class="ln-it" data-k="'+esc(r.key)+'"><div><b>'+esc(r.owner_name)+'</b> · '+when2+(c.late?'<span class="late">사후</span>':'')+(c.reason?'<div class="mut">사유: '+esc(c.reason)+'</div>':'')+'</div><div class="nowrap"><button class="btn primary sm" data-ln-ok="'+esc(r.key)+'">승인</button> <button class="btn sm" data-ln-no="'+esc(r.key)+'">반려</button></div></div>';
       return '<div class="ln-it '+(ok?'ok':'no')+'"><div><span class="ln-big">'+(ok?'승인':'반려')+'</span> '+when2+'<div class="mut">'+esc(r.decided_by||'')+' · '+when(r.decided_at)+(r.status==='반려'&&c.reject?'<br><b style="color:var(--bad)">반려 사유: '+esc(c.reject)+'</b>':'')+'</div></div><div><a href="#" class="doclink" data-ln-doc="'+esc(r.key)+'">신청서</a></div></div>'}).join('')+'</div>'+
     '<div class="act"><button class="btn" id="ln-later">나중에 보기</button><button class="btn primary" id="ln-ok">확인했습니다</button></div>');
   ov.querySelector('#ln-later').onclick=function(){items.forEach(function(r){LN.dismissed[lnSig(r)]=1});closeModal()};
@@ -1711,7 +1709,6 @@ function openDoc(r){
     '<tr><th>휴가 종류</th><td>'+esc(c.type)+'</td><th>사용 일수</th><td>'+fmtN(useOf(c))+'일</td></tr>'+
     '<tr><th>기 간</th><td colspan="3">'+esc(period)+(c.late?' <b style="color:#b3261e">(사후 신청)</b>':'')+'</td></tr>'+
     '<tr><th>사 유</th><td colspan="3">'+esc(c.reason||'')+'</td></tr>'+
-    '<tr><th>업무 대행</th><td colspan="3">'+esc(c.handover||'')+'<br><span style="font-size:10pt;color:#444">업무 공유: '+(c.shared?'완료':'미확인')+'</span></td></tr>'+
     '<tr><th>처리 결과</th><td colspan="3"><span class="stamp'+(r.status==='승인'?' ok':'')+'">'+esc(st)+'</span>'+(r.decided_at?' &nbsp; '+esc(r.decided_by||'')+(r.decided_by==='예전 연차대장'?'':' · '+when(r.decided_at)):'')+(c.reject?'<br>반려 사유: '+esc(c.reject):'')+'</td></tr></table>'+
     '<p class="decl">위와 같이 휴가를 신청합니다.</p><p class="decl">'+fmtDate(c.applied_at||r.created_at)+'</p><p class="decl">신청인 : '+esc(r.owner_name)+' &nbsp;(전자 신청)</p>'+
     '<p class="foot">노무그룹지노 대표 귀하</p>'+
@@ -1744,7 +1741,7 @@ $('#lv-file').addEventListener('change',function(e){var f=e.target.files[0];if(!
         for(var r=hr+3;r<a.length;r++){var dv=a[r][ci],tp=String(a[r][ci+1]||'').trim();if(!dv||!tp)continue;var ds='';
           if(dv instanceof Date)ds=ymd(new Date(dv.getTime()+12*3600e3));else ds=parseDay(String(dv).replace(/\(.*\)/,'').trim(),Y);
           if(!ds||TYPES.indexOf(tp)<0)continue;
-          recs.push({owner_id:m.id,name:name,year:+ds.slice(0,4),c:{type:tp,start:ds,end:ds,days:tp==='연차'?1:'',time:'',reason:'',handover:'',shared:true,late:false,applied_at:ds+'T00:00:00',applicant:name,entered_by:ME.name+' (예전 연차대장)'}})}
+          recs.push({owner_id:m.id,name:name,year:+ds.slice(0,4),c:{type:tp,start:ds,end:ds,days:tp==='연차'?1:'',time:'',reason:'',late:false,applied_at:ds+'T00:00:00',applicant:name,entered_by:ME.name+' (예전 연차대장)'}})}
       })});
     if(!recs.length)throw new Error('이 파일에서 연차 기록을 찾지 못했습니다.');
     var have={};
