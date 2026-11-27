@@ -99,6 +99,13 @@ td.note{min-width:110px;max-width:220px;white-space:pre-line;font-size:14.5px;co
 .stack>div{height:26px;line-height:26px;white-space:nowrap}
 .stack>div.gone{color:var(--faint)}
 .stack>div.gone .nm{text-decoration:line-through}
+.tabs{display:flex;gap:4px;margin:14px 0 0;padding:0 2px}
+.tabs button{font:inherit;font-size:16.5px;font-weight:700;padding:10px 26px;border:1px solid var(--rule);border-bottom:0;background:#e9eef5;color:var(--muted);cursor:pointer;border-radius:3px 3px 0 0}
+.tabs button.on{background:#fff;color:var(--navy);border-top:3px solid var(--navy);padding-top:8px}
+.tabs+.paper,.tabs~.paper{margin-top:0}
+.fsum{display:flex;flex-wrap:wrap;gap:6px 18px;align-items:center;border:1px solid var(--rule);background:#f7f9fc;padding:8px 12px;margin:-4px 0 12px;font-size:14.5px;color:var(--muted)}
+.fsum .lb{font-weight:700;color:var(--navy)}.fsum b{color:var(--navy);font-variant-numeric:tabular-nums}
+td.cs-content{min-width:260px;white-space:pre-line}
 .empty{padding:40px 16px;text-align:center;color:var(--muted);border:1px solid var(--rule);border-top:2px solid var(--navy)}
 .banner{margin-top:14px;padding:9px 14px;border:1px solid #e9c98f;background:var(--warn-soft);color:var(--warn);font-size:15px;display:flex;gap:10px;align-items:center;flex-wrap:wrap}
 .foot{margin-top:10px;font-size:14px;color:var(--muted)}
@@ -148,10 +155,12 @@ td.note{min-width:110px;max-width:220px;white-space:pre-line;font-size:14.5px;co
   <span class="savebox" id="savebox"><span id="savetext"></span><b id="who" style="color:#fff"></b><button class="btn sm" id="btn-changes">최근 30일 변경<b id="chg-n" class="cnt" hidden></b></button><button class="btn sm" id="btn-history">수정이력</button><button class="btn sm" id="btn-trash">휴지통<b id="trash-n" class="cnt" style="background:#6b7a8f" hidden></b></button><button class="btn sm" id="btn-backup" hidden>백업</button><button class="btn sm" id="btn-admin" hidden>관리</button><button class="btn sm" id="btn-bizno" hidden>사업자번호 넣기</button><button class="btn sm" id="btn-import" hidden>주소록 가져오기</button><button class="btn sm" id="btn-refresh">새로고침</button><button class="btn primary sm" id="btn-lock">잠그기</button></span>
 </div></header>
 <input type="file" id="bizno-file" accept=".xlsx,.xls,.csv" hidden>
+<input type="file" id="cs-file" accept=".xlsx,.xls" hidden>
 <input type="file" id="import-file" accept=".xlsx,.xls,.html,.htm" hidden>
 <div class="wrap">
 <div class="banner" id="restore" hidden></div>
-<div class="paper">
+<nav class="tabs" id="tabs"><button data-tab="addr" class="on">거래처 주소록</button><button data-tab="cs">경협 자문실적</button></nav>
+<div class="paper" id="pane-addr">
   <div class="doc-title"><h2>자문회사 주소록</h2><span class="ref" id="ref"></span></div>
   <div class="summary" id="stats"></div>
   <div class="searchbox">
@@ -170,6 +179,30 @@ td.note{min-width:110px;max-width:220px;white-space:pre-line;font-size:14.5px;co
   </div>
   <div id="list"></div>
   <div class="foot">※ 행을 누르면 수정 창이 열립니다. <b>확인</b>을 누르면 바로 저장되어 TEAM JINO 모두의 화면에 반영됩니다. 다른 구성원이 고친 내용은 1분마다 자동으로 새로 받아옵니다. 자리를 비울 때는 오른쪽 위 <b>잠그기</b>를 눌러 주세요.</div>
+</div>
+<div class="paper" id="pane-cs" hidden>
+  <div class="doc-title"><h2>경협 자문실적 <span style="font-size:15px;font-weight:500;color:var(--muted)">대한건설협회 경기도회 상담실적</span></h2><span class="ref" id="cs-ref"></span></div>
+  <div class="summary" id="cs-stats"></div>
+  <div class="fsum" id="cs-fstats"></div>
+  <div class="searchbox">
+    <span class="lb">검색어</span><span class="wide"><input type="search" id="cs-q" placeholder="회사명, 담당자, 연락처, 상담내용"></span>
+    <span class="lb">연도</span><span><select id="cs-year" aria-label="연도"></select></span>
+    <span class="lb">분기</span><span><select id="cs-qtr" aria-label="분기"><option value="">전체</option><option value="1">1분기 (1~3월)</option><option value="2">2분기 (4~6월)</option><option value="3">3분기 (7~9월)</option><option value="4">4분기 (10~12월)</option></select></span>
+    <span class="lb">월</span><span><select id="cs-mon" aria-label="월"></select></span>
+    <span class="lb">분야</span><span><select id="cs-field" aria-label="분야"></select></span>
+    <span class="lb">상담유형</span><span><select id="cs-type" aria-label="상담유형"></select></span>
+  </div>
+  <div class="toolbar">
+    <span id="cs-count" style="color:var(--muted);font-size:14.5px"></span>
+    <span style="flex:1"></span>
+    <button class="btn" id="cs-import">예전 엑셀 옮기기</button>
+    <button class="btn" id="cs-trash">삭제된 상담<b id="cs-trash-n" class="cnt" style="background:#6b7a8f" hidden></b></button>
+    <button class="btn" id="cs-yearx">연간 실적 엑셀</button>
+    <button class="btn" id="cs-rep">분기 보고서 내려받기</button>
+    <button class="btn primary" id="cs-add">상담 추가</button>
+  </div>
+  <div id="cs-list"></div>
+  <div class="foot">※ 행을 누르면 수정 창이 열립니다. 저장하면 TEAM JINO 모두의 화면에 반영되고, 고친 내용은 수정이력·최근 30일 변경에 남습니다. <b>분기 보고서 내려받기</b>는 협회 제출 양식(분야별 건수·비율 표 포함)으로 만들어 줍니다.</div>
 </div>
 </div>
 <div id="login" class="login"><form class="lbox" id="lform" autocomplete="off">
@@ -233,7 +266,7 @@ function status(text,warn){$('#savetext').textContent=text;$('#savebox').classLi
 
 /* ---------- 잠금 화면 ---------- */
 function lockOut(msg){
-  ME=null;TOKEN='';AKEY=null;docs={};data={companies:[],at:''};loaded=false;
+  ME=null;TOKEN='';AKEY=null;docs={};data={companies:[],at:''};loaded=false;CS.year=null;CS.docs={};CS.del=[];$('#cs-list').innerHTML='';
   if(watchT){clearInterval(watchT);watchT=null}
   closeModal();$('#login').hidden=false;$('#pw').value='';say(msg||'',!!msg);renderAll();setTimeout(function(){$('#pw').focus()},50);
 }
@@ -253,6 +286,7 @@ $('#lform').onsubmit=async function(ev){
     $('#btn-admin').hidden=!ME.is_master;$('#btn-backup').hidden=!ME.is_master;$('#btn-import').hidden=!ME.is_master;$('#btn-bizno').hidden=!ME.is_master;$('#btn-xlsx').hidden=!ME.can_export;
     status('불러오는 중…');await load();
     showChanges(true);pollEditing();
+    try{if(localStorage.getItem('jino-addr-tab')==='cs')setTab('cs')}catch(e){}
     watchT=setInterval(async function(){try{var k=await fetchKeys();if(!(k.entries||[]).some(function(e){return e.id===hit.id}))lockOut('이 비밀번호는 더 이상 쓸 수 없습니다.')}catch(e){}},RECHECK);
   }catch(e){say('열지 못했습니다: '+(e&&e.message||e),true)}
   finally{$('#lgo').disabled=false}
@@ -271,6 +305,7 @@ async function load(){
     docs=next;TRASH=dl;var tn=$('#trash-n');tn.hidden=!dl.length;tn.textContent=dl.length;data={companies:Object.keys(docs).map(function(k){return docs[k].c}),at:new Date().toISOString()};
     loaded=true;loadErr=fail&&!data.companies.length?'저장된 주소록을 열 수 없습니다(열쇠가 다릅니다). 대표님께 알려 주세요.':'';
     status('연결됨 · '+hm(new Date())+' 기준'+(fail?' · 열지 못한 '+fail+'건':''),!!fail);renderAll();
+    if(CS.year!=null&&!document.hidden)csLoad(CS.year,true);
     if(others.length){toast('다른 구성원이 방금 고쳤습니다 — '+others.slice(0,3).join(' / ')+(others.length>3?' 외 '+(others.length-3)+'건':''));refreshChgCount()}
   }catch(e){if(!ME)return;loaded=true;loadErr=(e&&e.message)||'';status('불러오지 못했습니다',true);renderAll()}
 }
@@ -501,7 +536,7 @@ function ago(iso){var m=Math.max(0,Math.round((Date.now()-new Date(iso))/60000))
 function editChip(id){var e=EDITING[id];if(!e||!e.length)return '';return '<span class="chip editing" title="'+esc(e.map(function(x){return x.name+' 님 '+ago(x.since)+'부터'}).join(', '))+'">✎ '+esc(e.map(function(x){return x.name}).join(', '))+' 님 수정 중</span>'}
 async function pollEditing(){if(!ME||document.hidden)return;try{var rows=await rpc('addr_editing_list'),m={};
   rows.forEach(function(r){if(r.member_id===ME.id)return;(m[r.key]=m[r.key]||[]).push({name:r.member_name,since:r.since})});
-  if(JSON.stringify(m)!==JSON.stringify(EDITING)){EDITING=m;if(loaded)renderAll()}}catch(e){}}
+  if(JSON.stringify(m)!==JSON.stringify(EDITING)){EDITING=m;if(loaded){renderAll();renderCs()}}}catch(e){}}
 setInterval(pollEditing,20000);
 function editStart(key,ov){
   editStop();EDITKEY=key;
@@ -557,19 +592,19 @@ async function showChanges(auto){
   ov.querySelector('#cg-ok').onclick=async function(){this.disabled=true;try{await rpc('addr_seen_mark',{p_at:info.now});await refreshChgCount()}catch(e){}closeModal();toast('확인했습니다. 새 변경이 생기면 다시 알려 드립니다.')};
   var items=[];
   for(var i=0;i<info.rows.length;i++){var r=info.rows[i],b=await decSafe(r.iv,r.data);if(!b)continue;var a=r.prev_iv?await decSafe(r.prev_iv,r.prev_data):null;
-    items.push({key:r.key,at:r.updated_at,by:r.updated_by,kind:chgKind(r),name:b.name,det:diffList(a,b,r.deleted,r.prev_deleted),why:whyHtml(b),me:mine(r.updated_by),unseen:!mine(r.updated_by)&&new Date(r.updated_at)>info.seen})}
+    items.push({key:r.key,at:r.updated_at,by:r.updated_by,kind:chgKind(r),name:docLabel(b),isK:b._t==='k',det:diffList(a,b,r.deleted,r.prev_deleted),why:whyHtml(b),me:mine(r.updated_by),unseen:!mine(r.updated_by)&&new Date(r.updated_at)>info.seen})}
   var KC={'추가':'ok','삭제':'end','변경':'warn','되살림':'info'};
   function draw(){
     var showMine=ov.querySelector('#cg-mine').checked,list=items.filter(function(x){return showMine||!x.me});
     if(!list.length){ov.querySelector('#cg-box').textContent='최근 30일 동안 다른 구성원이 고친 내용이 없습니다.';return}
     // 한 사람이 같은 날 같은 종류를 6건 넘게 했으면(가져오기 등) 한 줄로 묶음
     var groups=[],gi={};
-    list.forEach(function(x){var g=x.by+'|'+fmtDate(x.at)+'|'+x.kind;if(gi[g]==null){gi[g]=groups.length;groups.push([])}groups[gi[g]].push(x)});
+    list.forEach(function(x){var g=x.by+'|'+fmtDate(x.at)+'|'+x.kind+'|'+(x.isK?'k':'c');if(gi[g]==null){gi[g]=groups.length;groups.push([])}groups[gi[g]].push(x)});
     var html=[];
     groups.forEach(function(g){
       if(g.length>6){var un=g.some(function(x){return x.unseen});
-        html.push('<tr'+(un?' class="unseen"':'')+'><td class="mono nowrap">'+when(g[0].at)+'</td><td class="nowrap">'+esc(g[0].by)+'</td><td class="c"><span class="chip '+KC[g[0].kind]+'">'+g[0].kind+'</span></td><td colspan="2"><details class="chg-sum"><summary><b>'+g.length+'곳</b> 한꺼번에 '+g[0].kind+' (눌러서 목록 보기)</summary>'+g.map(function(x){return esc(x.name)}).join(', ')+'</details></td></tr>')}
-      else g.forEach(function(x){html.push('<tr class="click'+(x.unseen?' unseen':'')+'" data-hk="'+esc(x.key)+'" data-hn="'+esc(x.name)+'"><td class="mono nowrap">'+when(x.at)+'</td><td class="nowrap">'+esc(x.by)+'</td><td class="c"><span class="chip '+KC[x.kind]+'">'+x.kind+'</span></td><td class="nowrap"><b>'+esc(x.name)+'</b></td><td>'+(x.kind==='추가'?'새 거래처 등록':x.kind==='삭제'?'거래처 삭제':x.det.join('<br>'))+x.why+'</td></tr>')});
+        html.push('<tr'+(un?' class="unseen"':'')+'><td class="mono nowrap">'+when(g[0].at)+'</td><td class="nowrap">'+esc(g[0].by)+'</td><td class="c"><span class="chip '+KC[g[0].kind]+'">'+g[0].kind+'</span></td><td colspan="2"><details class="chg-sum"><summary><b>'+(g[0].isK?'경협 상담 기록 '+g.length+'건':g.length+'곳')+'</b> 한꺼번에 '+g[0].kind+' (눌러서 목록 보기)</summary>'+g.map(function(x){return esc(x.name)}).join(', ')+'</details></td></tr>')}
+      else g.forEach(function(x){html.push('<tr class="click'+(x.unseen?' unseen':'')+'" data-hk="'+esc(x.key)+'" data-hn="'+esc(x.name)+'"><td class="mono nowrap">'+when(x.at)+'</td><td class="nowrap">'+esc(x.by)+'</td><td class="c"><span class="chip '+KC[x.kind]+'">'+x.kind+'</span></td><td class="nowrap"><b>'+esc(x.name)+'</b></td><td>'+(x.isK&&x.kind!=='변경'?x.det.join('<br>'):x.kind==='추가'?'새 거래처 등록':x.kind==='삭제'?'거래처 삭제':x.det.join('<br>'))+x.why+'</td></tr>')});
     });
     ov.querySelector('#cg-box').innerHTML='<table><thead><tr><th>일시</th><th>고친 사람</th><th>구분</th><th>회사</th><th>바뀐 내용</th></tr></thead><tbody>'+html.join('')+'</tbody></table>';
   }
@@ -585,6 +620,7 @@ function short(v){v=String(v==null?'':v).replace(/\s+/g,' ');return v.length>40?
 function pname(p){return (p.name||p.email||p.title||'이름 없음')}
 function diffList(a,b,del,prevDel){
   if(!b)return [];
+  if(b._t==='k')return diffConsult(a,b,del,prevDel);
   if(del&&!prevDel)return ['<b class="red">거래처 삭제</b>'];
   if(!a||prevDel)return [a&&prevDel?'<b>삭제했던 거래처를 되살림</b>':'<b>새로 등록</b>'];
   var out=[];
@@ -614,7 +650,7 @@ $('#btn-history').onclick=async function(){
     var rows=await rpc('addr_history_recent',{p_limit:150}),html=[];
     for(var i=0;i<rows.length;i++){var r=rows[i],b=await decSafe(r.iv,r.data),a=r.prev_iv?await decSafe(r.prev_iv,r.prev_data):null;
       if(!b){html.push('<tr><td class="mono nowrap">'+when(r.updated_at)+'</td><td class="nowrap">'+esc(r.updated_by)+'</td><td colspan="2">(열 수 없는 기록)</td></tr>');continue}
-      html.push('<tr class="click" data-hk="'+esc(r.key)+'" data-hn="'+esc(b.name)+'"><td class="mono nowrap">'+when(r.updated_at)+'</td><td class="nowrap">'+esc(r.updated_by)+'</td><td class="nowrap"><b>'+esc(b.name)+'</b></td><td>'+diffList(a,b,r.deleted,r.prev_deleted).join('<br>')+whyHtml(b)+'</td></tr>')}
+      html.push('<tr class="click" data-hk="'+esc(r.key)+'" data-hn="'+esc(docLabel(b))+'"><td class="mono nowrap">'+when(r.updated_at)+'</td><td class="nowrap">'+esc(r.updated_by)+'</td><td class="nowrap"><b>'+esc(docLabel(b))+'</b></td><td>'+diffList(a,b,r.deleted,r.prev_deleted).join('<br>')+whyHtml(b)+'</td></tr>')}
     var box=ov.querySelector('#h-box');
     box.innerHTML=rows.length?'<table><thead><tr><th>일시</th><th>고친 사람</th><th>회사</th><th>바뀐 내용</th></tr></thead><tbody>'+html.join('')+'</tbody></table>':'아직 기록이 없습니다.';
     box.addEventListener('click',function(e){var t=e.target.closest('[data-hk]');if(t)companyHistory(t.dataset.hk,t.dataset.hn)});
@@ -661,7 +697,7 @@ $('#btn-backup').onclick=async function(){
   var list=[];
   async function draw(){
     try{list=await rpc('addr_backup_list');
-      ov.querySelector('#bk-list').innerHTML=list.length?'<table><thead><tr><th>일시</th><th>종류</th><th>회사 수</th><th>만든 사람 · 메모</th><th></th></tr></thead><tbody>'+list.map(function(b,i){return '<tr><td class="mono nowrap">'+when(b.created_at)+'</td><td class="c nowrap">'+esc(b.kind)+'</td><td class="c">'+b.doc_count+'</td><td>'+esc(b.created_by)+(b.note?' · '+esc(b.note):'')+'</td><td class="nowrap"><button class="btn sm" data-dl="'+b.id+'">PC에 저장</button> <button class="btn sm" data-rs="'+b.id+'">이 백업으로 되돌리기</button></td></tr>'}).join('')+'</tbody></table>':'아직 백업이 없습니다.';
+      ov.querySelector('#bk-list').innerHTML=list.length?'<table><thead><tr><th>일시</th><th>종류</th><th>항목 수</th><th>만든 사람 · 메모</th><th></th></tr></thead><tbody>'+list.map(function(b,i){return '<tr><td class="mono nowrap">'+when(b.created_at)+'</td><td class="c nowrap">'+esc(b.kind)+'</td><td class="c">'+b.doc_count+'</td><td>'+esc(b.created_by)+(b.note?' · '+esc(b.note):'')+'</td><td class="nowrap"><button class="btn sm" data-dl="'+b.id+'">PC에 저장</button> <button class="btn sm" data-rs="'+b.id+'">이 백업으로 되돌리기</button></td></tr>'}).join('')+'</tbody></table>':'아직 백업이 없습니다.';
     }catch(e){ov.querySelector('#bk-list').textContent='불러오지 못했습니다: '+e.message}
   }
   function fileOf(docs2,when2,note){return JSON.stringify({type:'jino-addr-backup',v:1,saved_at:when2,note:note||'',count:docs2.length,docs:docs2})}
@@ -675,7 +711,7 @@ $('#btn-backup').onclick=async function(){
     if(t.dataset.dl){t.disabled=true;try{var b=await rpc('addr_backup_get',{p_id:+t.dataset.dl});saveFile('주소록백업_'+stamp(new Date(b.created_at))+'.json',fileOf(b.docs,b.created_at,b.note));toast('PC에 저장했습니다 (다운로드 폴더).')}catch(err){toast('저장하지 못했습니다: '+err.message)}t.disabled=false;return}
     if(t.dataset.sure!=='1'){t.dataset.sure='1';t.textContent='지금 주소록 전체가 바뀝니다. 한 번 더 누르세요';t.classList.add('danger');return}
     t.disabled=true;busy=true;
-    try{var r=await rpc('addr_backup_restore',{p_id:+t.dataset.rs});busy=false;docs={};toast(r.count+'개 회사로 되돌렸습니다. 되돌리기 전 상태도 백업해 두었습니다.');await load();await draw()}
+    try{var r=await rpc('addr_backup_restore',{p_id:+t.dataset.rs});busy=false;docs={};CS.docs={};toast(r.count+'건(회사·상담 기록)으로 되돌렸습니다. 되돌리기 전 상태도 백업해 두었습니다.');await load();await draw()}
     catch(err){busy=false;t.disabled=false;toast('되돌리지 못했습니다: '+err.message)}
   });
   ov.querySelector('#bk-file').onclick=function(){var i=ov.querySelector('#bk-input');i.value='';i.click()};
@@ -687,7 +723,7 @@ $('#btn-backup').onclick=async function(){
         var w=ov.querySelector('#bk-list');w.insertAdjacentHTML('beforebegin','<p class="note-p" id="bk-confirm" style="background:#fff4e5;padding:10px;border-radius:6px"><b>'+esc(f.name)+'</b> ('+esc(when(j.saved_at))+' 저장, 회사 '+ok+'곳)으로 지금 주소록 전체를 바꿀까요? 지금 상태는 먼저 자동 백업됩니다. <button class="btn danger sm" id="bk-fy">되돌리기</button> <button class="btn sm" id="bk-fn">취소</button></p>');
         var cf=ov.querySelector('#bk-confirm');cf.querySelector('#bk-fn').onclick=function(){cf.remove()};
         cf.querySelector('#bk-fy').onclick=async function(){this.disabled=true;busy=true;
-          try{var r=await rpc('addr_import',{p_docs:j.docs.map(function(d){return {key:d.key,iv:d.iv,data:d.data}})});busy=false;docs={};cf.remove();toast(r.count+'개 회사로 되돌렸습니다.');await load();await draw()}
+          try{var r=await rpc('addr_restore_file',{p_docs:j.docs.map(function(d){return {key:d.key,iv:d.iv,data:d.data}})});busy=false;docs={};CS.docs={};cf.remove();toast(r.count+'건(회사·상담 기록)으로 되돌렸습니다.');await load();await draw()}
           catch(err){busy=false;this.disabled=false;toast('되돌리지 못했습니다: '+err.message)}};
       }catch(err){toast(err.message||'파일을 읽지 못했습니다.')}
     };rd.readAsText(f,'utf-8')});
@@ -733,13 +769,14 @@ function openCompany(c){
     '<div><div class="subhead" style="margin-bottom:6px">실무 담당자<span style="font-size:14px;color:var(--muted);font-weight:400">퇴사·휴직은 각 담당자 오른쪽의 상태에서 바꿉니다</span><button class="btn sm" id="m-add-contact">+ 담당자</button></div>'+
       '<div class="crows" id="m-contacts">'+(c.contacts||[]).map(contactRow).join('')+'</div></div>'+
     '<div class="form" style="margin-top:10px"><label class="full"><span>변경 사유</span><input id="m-why" placeholder="'+(isNew?'예: 11월 신규 자문계약':'예: 담당자 퇴사 통보 받음, 대표자 변경')+' — 다른 구성원 알림 창에 함께 보입니다"></label></div>'+
-    '<div class="act">'+(isNew?'':'<span class="left" id="m-delwrap"><button class="btn danger" id="m-del">거래처 삭제</button> <button class="btn" id="m-hist">수정이력</button></span>')+'<button class="btn" id="m-cancel">취소</button><button class="btn primary" id="m-save">확인</button></div>');
+    '<div class="act">'+(isNew?'':'<span class="left" id="m-delwrap"><button class="btn danger" id="m-del">거래처 삭제</button> <button class="btn" id="m-hist">수정이력</button> <button class="btn" id="m-cs">경협 상담 이력</button></span>')+'<button class="btn" id="m-cancel">취소</button><button class="btn primary" id="m-save">확인</button></div>');
   var cbox=ov.querySelector('#m-contacts');
   if(!isNew)editStart(c.id,ov);
   ov.querySelector('#m-add-contact').onclick=function(){cbox.insertAdjacentHTML('beforeend',contactRow({status:'재직'}));cbox.lastElementChild.querySelector('input').focus()};
   cbox.addEventListener('click',function(e){if(e.target.closest('[data-del-contact]'))e.target.closest('.crow').remove()});
   cbox.addEventListener('change',function(e){if(e.target.dataset.k==='status')e.target.classList.toggle('off',e.target.value!=='재직')});
   ov.querySelector('#m-cancel').onclick=closeModal;
+  var csb=ov.querySelector('#m-cs');if(csb)csb.onclick=function(){companyConsults(c)};
   var hb=ov.querySelector('#m-hist');if(hb)hb.onclick=function(){companyHistory(c.id,c.name)};
   var del=ov.querySelector('#m-del');
   if(del)del.onclick=function(){
@@ -834,6 +871,306 @@ $('#btn-mail').onclick=function(){
 
 renderAll();
 setTimeout(function(){$('#pw').focus()},50);
+
+/* =========================================================
+   경협 자문실적 (대한건설협회 경기도회 상담실적) — TEAM JINO 누구나 입력·내려받기
+   저장: addr_docs 'k_연도_…' 키 (암호화, 수정이력·백업·휴지통 공용)
+   ========================================================= */
+var CS={year:null,docs:{},del:[],busy:false},CS_TAB='addr';
+var CS_FIELDS=['근로기준','4대보험','산업안전/재해','퇴직금','퇴직공제','외국인','모성보호','노사관계','건설산업','기타'];
+var CS_TYPES=['유선','카톡','메일','방문','유선/카톡','유선/메일'];
+var REP_FIELDS=['퇴직금/퇴직공제','근로기준','외국인','노사관계','4대보험','산업안전/산업재해','기타'];
+var WD=['일','월','화','수','목','금','토'];
+function repField(f){f=String(f||'').replace(/\s/g,'');if(/퇴직/.test(f))return '퇴직금/퇴직공제';if(/산업안전|재해/.test(f))return '산업안전/산업재해';if(/4대보험/.test(f))return '4대보험';if(/외국인/.test(f))return '외국인';if(/노사|노동조합/.test(f))return '노사관계';if(/근로기준|모성|출산|육아/.test(f))return '근로기준';return '기타'}
+function normField(f){f=String(f||'').trim().replace(/\s+/g,'');if(!f)return '기타';if(f==='산업안전'||f==='산업안전/산업재해')return '산업안전/재해';if(/출산|육아/.test(f))return '모성보호';if(f==='노동조합')return '노사관계';if(f==='퇴직금/퇴직공제')return '퇴직금';return CS_FIELDS.indexOf(f)>=0?f:(/^방문$/.test(f)?'기타':f)}
+function normType(t){t=String(t||'').trim().replace(/\s*,\s*/g,'/').replace(/\s+/g,'');if(!t||t==='전화')return '유선';return t}
+function csKey(y){var a=crypto.getRandomValues(new Uint8Array(8));return 'k_'+y+'_'+Array.from(a,function(x){return x.toString(16).padStart(2,'0')}).join('')}
+function ymd(d){return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')}
+function today(){return ymd(new Date())}
+function csDay(s){var p=String(s||'').split('-');if(p.length<3)return esc(s);var d=new Date(+p[0],+p[1]-1,+p[2]);return (+p[1])+'. '+(+p[2])+'.('+WD[d.getDay()]+')'}
+function qOf(s){return Math.floor((+String(s).slice(5,7)-1)/3)+1}
+function csLabel(b){return '[자문실적] '+(b.date?b.date.slice(2,4)+'/'+(+b.date.slice(5,7))+'/'+(+b.date.slice(8,10)):'')+' '+(b.company||'')}
+function docLabel(b){return b&&b._t==='k'?csLabel(b):(b?b.name:'')}
+function diffConsult(a,b,del,prevDel){
+  if(del&&!prevDel)return ['<b class="red">상담 기록 삭제</b>'];
+  if(!a||prevDel)return [a&&prevDel?'<b>삭제했던 상담 기록을 되살림</b>':'<b>상담 기록 추가</b>: '+esc(short(b.content))];
+  var out=[];[['date','날짜'],['company','회사'],['contact','담당자/연락처'],['type','상담유형'],['field','분야'],['content','상담내용'],['note','비고']].forEach(function(f){var x=a[f[0]]||'',y=b[f[0]]||'';if(x!==y)out.push(f[1]+': '+(x?'<s>'+esc(short(x))+'</s> → ':'')+(y?esc(short(y)):'<i>(지움)</i>'))});
+  return out.length?out:['(바뀐 내용 없음)'];
+}
+function csRecs(){return Object.keys(CS.docs).map(function(k){var c=CS.docs[k].c;c.id=k;return c}).sort(function(a,b){return a.date<b.date?-1:a.date>b.date?1:(a.ts||0)-(b.ts||0)})}
+function addrCoByName(n){var k=normCo(n);if(!k)return null;return data.companies.find(function(c){return normCo(c.name)===k})||null}
+
+/* ---------- 탭 ---------- */
+function setTab(t){CS_TAB=t;try{localStorage.setItem('jino-addr-tab',t)}catch(e){}
+  document.querySelectorAll('#tabs button').forEach(function(b){b.classList.toggle('on',b.dataset.tab===t)});
+  $('#pane-addr').hidden=t!=='addr';$('#pane-cs').hidden=t!=='cs';
+  if(t==='cs'&&ME&&CS.year==null)csLoad(+$('#cs-year').value||new Date().getFullYear());else if(t==='cs')renderCs();}
+document.querySelectorAll('#tabs button').forEach(function(b){b.onclick=function(){setTab(b.dataset.tab)}});
+(function(){var y=new Date().getFullYear(),s=$('#cs-year'),h='';for(var i=y+(new Date().getMonth()===11?1:0);i>=2024;i--)h+='<option value="'+i+'"'+(i===y?' selected':'')+'>'+i+'년</option>';s.innerHTML=h;
+  $('#cs-field').innerHTML='<option value="">전체</option>'+CS_FIELDS.map(function(f){return '<option>'+f+'</option>'}).join('');
+  $('#cs-type').innerHTML='<option value="">전체</option>'+CS_TYPES.map(function(f){return '<option>'+f+'</option>'}).join('');
+  var m='<option value="">전체</option>';for(var k=1;k<=12;k++)m+='<option value="'+k+'">'+k+'월</option>';$('#cs-mon').innerHTML=m;})();
+$('#cs-year').onchange=function(){csLoad(+this.value)};
+['#cs-qtr','#cs-mon','#cs-field','#cs-type'].forEach(function(s){$(s).onchange=renderCs});
+$('#cs-q').oninput=function(){clearTimeout(renderCs._t);renderCs._t=setTimeout(renderCs,150)};
+$('#cs-qtr').addEventListener('change',function(){if(this.value)$('#cs-mon').value=''});
+$('#cs-mon').addEventListener('change',function(){if(this.value)$('#cs-qtr').value=''});
+
+/* ---------- 불러오기 ---------- */
+async function csLoad(year,quiet){
+  if(!ME||CS.busy)return;CS.busy=true;
+  try{
+    if(!quiet&&CS.year!==year){$('#cs-list').innerHTML='<div class="empty">'+year+'년 상담 기록을 불러오는 중…</div>'}
+    var rows=await rpc('consult_list',{p_year:year}),next={},del=[],others=[],same=CS.year===year;
+    for(var i=0;i<rows.length;i++){var d=rows[i];if(d.deleted){del.push(d);continue}
+      var old=CS.docs[d.key];if(same&&old&&old.rev===d.rev){next[d.key]=old;continue}
+      try{var c=await dec(d.iv,d.data);next[d.key]={rev:d.rev,c:c,by:d.updated_by,at:d.updated_at};if(same&&!mine(d.updated_by))others.push(d.updated_by+' 님: '+(c.company||'')+(old?' 상담 수정':' 상담 추가'))}catch(e){}}
+    if(same)Object.keys(CS.docs).forEach(function(k){if(!next[k]){var r=rows.find(function(x){return x.key===k});if(r&&!mine(r.updated_by))others.push(r.updated_by+' 님: '+(CS.docs[k].c.company||'')+' 상담 삭제')}});
+    CS.year=year;CS.docs=next;CS.del=del;renderCs();
+    if(others.length&&CS_TAB==='cs')toast('다른 구성원이 방금 고쳤습니다 — '+others.slice(0,3).join(' / ')+(others.length>3?' 외 '+(others.length-3)+'건':''));
+  }catch(e){if(!quiet)$('#cs-list').innerHTML='<div class="empty">불러오지 못했습니다: '+esc(e.message||'')+'</div>'}
+  finally{CS.busy=false}
+}
+function csFiltered(){
+  var q=$('#cs-q').value.trim().toLowerCase(),qd=q.replace(/\D/g,''),qt=+$('#cs-qtr').value||0,mo=+$('#cs-mon').value||0,fd=$('#cs-field').value,ty=$('#cs-type').value;
+  return csRecs().filter(function(c){
+    if(qt&&qOf(c.date)!==qt)return false;if(mo&&+c.date.slice(5,7)!==mo)return false;if(fd&&c.field!==fd)return false;if(ty&&c.type!==ty)return false;
+    if(q){var t=[c.company,c.contact,c.content,c.note,c.field,c.type,c.by].join(' ').toLowerCase();if(t.indexOf(q)<0&&!(qd.length>=3&&t.replace(/\D/g,'').indexOf(qd)>=0))return false}
+    return true});
+}
+function renderCs(){
+  if(!$('#pane-cs')||$('#pane-cs').hidden)return;
+  var all=csRecs(),list=csFiltered(),y=CS.year;
+  $('#cs-ref').textContent='조회일: '+fmtDate(new Date());
+  var qc=[0,0,0,0];all.forEach(function(c){qc[qOf(c.date)-1]++});
+  var thisM=all.filter(function(c){return c.date.slice(0,7)===today().slice(0,7)}).length;
+  $('#cs-stats').innerHTML='<div>'+y+'년 전체<b>'+all.length+'<small>건</small></b></div>'+qc.map(function(n,i){return '<div>'+(i+1)+'분기<b>'+n+'<small>건</small></b></div>'}).join('')+(y===new Date().getFullYear()?'<div>이번 달<b>'+thisM+'<small>건</small></b></div>':'');
+  var fc={};REP_FIELDS.forEach(function(f){fc[f]=0});list.forEach(function(c){fc[repField(c.field)]++});
+  $('#cs-fstats').innerHTML='<span class="lb">보고서 분야별 (지금 조건)</span>'+REP_FIELDS.map(function(f){return '<span>'+f+' <b>'+fc[f]+'</b></span>'}).join('');
+  $('#cs-count').textContent='총 '+list.length+'건'+(list.length!==all.length?' (연간 '+all.length+'건 중)':'');
+  var tb=$('#cs-trash-n');tb.hidden=!CS.del.length;tb.textContent=CS.del.length;
+  if(!all.length){$('#cs-list').innerHTML='<div class="empty">'+y+'년 상담 기록이 없습니다. <b>상담 추가</b>로 입력하거나, 지금까지 쓰던 엑셀을 <b>예전 엑셀 옮기기</b>로 가져오세요.</div>';return}
+  if(!list.length){$('#cs-list').innerHTML='<div class="empty">조건에 맞는 상담 기록이 없습니다.</div>';return}
+  var mcount={};
+  $('#cs-list').innerHTML='<table class="grid cs"><thead><tr><th style="width:52px">연번</th><th style="width:96px">날짜</th><th>회사</th><th>담당자 / 연락처</th><th style="width:84px">상담유형</th><th style="width:110px">분야</th><th>상담내용</th><th>비고</th><th style="width:70px">입력</th></tr></thead><tbody>'+
+    list.map(function(c,i){var d=CS.docs[c.id];
+      return '<tr class="click" data-cs="'+esc(c.id)+'"><td class="no mono">'+(i+1)+'</td><td class="nowrap mono">'+csDay(c.date)+'</td><td class="nowrap"><b>'+esc(c.company)+'</b>'+(c.cid&&docs[c.cid]?' <span class="chip ok" title="주소록 거래처">거래처</span>':'')+editChip(c.id)+'</td><td>'+esc(c.contact)+'</td><td class="c">'+esc(c.type)+'</td><td class="c">'+esc(c.field)+'</td><td class="cs-content">'+esc(c.content)+'</td><td class="note">'+esc(c.note)+'</td><td class="c" style="font-size:13.5px;color:var(--muted)" title="'+esc(d?when(d.at)+' '+d.by:'')+'">'+esc(String(c.by||'').replace(/\s*\(.*\)$/,''))+'</td></tr>'}).join('')+'</tbody></table>';
+}
+$('#cs-list').addEventListener('click',function(e){var t=e.target.closest('[data-cs]');if(t&&CS.docs[t.dataset.cs])openConsult(CS.docs[t.dataset.cs].c)});
+
+/* ---------- 입력·수정 창 ---------- */
+var csCoNames=null;
+async function csAllCompanies(){var s={};data.companies.forEach(function(c){s[c.name]=1});csRecs().forEach(function(c){if(c.company)s[c.company.trim()]=1});return Object.keys(s).sort(function(a,b){return normCo(a).localeCompare(normCo(b),'ko')})}
+function contactOptions(coName){
+  var out=[],co=addrCoByName(coName);
+  if(co)(co.contacts||[]).forEach(function(p){if(p.status&&p.status!=='재직')return;var s=[p.name,p.title,p.phone].filter(Boolean).join(' ');if(s)out.push(s)});
+  if(co&&co.tel)out.push(co.tel.split(/\s*\/\s*/)[0]);
+  csRecs().slice().reverse().forEach(function(c){if(normCo(c.company)===normCo(coName)&&c.contact&&out.indexOf(c.contact)<0)out.push(c.contact)});
+  return out.slice(0,15);
+}
+async function openConsult(c,preset){
+  var isNew=!c;c=c?clone(c):Object.assign({date:today(),company:'',contact:'',type:'유선',field:'근로기준',content:'',note:''},preset||{});
+  var names=await csAllCompanies();
+  var sel=function(id,list,cur){if(cur&&list.indexOf(cur)<0)list=list.concat([cur]);return '<select id="'+id+'">'+list.map(function(s){return '<option'+(s===cur?' selected':'')+'>'+esc(s)+'</option>'}).join('')+'</select>'};
+  var ov=modal('<h2>'+(isNew?'상담 추가':'상담 기록 수정')+'</h2>'+
+    '<div class="form">'+
+      '<label><span>날짜</span><input type="date" id="k-date" value="'+esc(c.date)+'"></label>'+
+      '<label><span>상담유형</span>'+sel('k-type',CS_TYPES.slice(),c.type)+'</label>'+
+      '<label class="full"><span>회사</span><input id="k-company" list="k-co-list" value="'+esc(c.company)+'" placeholder="회사명 (주소록·예전 상담 회사가 아래에 나옵니다. 없으면 그냥 적으세요)" autocomplete="off"></label>'+
+      '<datalist id="k-co-list">'+names.map(function(n){return '<option value="'+esc(n)+'">'}).join('')+'</datalist>'+
+      '<label class="full"><span>담당자 / 연락처</span><input id="k-contact" list="k-ct-list" value="'+esc(c.contact)+'" placeholder="예: 최세은 과장 010-0000-0000 (회사를 고르면 담당자가 아래에 나옵니다)" autocomplete="off"></label><datalist id="k-ct-list"></datalist>'+
+      '<div class="full" id="k-ct-pick" style="display:flex;flex-wrap:wrap;gap:6px"></div>'+
+      '<label><span>분야</span>'+sel('k-field',CS_FIELDS.slice(),c.field)+'</label>'+
+      '<label><span>보고서 분야</span><input id="k-rep" value="'+esc(repField(c.field))+'" disabled style="background:#f3f5f8;color:var(--muted)"></label>'+
+      '<label class="full"><span>상담내용</span><textarea id="k-content" rows="4" placeholder="예: 일용직 4대보험 신고방법 문의">'+esc(c.content)+'</textarea></label>'+
+      '<label class="full"><span>비고</span><input id="k-note" value="'+esc(c.note)+'"></label>'+
+      (isNew?'':'<label class="full"><span>변경 사유</span><input id="k-why" placeholder="예: 날짜 오기 수정 — 다른 구성원 알림 창에 함께 보입니다"></label>')+
+    '</div>'+
+    '<div class="act">'+(isNew?'':'<span class="left" id="k-delwrap"><button class="btn danger" id="k-del">삭제</button> <button class="btn" id="k-hist">수정이력</button></span>')+'<button class="btn" id="k-cancel">취소</button>'+(isNew?'<button class="btn" id="k-more">저장하고 계속 입력</button>':'')+'<button class="btn primary" id="k-save">저장</button></div>');
+  if(!isNew)editStart(c.id,ov);
+  var co=ov.querySelector('#k-company'),ct=ov.querySelector('#k-contact');
+  function fillContacts(){var o=contactOptions(co.value);ov.querySelector('#k-ct-list').innerHTML=o.map(function(s){return '<option value="'+esc(s)+'">'}).join('');
+    ov.querySelector('#k-ct-pick').innerHTML=o.length?'<span style="font-size:13.5px;color:var(--muted);align-self:center">눌러서 넣기:</span>'+o.slice(0,6).map(function(s,i){return '<button type="button" class="btn sm" data-ct="'+i+'">'+esc(s)+'</button>'}).join(''):'';
+    ov.querySelector('#k-ct-pick').onclick=function(e){var b=e.target.closest('[data-ct]');if(b){ct.value=o[+b.dataset.ct];ct.focus()}}}
+  co.addEventListener('input',fillContacts);co.addEventListener('change',fillContacts);fillContacts();
+  ov.querySelector('#k-field').onchange=function(){ov.querySelector('#k-rep').value=repField(this.value)};
+  ov.querySelector('#k-cancel').onclick=closeModal;
+  var hb=ov.querySelector('#k-hist');if(hb)hb.onclick=function(){companyHistory(c.id,csLabel(c))};
+  var del=ov.querySelector('#k-del');
+  if(del)del.onclick=function(){var w=ov.querySelector('#k-delwrap');
+    w.innerHTML='<span class="confirm">삭제할까요? <input id="k-delwhy" placeholder="삭제 사유 (예: 중복 입력)" style="width:200px;min-height:0;padding:4px 6px"> <button class="btn danger sm" data-y>삭제</button><button class="btn sm" data-n>아니요</button></span>';
+    w.querySelector('#k-delwhy').focus();
+    w.querySelector('[data-n]').onclick=function(){closeModal();openConsult(CS.docs[c.id]?CS.docs[c.id].c:c)};
+    w.querySelector('[data-y]').onclick=async function(){this.disabled=true;var body=clone(CS.docs[c.id].c);delete body.id;body._why=w.querySelector('#k-delwhy').value.trim();
+      if(await csPut(c.id,body,true)){closeModal();toast('삭제했습니다. 「삭제된 상담」에서 되살릴 수 있습니다.');csLoad(CS.year,true)}}};
+  async function save(again){
+    var v=function(k){var el=ov.querySelector('#k-'+k);return el?el.value.trim():''};
+    if(!/^\d{4}-\d{2}-\d{2}$/.test(v('date'))){toast('날짜를 넣어 주세요.');ov.querySelector('#k-date').focus();return}
+    if(!v('company')){toast('회사(또는 담당자 성함·연락처)를 넣어 주세요.');co.focus();return}
+    if(!v('content')){toast('상담내용을 넣어 주세요.');ov.querySelector('#k-content').focus();return}
+    var hit=addrCoByName(v('company'));
+    var body={_t:'k',date:v('date'),company:v('company'),cid:hit?hit.id:'',contact:v('contact'),type:v('type'),field:v('field'),content:v('content'),note:v('note'),
+      by:isNew?ME.name:(c.by||ME.name),ts:isNew?Date.now():(c.ts||Date.now()),_why:isNew?'':v('why')};
+    var y=+body.date.slice(0,4),key=c.id,ok;
+    ov.querySelectorAll('.act button').forEach(function(b){b.disabled=true});
+    if(isNew)ok=await csPut(csKey(y),body,false,0);
+    else if(key.slice(2,6)!==String(y)){ok=await csPut(csKey(y),body,false,0);if(ok){var old=clone(CS.docs[key].c);delete old.id;old._why='날짜를 '+y+'년으로 옮김';await csPut(key,old,true)}}
+    else ok=await csPut(key,body,false);
+    ov.querySelectorAll('.act button').forEach(function(b){b.disabled=false});
+    if(!ok)return;
+    if(y!==CS.year)toast(y+'년 기록으로 저장했습니다.');else toast('저장했습니다. TEAM JINO 모두의 화면에 반영됩니다.');
+    await csLoad(CS.year,true);
+    if(again){closeModal();openConsult(null,{date:body.date,type:body.type})}else closeModal();
+  }
+  ov.querySelector('#k-save').onclick=function(){save(false)};
+  var mb=ov.querySelector('#k-more');if(mb)mb.onclick=function(){save(true)};
+  setTimeout(function(){(isNew?co:ov.querySelector('#k-content')).focus()},30);
+}
+async function csPut(key,body,deleted,rev){
+  try{busy=true;var cur=CS.docs[key],x=await enc(body);
+    var res=await rpc('addr_put',{p_key:key,p_expected_rev:rev!=null?rev:(cur?cur.rev:0),p_iv:x.iv,p_data:x.data,p_deleted:!!deleted});busy=false;
+    if(res&&res.conflict){toast((res.updated_by||'다른 구성원')+' 님이 방금 이 기록을 고쳤습니다. 다시 열어 확인해 주세요.');closeModal();csLoad(CS.year,true);return false}
+    return !!(res&&res.ok);
+  }catch(e){busy=false;toast('저장하지 못했습니다: '+(e.message||''));return false}
+}
+$('#cs-add').onclick=function(){openConsult(null)};
+
+/* ---------- 삭제된 상담 (휴지통) ---------- */
+$('#cs-trash').onclick=async function(){
+  var list=CS.del.slice().sort(function(a,b){return new Date(b.updated_at)-new Date(a.updated_at)}),items=[];
+  var ov=modal('<h2>삭제된 상담 기록 ('+CS.year+'년)</h2><p class="note-p">삭제된 기록은 지워지지 않고 여기에 남습니다. <b>되살리기</b>를 누르면 삭제 직전 내용 그대로 돌아옵니다.</p><div id="kt-box" class="note-p">불러오는 중…</div><div class="act"><button class="btn primary" id="kt-close">닫기</button></div>');
+  ov.querySelector('#kt-close').onclick=closeModal;
+  for(var i=0;i<list.length;i++)items.push(await decSafe(list[i].iv,list[i].data));
+  var box=ov.querySelector('#kt-box');if(!list.length){box.textContent='삭제된 기록이 없습니다.';return}
+  box.innerHTML='<table><thead><tr><th>삭제 일시</th><th>삭제한 사람</th><th>상담 날짜 · 회사</th><th>상담내용</th><th>삭제 사유</th><th></th></tr></thead><tbody>'+list.map(function(d,i){var b=items[i]||{};
+    return '<tr><td class="mono nowrap">'+when(d.updated_at)+'</td><td class="nowrap">'+esc(d.updated_by)+'</td><td class="nowrap">'+esc(b.date||'')+' <b>'+esc(b.company||'')+'</b></td><td>'+esc(short(b.content||''))+'</td><td>'+esc(b._why||'')+'</td><td class="nowrap">'+(items[i]?'<button class="btn sm" data-rs="'+i+'">되살리기</button>':'')+'</td></tr>'}).join('')+'</tbody></table>';
+  box.addEventListener('click',async function(e){var t=e.target.closest('[data-rs]');if(!t)return;var k=+t.dataset.rs;
+    if(t.dataset.sure!=='1'){t.dataset.sure='1';t.textContent='한 번 더 누르면 되살립니다';return}
+    t.disabled=true;var body=clone(items[k]);delete body.id;body._why='삭제된 상담에서 되살림';
+    if(await csPut(list[k].key,body,false,list[k].rev)){closeModal();toast('되살렸습니다.');csLoad(CS.year,true)}else t.disabled=false});
+};
+
+/* ---------- 회사별 상담 이력 (주소록 수정 창에서) ---------- */
+async function companyConsults(co){
+  var ov=modal('<h2>'+esc(co.name)+' — 경협 상담 이력</h2><div id="kc-box" class="note-p">불러오는 중…</div><div class="act"><button class="btn primary" id="kc-close">닫기</button></div>');
+  ov.querySelector('#kc-close').onclick=closeModal;
+  try{var rows=await rpc('consult_list',{p_year:null}),list=[];
+    for(var i=0;i<rows.length;i++){if(rows[i].deleted)continue;var b=await decSafe(rows[i].iv,rows[i].data);if(b&&(b.cid===co.id||normCo(b.company)===normCo(co.name))){b.id=rows[i].key;list.push(b)}}
+    list.sort(function(a,b){return a.date<b.date?1:-1});
+    ov.querySelector('#kc-box').innerHTML=list.length?'<p class="note-p" style="margin-top:0">모두 <b>'+list.length+'</b>건 (최근 순)</p><table><thead><tr><th>날짜</th><th>담당자 / 연락처</th><th>유형</th><th>분야</th><th>상담내용</th></tr></thead><tbody>'+list.map(function(c){return '<tr><td class="mono nowrap">'+esc(c.date)+'</td><td>'+esc(c.contact)+'</td><td class="c">'+esc(c.type)+'</td><td class="c">'+esc(c.field)+'</td><td>'+esc(c.content)+'</td></tr>'}).join('')+'</tbody></table>':'경협 상담 기록이 없습니다.';
+  }catch(e){ov.querySelector('#kc-box').textContent='불러오지 못했습니다: '+e.message}
+}
+
+/* ---------- 엑셀 보고서 (공공기관 양식) ---------- */
+function loadExcelJS(){
+  if(window.ExcelJS)return Promise.resolve(window.ExcelJS);
+  var urls=['https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.4.0/exceljs.min.js','https://cdn.jsdelivr.net/npm/exceljs@4.4.0/dist/exceljs.min.js'];
+  return new Promise(function(res,rej){(function next(i){if(i>=urls.length)return rej(new Error('엑셀 도구를 불러오지 못했습니다. 인터넷 연결을 확인해 주세요.'));
+    var s=document.createElement('script');s.src=urls[i];s.onload=function(){window.ExcelJS?res(window.ExcelJS):next(i+1)};s.onerror=function(){s.remove();next(i+1)};document.head.appendChild(s)})(0)});
+}
+async function buildReport(recs,o){
+  var EJ=await loadExcelJS(),wb=new EJ.Workbook();wb.creator='노무그룹 지노';
+  var ws=wb.addWorksheet(o.sheet,{pageSetup:{paperSize:9,orientation:'landscape',fitToPage:true,fitToWidth:1,fitToHeight:0,horizontalCentered:true,margins:{left:0.4,right:0.4,top:0.5,bottom:0.5,header:0.3,footer:0.3}},views:[{state:'frozen',ySplit:9,showGridLines:false}]});
+  ws.pageSetup.printTitlesRow='8:9';
+  ws.headerFooter.oddFooter='&C&10&P / &N';
+  ws.columns=[{width:2},{width:9},{width:14},{width:30},{width:30},{width:13},{width:20},{width:90},{width:22}];
+  var F='맑은 고딕',thin={style:'thin',color:{argb:'FF7F8FA6'}},B={top:thin,left:thin,bottom:thin,right:thin};
+  var HEAD={type:'pattern',pattern:'solid',fgColor:{argb:'FFDCE6F2'}},LAB={type:'pattern',pattern:'solid',fgColor:{argb:'FFF2F5F9'}};
+  function cell(a,v,st){var c=ws.getCell(a);c.value=v;st=st||{};c.font={name:F,size:st.sz||12,bold:!!st.b,color:st.color?{argb:st.color}:undefined};
+    c.alignment={horizontal:st.h||'center',vertical:'middle',wrapText:st.wrap!==false};if(st.border!==false)c.border=B;if(st.fill)c.fill=st.fill;if(st.fmt)c.numFmt=st.fmt;return c}
+  ws.getRow(1).height=10;
+  ws.mergeCells('B2:I2');cell('B2',o.title,{sz:24,b:true,border:false,color:'FF0B3A75'});ws.getRow(2).height=56;
+  ws.getCell('B2').border={bottom:{style:'medium',color:{argb:'FF0B3A75'}}};
+  [['작성자','노무그룹 지노'],['수신처','대한건설협회 경기도회'],['자문 기간',o.period]].forEach(function(p,i){var r=4+i;ws.getRow(r).height=26;
+    cell('B'+r,p[0],{sz:12,b:true,fill:LAB});ws.mergeCells('C'+r+':D'+r);cell('C'+r,p[1],{sz:12,b:true});ws.getCell('D'+r).border=B});
+  ws.mergeCells('F4:I4');cell('F4','▶ 회사 이름이 확인되지 않은 경우 담당자 성함 또는 연락처로 기록하였습니다.',{sz:11,h:'right',border:false,color:'FF555555'});
+  ws.mergeCells('F6:I6');cell('F6','총 '+recs.length+'건',{sz:12,b:true,h:'right',border:false,color:'FF0B3A75'});
+  var H=[['B8:B9','연 번'],['C8:C9','날짜'],['D8:E8','상담회원사'],['F8:F9','상담유형'],['G8:G9','분야'],['H8:H9','상담내용'],['I8:I9','비 고']];
+  H.forEach(function(h){ws.mergeCells(h[0]);cell(h[0].split(':')[0],h[1],{sz:12,b:true,fill:HEAD})});
+  cell('D9','회사',{sz:12,b:true,fill:HEAD});cell('E9',o.contactHead||'연락처',{sz:12,b:true,fill:HEAD});
+  ['B9','C9','F9','G9','H9','I9'].forEach(function(a){ws.getCell(a).border=B;ws.getCell(a).fill=HEAD});
+  ws.getRow(8).height=22;ws.getRow(9).height=22;
+  var r=10,no=0,lastM='';
+  recs.forEach(function(c){var m=c.date.slice(0,7);if(o.monthNo&&m!==lastM){no=0;lastM=m}no++;
+    var f=o.detailField?c.field:repField(c.field);
+    cell('B'+r,no,{sz:11});cell('C'+r,o.dateFmt==='md'?(+c.date.slice(5,7))+'월'+(+c.date.slice(8,10))+'일':c.date,{sz:11});
+    cell('D'+r,c.company,{sz:11,b:true});cell('E'+r,c.contact,{sz:11});cell('F'+r,c.type,{sz:11});cell('G'+r,f,{sz:11});
+    cell('H'+r,c.content,{sz:11,h:'left'});cell('I'+r,c.note||'',{sz:11,h:'left'});
+    var lines=Math.max(1,Math.ceil(String(c.content||'').length/62),Math.ceil(String(c.contact||'').length/16),Math.ceil(String(c.company||'').length/15));ws.getRow(r).height=Math.max(20,lines*16+4);r++});
+  var last=r-1;r+=2;
+  ws.getRow(r).height=24;cell('D'+r,'분야',{sz:12,b:true,fill:HEAD});cell('E'+r,'문의건수',{sz:12,b:true,fill:HEAD});cell('F'+r,'비율',{sz:12,b:true,fill:HEAD});
+  var top=r+1,tot=top+REP_FIELDS.length,cnt={};REP_FIELDS.forEach(function(f){cnt[f]=0});recs.forEach(function(c){cnt[repField(c.field)]++});
+  var rng='$G$10:$G$'+Math.max(10,last);
+  REP_FIELDS.forEach(function(f,i){var rr=top+i;ws.getRow(rr).height=22;cell('D'+rr,f,{sz:12,b:true});
+    cell('E'+rr,o.detailField?cnt[f]:{formula:'COUNTIF('+rng+',"'+f+'")',result:cnt[f]},{sz:12,h:'right',fmt:'#,##0'});
+    cell('F'+rr,{formula:'IF($E$'+tot+'=0,0,E'+rr+'/$E$'+tot+')',result:recs.length?cnt[f]/recs.length:0},{sz:12,h:'right',fmt:'0%'})});
+  ws.getRow(tot).height=24;cell('D'+tot,'계',{sz:12,b:true,fill:LAB});cell('E'+tot,{formula:'SUM(E'+top+':E'+(tot-1)+')',result:recs.length},{sz:12,b:true,h:'right',fmt:'#,##0',fill:LAB});cell('F'+tot,{formula:'IF($E$'+tot+'=0,0,1)',result:recs.length?1:0},{sz:12,b:true,h:'right',fmt:'0%',fill:LAB});
+  if(o.detailField){var rr2=tot+2;cell('D'+rr2,'※ 분야는 내부 정리 기준이고, 위 표의 건수는 협회 보고 분야로 묶어 센 것입니다.',{sz:10,h:'left',border:false,color:'FF666666'});ws.mergeCells('D'+rr2+':H'+rr2)}
+  var buf=await wb.xlsx.writeBuffer();
+  var a=document.createElement('a');a.href=URL.createObjectURL(new Blob([buf],{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'}));a.download=o.file;document.body.appendChild(a);a.click();setTimeout(function(){URL.revokeObjectURL(a.href);a.remove()},1500);
+}
+$('#cs-rep').onclick=function(){
+  var y=CS.year,cur=+$('#cs-qtr').value||(y===new Date().getFullYear()?Math.max(1,qOf(today())-(new Date().getMonth()%3===0&&new Date().getDate()<20?1:0)):4);
+  var counts=[1,2,3,4].map(function(q){return csRecs().filter(function(c){return qOf(c.date)===q}).length});
+  var ov=modal('<h2>분기 보고서 내려받기</h2><p class="note-p">대한건설협회 경기도회에 내는 상담실적 보고서 양식으로 만듭니다. 분야는 협회 보고 분야(퇴직금/퇴직공제, 근로기준, 외국인, 노사관계, 4대보험, 산업안전/산업재해, 기타)로 바뀌어 들어가고, 아래에 분야별 건수·비율 표가 붙습니다.</p>'+
+    '<div style="display:flex;gap:8px;flex-wrap:wrap">'+[1,2,3,4].map(function(q){return '<label style="flex:1;min-width:120px;border:1px solid var(--rule);padding:10px;cursor:pointer;display:flex;gap:8px;align-items:center"><input type="radio" name="rq" value="'+q+'"'+(q===cur?' checked':'')+' style="width:auto;min-height:0"> <b>'+y+'년 '+q+'분기</b> <span style="color:var(--muted)">'+counts[q-1]+'건</span></label>'}).join('')+'</div>'+
+    '<div class="act"><button class="btn" id="rq-cancel">취소</button><button class="btn primary" id="rq-go">내려받기</button></div>');
+  ov.querySelector('#rq-cancel').onclick=closeModal;
+  ov.querySelector('#rq-go').onclick=async function(){var q=+ov.querySelector('[name=rq]:checked').value,recs=csRecs().filter(function(c){return qOf(c.date)===q});
+    if(!recs.length){toast(q+'분기 기록이 없습니다.');return}this.disabled=true;this.textContent='만드는 중…';
+    var s=(q-1)*3+1,e=s+2,yy=String(y).slice(2);
+    try{await buildReport(recs,{sheet:yy+'년 '+q+'분기 자문실적',title:'대한건설협회 경기도회 상담실적 보고서 ('+yy+'년 '+q+'분기)',period:y+'.'+s+'. ~ '+y+'.'+e+'.',dateFmt:'md',file:'노무그룹지노_경기도회_상담실적보고서_'+yy+'년_'+q+'분기.xlsx'});closeModal();toast('내려받았습니다 (다운로드 폴더).')}
+    catch(err){this.disabled=false;this.textContent='내려받기';toast(err.message||'만들지 못했습니다.')}};
+};
+$('#cs-yearx').onclick=async function(){var y=CS.year,recs=csFiltered();if(!recs.length){toast('내려받을 기록이 없습니다.');return}
+  var b=this;b.disabled=true;var filt=recs.length!==csRecs().length;
+  try{await buildReport(recs,{sheet:String(y).slice(2)+'년 경협자문실적',title:y+'년 대한건설협회 경기도회 상담실적 보고서'+(filt?' (조건 적용)':''),period:y+'.01.01 ~ '+y+'.12.31',dateFmt:'ymd',detailField:true,monthNo:!filt,contactHead:'담당자 / 연락처',file:'노무그룹지노_경협자문실적_'+y+'년'+(filt?'_조건':'')+'.xlsx'});toast('내려받았습니다 (다운로드 폴더).')}
+  catch(err){toast(err.message||'만들지 못했습니다.')}b.disabled=false};
+
+/* ---------- 예전 엑셀 옮기기 ---------- */
+$('#cs-import').onclick=function(){var i=$('#cs-file');i.value='';i.click()};
+$('#cs-file').addEventListener('change',function(e){var f=e.target.files[0];if(!f)return;var rd=new FileReader();
+  rd.onload=async function(){
+    try{var wb=XLSX.read(new Uint8Array(rd.result),{type:'array',cellDates:true}),recs=[];
+      wb.SheetNames.forEach(function(sn){var aoa=XLSX.utils.sheet_to_json(wb.Sheets[sn],{header:1,raw:true,defval:''});
+        var hr=-1;for(var i=0;i<Math.min(20,aoa.length);i++){var t=aoa[i].map(function(x){return String(x).replace(/\s/g,'')});if(t.indexOf('날짜')>=0&&t.some(function(x){return /상담회원사|회사/.test(x)})){hr=i;break}}
+        if(hr<0)return;
+        var H=aoa[hr].map(function(x){return String(x).replace(/\s/g,'')}),col=function(n){return H.findIndex(function(x){return n.test(x)})};
+        var cD=col(/^날짜$/),cC=col(/상담회원사|^회사$/),cT=col(/상담유형/),cF=col(/^분야$/),cX=col(/상담내용/),cN=col(/^비고$/);
+        var ym=(sn+' '+aoa.slice(0,hr).map(function(r){return r.join(' ')}).join(' ')).match(/(20\d{2})\s*[.년]|(\d{2})년/),sy=ym?+(ym[1]||'20'+ym[2]):new Date().getFullYear();
+        for(var r=hr+1;r<aoa.length;r++){var row=aoa[r],dv=row[cD],date='';
+          if(dv instanceof Date){date=ymd(new Date(dv.getTime()+12*3600e3))}
+          else if(typeof dv==='number'&&dv>30000){var d0=new Date(Math.round((dv-25569)*864e5)+12*3600e3);date=ymd(d0)}
+          else{var s=String(dv).trim(),m1=s.match(/^(20\d{2})[-.\/]\s*(\d{1,2})[-.\/]\s*(\d{1,2})/),m2=s.match(/^(\d{1,2})\s*[월.\/]\s*(\d{1,2})/);
+            if(m1)date=m1[1]+'-'+m1[2].padStart(2,'0')+'-'+m1[3].padStart(2,'0');else if(m2)date=sy+'-'+m2[1].padStart(2,'0')+'-'+m2[2].padStart(2,'0')}
+          var company=String(row[cC]||'').trim(),content=String(row[cX]||'').trim();
+          if(!date||(!company&&!content))continue;
+          recs.push({_t:'k',date:date,company:company||String(row[cC+1]||'').trim(),contact:String(row[cC+1]||'').trim(),type:normType(row[cT]),field:normField(row[cF]),content:content,note:cN>=0?String(row[cN]||'').trim():''});
+        }
+      });
+      if(!recs.length)throw new Error('이 파일에서 상담 기록을 찾지 못했습니다. 첫 줄 근처에 "날짜", "상담회원사" 제목이 있는 파일이어야 합니다.');
+      $('#cs-list').insertAdjacentHTML('beforebegin','');
+      var ov=modal('<h2>예전 엑셀 옮기기</h2><p class="note-p">이미 들어 있는 기록과 겹치는지 확인하는 중…</p><div class="act"><button class="btn" id="ki-cancel">취소</button></div>');ov.querySelector('#ki-cancel').onclick=closeModal;
+      var rows=await rpc('consult_list',{p_year:null}),have={};
+      for(var i=0;i<rows.length;i++){if(rows[i].deleted)continue;var b=await decSafe(rows[i].iv,rows[i].data);if(b)have[b.date+'|'+normCo(b.company)+'|'+String(b.content).replace(/\s/g,'').slice(0,25)]=1}
+      var seen={},add=[],dup=0;recs.forEach(function(c){var k=c.date+'|'+normCo(c.company)+'|'+c.content.replace(/\s/g,'').slice(0,25);if(have[k]||seen[k]){dup++;return}seen[k]=1;add.push(c)});
+      var byY={};add.forEach(function(c){var y=c.date.slice(0,4);byY[y]=(byY[y]||0)+1});
+      var fset={};add.forEach(function(c){fset[c.field]=(fset[c.field]||0)+1});
+      ov=modal('<h2>예전 엑셀 옮기기</h2><p class="note-p"><b>'+esc(f.name)+'</b>에서 상담 기록 <b>'+recs.length+'</b>건을 읽었습니다.</p>'+
+        '<table><tbody><tr><th style="width:180px">새로 옮길 기록</th><td><b>'+add.length+'</b>건 '+(add.length?'('+Object.keys(byY).sort().map(function(y){return y+'년 '+byY[y]+'건'}).join(', ')+')':'')+'</td></tr>'+
+        '<tr><th>이미 있어서 건너뜀</th><td>'+dup+'건 (같은 날짜·회사·상담내용)</td></tr>'+
+        '<tr><th>분야</th><td>'+Object.keys(fset).map(function(k){return esc(k)+' '+fset[k]}).join(', ')+'</td></tr></tbody></table>'+
+        '<p class="note-p">"산업안전"→"산업안전/재해", "전화"→"유선"처럼 같은 뜻의 이름은 하나로 맞췄습니다. 주소록에 있는 회사는 거래처로 연결됩니다.</p><p class="note-p" id="ki-prog" hidden></p>'+
+        '<div class="act"><button class="btn" id="ki-cancel">취소</button><button class="btn primary" id="ki-go"'+(add.length?'':' disabled')+'>'+add.length+'건 옮기기</button></div>');
+      ov.querySelector('#ki-cancel').onclick=closeModal;
+      ov.querySelector('#ki-go').onclick=async function(){var btn=this,prog=ov.querySelector('#ki-prog');btn.disabled=true;prog.hidden=false;busy=true;var n=0,base=Date.now();
+        try{for(var s=0;s<add.length;s+=250){var part=[];for(var j=s;j<Math.min(add.length,s+250);j++){var c=add[j],hit=addrCoByName(c.company);c.cid=hit?hit.id:'';c.by=ME.name;c.ts=base+j;c._why='예전 엑셀에서 옮김';var x=await enc(c);part.push({key:csKey(c.date.slice(0,4)),iv:x.iv,data:x.data})}
+            prog.textContent='옮기는 중… '+Math.min(add.length,s+250)+' / '+add.length;var res=await rpc('consult_add_many',{p_docs:part});n+=res.count||0}
+          busy=false;closeModal();toast(n+'건을 옮겼습니다.');CS.docs={};csLoad(CS.year)}
+        catch(err){busy=false;btn.disabled=false;toast('옮기지 못했습니다: '+(err.message||'')+' (옮긴 '+n+'건은 저장됨)')}};
+    }catch(err){closeModal();toast(err.message||'파일을 읽지 못했습니다.')}
+  };rd.readAsArrayBuffer(f)});
+
 })();
 </script>
 </body>
