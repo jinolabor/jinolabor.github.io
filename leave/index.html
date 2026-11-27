@@ -209,7 +209,7 @@ details.mgrp>table{margin:0;border-left:0;border-right:0}
   <div class="doc-title"><h2>연차 사용 관리대장</h2><span class="ref" id="ref"></span></div>
   <div class="notice">
     · 연차 1일 = 8시간 · <b>오전반차</b> 3시간(09:30~13:30, 점심 포함) = 3/8일 · <b>오후반차</b> 5시간(12:30~18:30, 점심 포함) = 5/8일 · <b>외출</b> 2시간권 = 2/8일 (연 8회)<br>
-    · 연차 사용 전 원활한 업무 공유를 부탁드립니다. <span style="color:var(--bad)">비밀번호는 이 프로그램에 적지 마세요.</span>
+    · 대표·팀장은 연차 관리 대상이 아니며 승인·관리만 합니다. · 연차 사용 전 원활한 업무 공유를 부탁드립니다. <span style="color:var(--bad)">비밀번호는 이 프로그램에 적지 마세요.</span>
   </div>
   <div class="toolbar" style="margin-top:0">
     <span class="lb" style="font-weight:700;color:var(--navy)">연도</span><select id="lv-year" style="width:auto"></select>
@@ -329,6 +329,7 @@ $('#lform').onsubmit=async function(ev){
     ME=who;LKEY=await leaveKey(hit.k);
     $('#login').hidden=true;$('#who').textContent=ME.name+' 님'+(ME.is_mgr?' (관리)':'');
     ['#btn-pending','#sec-pend','#lv-import','#lv-xlsx','#lv-who'].forEach(function(s){$(s).hidden=!ME.is_mgr});
+    $('#lv-add').textContent=ME.is_mgr?'연차 등록 (구성원)':'연차 신청';
     await loadAll();
     if(ME.is_mgr&&ME.pending>0){setTimeout(function(){$('#sec-pend').scrollIntoView({behavior:'smooth',block:'start'})},300);toast('승인을 기다리는 신청이 '+ME.pending+'건 있습니다.')}
     watchT=setInterval(async function(){try{var k=await fetchKeys();if(!(k.entries||[]).some(function(e){return e.id===hit.id}))lockOut('이 비밀번호는 더 이상 쓸 수 없습니다.')}catch(e){}},RECHECK);
@@ -367,7 +368,7 @@ function summary(){
   var rows=ms.map(function(m){var q=L.quota[m.id],my=fullRows().filter(function(r){return r.owner_id===m.id});
     var used=0,plan=0,req=0,out=0;my.forEach(function(r){var u=useOf(r.c);if(r.status==='승인'){if((r.c.end||r.c.start)<t)used+=u;else plan+=u;if(r.c.type==='외출')out++}else if(r.status==='신청')req+=u});
     var left=q?q.days-used-plan:null;
-    return '<tr'+(isMgr()?' class="click" data-q="'+esc(m.id)+'"':'')+'><td class="nowrap"><b>'+esc(m.name)+'</b>'+(m.is_mgr?' <span class="chip info">팀장·대표</span>':'')+'</td>'+
+    return '<tr'+(isMgr()?' class="click" data-q="'+esc(m.id)+'"':'')+'><td class="nowrap"><b>'+esc(m.name)+'</b></td>'+
       '<td class="num">'+(q?fmtN(q.days)+'일'+(q.label?' <span style="color:var(--muted);font-size:13px">('+esc(q.label)+')</span>':''):'<span style="color:var(--bad)">미설정</span>')+'</td>'+
       '<td class="num">'+fmtN(used)+'</td><td class="num">'+fmtN(plan)+'</td><td class="num">'+(req?'<span style="color:#8a5a00">'+fmtN(req)+'</span>':'0')+'</td>'+
       '<td class="num"><span class="left-big">'+(left==null?'-':fmtN(left))+'</span></td><td class="num">'+out+' / '+OUT_MAX+'회</td></tr>'}).join('');
@@ -375,7 +376,7 @@ function summary(){
 }
 var OPEN={};
 function rowAct(r){var a='<a href="#" class="doclink" data-doc="'+esc(r.key)+'">신청서</a>';
-  if(isMgr()&&r.status==='신청'&&(!mine(r)||ME.is_master))a='<button class="btn primary sm" data-ok="'+esc(r.key)+'">승인</button> <button class="btn sm" data-no="'+esc(r.key)+'">반려</button> '+a;return a}
+  if(isMgr()&&r.status==='신청')a='<button class="btn primary sm" data-ok="'+esc(r.key)+'">승인</button> <button class="btn sm" data-no="'+esc(r.key)+'">반려</button> '+a;return a}
 function rowHtml(r,showName){var c=r.c;
   var period=dayK(c.start)+(c.end&&c.end!==c.start?' ~ '+dayK(c.end):'');
   var memo=[c.reason,c.handover?'대행: '+c.handover:'',r.status==='반려'&&c.reject?'<span style="color:var(--bad)">반려 사유: '+esc(c.reject)+'</span>':''].filter(Boolean);
@@ -465,7 +466,7 @@ function openDay(k){
     '<div class="act"><button class="btn" id="dy-c">닫기</button><button class="btn" id="dy-ev">외부 일정 추가</button><button class="btn primary" id="dy-lv">연차 신청</button></div>');
   ov.querySelector('#dy-c').onclick=closeModal;
   ov.querySelector('#dy-ev').onclick=function(){openEvent(null,{date:k})};
-  ov.querySelector('#dy-lv').onclick=function(){openForm(null,{start:k})};
+  ov.querySelector('#dy-lv').onclick=function(){openForm(null,{start:k})};if(isMgr())ov.querySelector('#dy-lv').textContent='연차 등록 (구성원)';
   ov.querySelector('.daylist').addEventListener('click',function(e){var t=e.target.closest('[data-ev-leave],[data-ev-ext]');if(!t)return;if(t.dataset.evExt)openEvent(L.events.find(function(x){return x.key===t.dataset.evExt}));else{var r=byKey(t.dataset.evLeave);if(r&&r.full_view)openForm(r);else toast(r?r.owner_name+' 님 '+r.c.type+' (승인됨)':'')}});
 }
 
@@ -513,10 +514,10 @@ function openEvent(e,preset){
 $('#lv-add').onclick=function(){openForm(null)};
 function openForm(r,preset){
   var isNew=!r,c=r?clone(r.c):Object.assign({type:'연차',start:'',end:'',days:'',time:'',reason:'',handover:'',shared:false},preset||{});
-  var owner=r?r.owner_id:ME.id;
+  var owner=r?r.owner_id:(isMgr()?'':ME.id);
   var canEdit=isNew||isMgr()||(mine(r)&&(r.status==='신청'||r.status==='반려'));
-  var ownerSel=isMgr()&&isNew?'<select id="f-owner">'+L.members.map(function(m){return '<option value="'+esc(m.id)+'"'+(m.id===owner?' selected':'')+'>'+esc(m.name)+'</option>'}).join('')+'</select>':'<input value="'+esc(r?r.owner_name:ME.name)+'" disabled style="background:#f3f5f8">';
-  var ov=modal('<h2>'+(isNew?'연차 신청':'연차 신청 내용')+(r?' <span style="font-size:14px">'+stChip(r)+'</span>':'')+'</h2>'+
+  var ownerSel=isMgr()&&isNew?'<select id="f-owner"><option value="">구성원 선택</option>'+L.members.map(function(m){return '<option value="'+esc(m.id)+'"'+(m.id===owner?' selected':'')+'>'+esc(m.name)+'</option>'}).join('')+'</select>':'<input value="'+esc(r?r.owner_name:ME.name)+'" disabled style="background:#f3f5f8">';
+  var ov=modal('<h2>'+(isNew?(isMgr()?'연차 등록 (구성원)':'연차 신청'):'연차 신청 내용')+(r?' <span style="font-size:14px">'+stChip(r)+'</span>':'')+'</h2>'+
     (canEdit?'':'<p class="note-p" style="color:var(--bad)">승인된 신청은 본인이 고칠 수 없습니다. 바꿔야 하면 팀장·대표에게 요청해 주세요.</p>')+
     '<div class="form">'+
       '<label><span>신청인</span>'+ownerSel+'</label>'+
@@ -533,7 +534,7 @@ function openForm(r,preset){
     (r&&r.status==='반려'&&c.reject?'<p class="note-p" style="color:var(--bad)">반려 사유: '+esc(c.reject)+'</p>':'')+
     '<div class="act"><span class="left">'+(r?'<button class="btn" id="f-hist">처리 이력</button> <button class="btn" id="f-doc">신청서</button>':'')+
       (r&&mine(r)&&r.status==='신청'?' <button class="btn danger" id="f-cancel">신청 취소</button>':'')+(r&&isMgr()&&r.status!=='취소'?' <button class="btn danger" id="f-del">삭제</button>':'')+'</span>'+
-      '<button class="btn" id="f-close">닫기</button>'+(canEdit?'<button class="btn primary" id="f-save">'+(isNew?'신청하기':(isMgr()&&r.status==='승인'?'저장':'다시 신청'))+'</button>':'')+'</div>');
+      '<button class="btn" id="f-close">닫기</button>'+(canEdit?'<button class="btn primary" id="f-save">'+(isNew?(isMgr()?'등록 (바로 승인)':'신청하기'):(isMgr()&&r.status==='승인'?'저장':'다시 신청'))+'</button>':'')+'</div>');
   var q=function(s){return ov.querySelector(s)};
   if(!canEdit)ov.querySelectorAll('.form input,.form select,#f-shared').forEach(function(i){i.disabled=true});
   function sync(){var t=q('#f-type').value,fe=q('#f-end'),fd=q('#f-days'),ft=q('#f-time');
@@ -560,12 +561,12 @@ function openForm(r,preset){
     if(e<s){toast('끝나는 날이 사용일보다 앞입니다.');q('#f-end').focus();return}
     if(t==='연차'&&String(s).slice(0,4)!==String(e).slice(0,4)){toast('연도가 바뀌는 연차는 연도별로 나눠 신청해 주세요.');return}
     var days=t==='연차'?parseFloat(String(q('#f-days').value).replace(/[^\d.]/g,'')):W[t];if(t==='연차'&&!(days>0)){toast('사용 일수를 확인해 주세요.');q('#f-days').focus();return}
-    var own=q('#f-owner')?q('#f-owner').value:owner;
+    var own=q('#f-owner')?q('#f-owner').value:owner;if(!own){toast('구성원을 골라 주세요.');q('#f-owner').focus();return}
     var body={type:t,start:s,end:e,days:t==='연차'?days:'',time:t==='외출'?q('#f-time').value.trim():'',reason:q('#f-reason').value.trim(),handover:q('#f-handover').value.trim(),shared:q('#f-shared').checked,
       late:s<today(),applied_at:isNew?new Date().toISOString():(c.applied_at||r.created_at),applicant:isNew?(L.members.find(function(m){return m.id===own})||{name:ME.name}).name:c.applicant,entered_by:isNew?ME.name:(c.entered_by||ME.name)};
     var stNew='신청';
     if(isMgr()&&r&&r.status==='승인')stNew='승인';
-    var direct=isMgr()&&isNew&&own!==ME.id;
+    var direct=isMgr()&&isNew;
     if(direct)stNew='승인';
     this.disabled=true;
     var ok=await put(r||{key:lkey(s.slice(0,4)),owner_id:own,rev:0,status:'신청'},body,stNew);
