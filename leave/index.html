@@ -172,7 +172,12 @@ td.num{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
 .cal>.off{background:#f7f8fa;color:#aab}
 .cal .dn{font-weight:700;color:#334}.cal .sun .dn,.cal>.sun .dn{color:#c0392b}.cal>.sat .dn{color:#1f5fbf}
 .cal>.today{outline:2px solid var(--navy);outline-offset:-2px}
-.ev{display:block;margin-top:3px;padding:1px 5px;border-radius:2px;background:#e8f0fb;color:#174a8c;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.legend{display:flex;flex-wrap:wrap;gap:6px 12px;align-items:center;font-size:13.5px;margin:0 0 8px}
+.legend .sw{display:inline-block;width:12px;height:12px;border-radius:2px;margin-right:4px;vertical-align:-1px}
+.ev.x{background:#fff!important;border:1px solid #ccd3dd;border-left-width:4px;font-weight:500;color:#223}
+.ev.leave{border:1px solid transparent}
+.daylist .it{display:flex;gap:8px;align-items:center;padding:7px 9px;border:1px solid var(--rule);margin-bottom:5px;cursor:pointer;border-left-width:5px}
+.ev{display:block;cursor:pointer;margin-top:3px;padding:1px 5px;border-radius:2px;background:#e8f0fb;color:#174a8c;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .ev.t-오전반차,.ev.t-오후반차{background:#eaf6ee;color:#1d6b3a}.ev.t-외출{background:#f3ecfb;color:#5b2d91}.ev.pend{background:#fff;border:1px dashed #e9c98f;color:#8a5a00}
 .calnav{display:flex;align-items:center;gap:10px;margin-bottom:8px}.calnav b{font-size:18px;color:var(--navy)}
 .grid.lv td{padding:6px 10px;font-size:14.5px;vertical-align:middle}.grid.lv th{padding:7px 10px}
@@ -209,6 +214,7 @@ details.mgrp>table{margin:0;border-left:0;border-right:0}
     <span style="flex:1"></span>
     <button class="btn" id="lv-import" hidden>예전 연차대장 옮기기</button>
     <button class="btn" id="lv-xlsx" hidden>연차대장 엑셀</button>
+    <button class="btn" id="ev-add">외부 일정 추가</button>
     <button class="btn primary" id="lv-add">연차 신청</button>
   </div>
   <h3 class="sec-h">팀 달력</h3>
@@ -303,7 +309,7 @@ function dispSt(r){return r.status==='승인'&&r.c&&(r.c.end||r.c.start)<today()
 function stChip(r){var s=dispSt(r);return '<span class="st s-'+s+'">'+s+'</span>'}
 
 /* ---------- 상태 ---------- */
-var L={year:new Date().getFullYear(),rows:[],members:[],quota:{},view:'list',calM:null};
+var L={year:new Date().getFullYear(),rows:[],members:[],quota:{},view:'list',calM:null,names:[],events:[]};
 function isMgr(){return ME&&ME.is_mgr}
 
 /* ---------- 로그인 ---------- */
@@ -337,7 +343,8 @@ $('#lv-year').onchange=function(){L.year=+this.value;L.calM=null;loadAll()};
 async function loadAll(quiet){
   if(!ME)return;if(!quiet)status('불러오는 중…');
   try{
-    var x=await Promise.all([rpc('leave_list',{p_year:L.year}),rpc('leave_members'),rpc('leave_quota_list',{p_year:L.year}),rpc('leave_whoami')]);
+    var x=await Promise.all([rpc('leave_list',{p_year:L.year}),rpc('leave_members'),rpc('leave_quota_list',{p_year:L.year}),rpc('leave_whoami'),rpc('team_names'),rpc('event_list',{p_year:L.year})]);
+    L.names=x[4];var evs=[];for(var ei=0;ei<x[5].length;ei++){var er=x[5][ei],ec=await decSafe(er.iv,er.data);if(ec){er.c=ec;evs.push(er)}}L.events=evs;
     var rows=[];for(var i=0;i<x[0].length;i++){var r=x[0][i];r.c=r.full_view?await decSafe(r.iv,r.data):null;r.cal=await decSafe(r.cal_iv,r.cal_data);if(!r.c&&r.cal)r.c=r.cal;if(r.c)rows.push(r)}
     L.rows=rows;L.members=x[1];L.quota={};x[2].forEach(function(q){L.quota[q.member_id]=q});ME.pending=x[3].pending;
     var pn=$('#pend-n');pn.hidden=!ME.pending;pn.textContent=ME.pending;
@@ -414,7 +421,9 @@ document.querySelector('.paper').addEventListener('click',function(e){
   if(t=e.target.closest('[data-no]')){e.stopPropagation();decide(byKey(t.dataset.no),'반려');return}
   if(t=e.target.closest('[data-cal-prev]')){L.calM=shiftM(-1);renderCal();return}
   if(t=e.target.closest('[data-cal-next]')){L.calM=shiftM(1);renderCal();return}
-  if(t=e.target.closest('[data-cal-day]')){openForm(null,{start:t.dataset.calDay});return}
+  if(t=e.target.closest('#cal-body [data-ev-ext]')){e.stopPropagation();openEvent(L.events.find(function(x){return x.key===t.dataset.evExt}));return}
+  if(t=e.target.closest('#cal-body [data-ev-leave]')){e.stopPropagation();var lr=byKey(t.dataset.evLeave);if(lr&&lr.full_view)openForm(lr);else openDay(t.closest('[data-cal-day]').dataset.calDay);return}
+  if(t=e.target.closest('[data-cal-day]')){openDay(t.dataset.calDay);return}
   if(t=e.target.closest('[data-edit]')){var r=byKey(t.dataset.edit);if(r&&r.full_view)openForm(r)}
 });
 $('#lv-sum').addEventListener('click',function(e){var t=e.target.closest('[data-q]');if(t&&isMgr())openQuota(t.dataset.q)});
@@ -423,16 +432,79 @@ function byKey(k){return L.rows.find(function(r){return r.key===k})}
 /* ---------- 팀 달력 ---------- */
 function shiftM(n){var m=L.calM||defaultM();var d=new Date(m.y,m.m+n,1);return {y:d.getFullYear(),m:d.getMonth()}}
 function defaultM(){var n=new Date();return n.getFullYear()===L.year?{y:L.year,m:n.getMonth()}:{y:L.year,m:0}}
+var PAL=[['#d6e4fb','#1747a6'],['#d8f1df','#17663a'],['#fde2cf','#a04a0b'],['#ecdcfb','#6a2fa3'],['#fbd9e3','#a8264f'],['#d3f0f2','#0f6670'],['#f6ecc4','#7a5c00'],['#e3e6ea','#3c4654'],['#dfe9c8','#4b6614'],['#f9d6d0','#9b2b1a']];
+function colorOf(id){var i=L.names.findIndex(function(n){return n.id===id});if(i<0)i=L.names.length;return PAL[i%PAL.length]}
+function eventsOn(k){var out=[];
+  L.rows.forEach(function(r){if(r.status!=='승인'&&!(r.status==='신청'&&(mine(r)||isMgr())))return;var c=r.c;if(c.start>k||(c.end||c.start)<k)return;var w=pd(k).getDay();if(c.type==='연차'&&(w===0||w===6))return;out.push({kind:'leave',r:r})});
+  L.events.forEach(function(e){var c=e.c;if(c.date>k||(c.end||c.date)<k)return;out.push({kind:'ext',e:e})});
+  return out.sort(function(a,b){return (a.kind==='leave'?0:1)-(b.kind==='leave'?0:1)||String(a.kind==='ext'?a.e.c.time:'').localeCompare(String(b.kind==='ext'?b.e.c.time:''))})}
+function evChip(x){
+  if(x.kind==='leave'){var r=x.r,col=colorOf(r.owner_id);
+    return '<span class="ev leave'+(r.status==='신청'?' pend':'')+'" data-ev-leave="'+esc(r.key)+'" style="'+(r.status==='신청'?'':'background:'+col[0]+';color:'+col[1]+';')+'border-color:'+col[1]+'" title="'+esc(r.owner_name+' '+r.c.type+(r.status==='신청'?' (승인 전)':''))+'">'+esc(r.owner_name)+' '+esc(r.c.type)+'</span>'}
+  var e=x.e,c=e.c,col=colorOf(e.owner_id);
+  return '<span class="ev x" data-ev-ext="'+esc(e.key)+'" style="border-left-color:'+col[1]+'" title="'+esc(e.owner_name+' · '+(c.kind?'['+c.kind+'] ':'')+c.title+(c.time?' '+c.time:'')+(c.place?' @'+c.place:''))+'"><b style="color:'+col[1]+'">'+esc(e.owner_name)+'</b> '+esc((c.time?c.time.split(/[~-]/)[0]+' ':'')+c.title)+'</span>'}
 function renderCal(){
   var m=L.calM||defaultM();if(m.y!==L.year){L.year=m.y;$('#lv-year').value=m.y;L.calM=m;loadAll();return}
   var first=new Date(m.y,m.m,1),start=new Date(first);start.setDate(1-first.getDay());
-  var evs={};L.rows.forEach(function(r){if(r.status!=='승인'&&!(r.status==='신청'&&(mine(r)||isMgr())))return;var c=r.c;var d=pd(c.start),e=pd(c.end||c.start);
-    for(;d<=e;d.setDate(d.getDate()+1)){var w=d.getDay();if(c.type==='연차'&&(w===0||w===6))continue;var k=ymd(d);(evs[k]=evs[k]||[]).push(r)}});
-  var h='<div class="calnav"><button class="btn sm" data-cal-prev>◀</button><b>'+m.y+'년 '+(m.m+1)+'월</b><button class="btn sm" data-cal-next>▶</button><span style="font-size:13.5px;color:var(--muted);margin-left:8px">점선은 승인 전 신청입니다. 빈 날짜를 누르면 그날로 신청 창이 열립니다.</span></div><div class="cal">'+WD.map(function(w){return '<div class="h">'+w+'</div>'}).join('');
+  var lg='<div class="legend">'+L.names.map(function(n){var c=colorOf(n.id);return '<span><span class="sw" style="background:'+c[1]+'"></span>'+esc(n.name)+'</span>'}).join('')+
+    '<span style="margin-left:auto;color:var(--muted)">칠한 칸 = 연차 · 흰 칸(왼쪽 색 줄) = 외부 일정 · 점선 = 승인 전</span></div>';
+  var h='<div class="calnav"><button class="btn sm" data-cal-prev>◀</button><b>'+m.y+'년 '+(m.m+1)+'월</b><button class="btn sm" data-cal-next>▶</button><span style="font-size:13.5px;color:var(--muted);margin-left:8px">날짜를 누르면 그날 일정을 보고 연차 신청·외부 일정을 넣을 수 있습니다.</span></div>'+lg+'<div class="cal">'+WD.map(function(w){return '<div class="h">'+w+'</div>'}).join('');
   for(var i=0;i<42;i++){var d=new Date(start);d.setDate(start.getDate()+i);var k=ymd(d),cls=[];if(d.getMonth()!==m.m)cls.push('off');if(d.getDay()===0)cls.push('sun');if(d.getDay()===6)cls.push('sat');if(k===today())cls.push('today');
-    h+='<div class="'+cls.join(' ')+'" data-cal-day="'+k+'"><span class="dn">'+d.getDate()+'</span>'+(evs[k]||[]).map(function(r){return '<span class="ev t-'+esc(r.c.type)+(r.status==='신청'?' pend':'')+'" title="'+esc(r.owner_name+' '+r.c.type+(r.c.time?' '+r.c.time:''))+'">'+esc(r.owner_name)+' '+esc(r.c.type==='연차'?'연차':r.c.type)+'</span>'}).join('')+'</div>';
+    h+='<div class="'+cls.join(' ')+'" data-cal-day="'+k+'"><span class="dn">'+d.getDate()+'</span>'+eventsOn(k).map(evChip).join('')+'</div>';
     if(i===34&&new Date(start.getTime()+35*864e5).getMonth()!==m.m)break}
   $('#cal-body').innerHTML=h+'</div>';
+}
+function openDay(k){
+  var list=eventsOn(k);
+  var ov=modal('<h2>'+(+k.slice(5,7))+'월 '+(+k.slice(8,10))+'일 ('+WD[pd(k).getDay()]+') 팀 일정</h2>'+
+    '<div class="daylist">'+(list.length?list.map(function(x){
+      if(x.kind==='leave'){var r=x.r,col=colorOf(r.owner_id);return '<div class="it" data-ev-leave="'+esc(r.key)+'" style="border-left-color:'+col[1]+'"><b style="color:'+col[1]+'">'+esc(r.owner_name)+'</b> '+esc(r.c.type)+(r.c.time?' '+esc(r.c.time):'')+' '+stChip(r)+'</div>'}
+      var e=x.e,c=e.c,col2=colorOf(e.owner_id);return '<div class="it" data-ev-ext="'+esc(e.key)+'" style="border-left-color:'+col2[1]+'"><b style="color:'+col2[1]+'">'+esc(e.owner_name)+'</b> <span class="chip info">'+esc(c.kind||'외부')+'</span> '+esc(c.time||'')+' <b>'+esc(c.title)+'</b>'+(c.place?' <span class="mut">@'+esc(c.place)+'</span>':'')+'</div>'}).join(''):'<p class="note-p">이 날 일정이 없습니다.</p>')+'</div>'+
+    '<div class="act"><button class="btn" id="dy-c">닫기</button><button class="btn" id="dy-ev">외부 일정 추가</button><button class="btn primary" id="dy-lv">연차 신청</button></div>');
+  ov.querySelector('#dy-c').onclick=closeModal;
+  ov.querySelector('#dy-ev').onclick=function(){openEvent(null,{date:k})};
+  ov.querySelector('#dy-lv').onclick=function(){openForm(null,{start:k})};
+  ov.querySelector('.daylist').addEventListener('click',function(e){var t=e.target.closest('[data-ev-leave],[data-ev-ext]');if(!t)return;if(t.dataset.evExt)openEvent(L.events.find(function(x){return x.key===t.dataset.evExt}));else{var r=byKey(t.dataset.evLeave);if(r&&r.full_view)openForm(r);else toast(r?r.owner_name+' 님 '+r.c.type+' (승인됨)':'')}});
+}
+
+/* ---------- 외부 일정 ---------- */
+var EV_KINDS=['외근','출장','미팅','교육','기타'];
+function ekey(y){var a=crypto.getRandomValues(new Uint8Array(8));return 'e_'+y+'_'+Array.from(a,function(x){return x.toString(16).padStart(2,'0')}).join('')}
+$('#ev-add').onclick=function(){openEvent(null)};
+function openEvent(e,preset){
+  var isNew=!e,c=e?clone(e.c):Object.assign({date:today(),end:'',time:'',kind:'외근',title:'',place:'',memo:''},preset||{});
+  var owner=e?e.owner_id:ME.id,can=isNew||e.owner_id===ME.id||isMgr();
+  var opts=(isMgr()?L.names:L.names.filter(function(n){return n.id===ME.id})).map(function(n){return '<option value="'+esc(n.id)+'"'+(n.id===owner?' selected':'')+'>'+esc(n.name)+'</option>'}).join('');
+  var ov=modal('<h2>'+(isNew?'외부 일정 추가':'외부 일정')+'</h2>'+(can?'':'<p class="note-p">'+esc(e.owner_name)+' 님 일정입니다. 고치려면 본인이나 팀장·대표에게 요청해 주세요.</p>')+
+    '<div class="form">'+
+      '<label><span>구성원</span>'+(isNew?'<select id="e-owner">'+opts+'</select>':'<input value="'+esc(e.owner_name)+'" disabled style="background:#f3f5f8">')+'</label>'+
+      '<label><span>구분</span><select id="e-kind">'+EV_KINDS.map(function(k){return '<option'+(k===c.kind?' selected':'')+'>'+k+'</option>'}).join('')+'</select></label>'+
+      '<label><span>날짜</span><input id="e-date" value="'+esc(c.date)+'" placeholder="예: 12/3" autocomplete="off"></label>'+
+      '<label><span>끝나는 날</span><input id="e-end" value="'+esc(c.end&&c.end!==c.date?c.end:'')+'" placeholder="하루면 비워 두세요" autocomplete="off"></label>'+
+      '<label><span>시간</span><input id="e-time" value="'+esc(c.time)+'" placeholder="예: 14:00~16:00"></label>'+
+      '<label><span>장소</span><input id="e-place" value="'+esc(c.place)+'" placeholder="예: 수원 ○○건설"></label>'+
+      '<label class="full"><span>일정 내용</span><input id="e-title" value="'+esc(c.title)+'" placeholder="예: ○○건설 노무비 신고 방문"></label>'+
+      '<label class="full"><span>메모</span><input id="e-memo" value="'+esc(c.memo)+'" placeholder="연락처, 준비물 등 (선택)"></label>'+
+    '</div><p class="note-p" id="e-info"></p>'+
+    '<div class="act">'+(!isNew&&can?'<span class="left"><button class="btn danger" id="e-del">삭제</button></span>':'')+'<button class="btn" id="e-c">닫기</button>'+(can?'<button class="btn primary" id="e-save">저장</button>':'')+'</div>');
+  var q=function(x){return ov.querySelector(x)};
+  if(!can)ov.querySelectorAll('.form input,.form select').forEach(function(i){i.disabled=true});
+  function info(){var s=parseDay(q('#e-date').value,L.year),en=parseDay(q('#e-end').value,L.year);q('#e-info').textContent=s?dayK(s)+(en&&en!==s?' ~ '+dayK(en):''):(q('#e-date').value?'날짜를 확인해 주세요':'')}
+  ['#e-date','#e-end'].forEach(function(x){q(x).addEventListener('input',info);q(x).addEventListener('blur',function(){var v=parseDay(this.value,L.year);if(v)this.value=v;info()})});info();
+  q('#e-c').onclick=closeModal;
+  async function save(del){
+    var s=parseDay(q('#e-date').value,L.year),en=parseDay(q('#e-end').value,L.year)||s;
+    if(!s){toast('날짜를 확인해 주세요 (예: 12/3).');q('#e-date').focus();return}
+    if(en<s){toast('끝나는 날이 앞입니다.');return}
+    if(!del&&!q('#e-title').value.trim()){toast('일정 내용을 적어 주세요.');q('#e-title').focus();return}
+    var body={date:s,end:en,time:q('#e-time').value.trim(),kind:q('#e-kind').value,title:q('#e-title').value.trim(),place:q('#e-place').value.trim(),memo:q('#e-memo').value.trim()};
+    try{var x=await enc(body),own=isNew?q('#e-owner').value:e.owner_id;
+      var res=await rpc('event_put',{p_key:isNew?ekey(s.slice(0,4)):e.key,p_expected_rev:isNew?0:e.rev,p_owner_id:own,p_year:+s.slice(0,4),p_iv:x.iv,p_data:x.data,p_deleted:!!del});
+      if(res&&res.conflict){toast((res.updated_by||'다른 사람')+' 님이 방금 고쳤습니다. 다시 열어 주세요.');closeModal();loadAll(true);return}
+      closeModal();toast(del?'일정을 지웠습니다.':'저장했습니다. 팀 달력에 보입니다.');loadAll(true)}
+    catch(err){toast(err.message||'저장하지 못했습니다.')}}
+  if(q('#e-save'))q('#e-save').onclick=function(){save(false)};
+  if(q('#e-del'))q('#e-del').onclick=function(){if(this.dataset.sure!=='1'){this.dataset.sure='1';this.textContent='한 번 더 누르면 지웁니다';return}save(true)};
 }
 
 /* ---------- 신청·수정 ---------- */
