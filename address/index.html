@@ -99,6 +99,13 @@ td.note{min-width:110px;max-width:220px;white-space:pre-line;font-size:14.5px;co
 .stack>div{height:26px;line-height:26px;white-space:nowrap}
 .stack>div.gone{color:var(--faint)}
 .stack>div.gone .nm{text-decoration:line-through}
+ /* 경협 자문실적 탭: 초록 톤 */
+body.t-cs{--page:#ecf5ef;--navy:#0e5a35;--blue:#1f8a4f;--blue-dark:#16703f;--head:#d8eedf;--label:#eaf6ee;--rule:#b2d0bd;--rule-strong:#76a487;--ok:#1f8a4f;--ok-soft:#e0f3e7}
+body{transition:background-color .2s}
+.tabs button[data-tab=addr]{border-top-color:#0b3a75}.tabs button[data-tab=cs]{color:#1f8a4f}
+body:not(.t-cs) .tabs button[data-tab=addr].on{color:#0b3a75;border-top:3px solid #0b3a75}
+body.t-cs .tabs button[data-tab=cs].on{color:#0e5a35;border-top:3px solid #0e5a35;background:#fff}
+body.t-cs .fsum{background:#f2f9f4}
 .tabs{display:flex;gap:4px;margin:14px 0 0;padding:0 2px}
 .tabs button{font:inherit;font-size:16.5px;font-weight:700;padding:10px 26px;border:1px solid var(--rule);border-bottom:0;background:#e9eef5;color:var(--muted);cursor:pointer;border-radius:3px 3px 0 0}
 .tabs button.on{background:#fff;color:var(--navy);border-top:3px solid var(--navy);padding-top:8px}
@@ -921,7 +928,7 @@ function csRecs(){return Object.keys(CS.docs).map(function(k){var c=CS.docs[k].c
 function addrCoByName(n){var k=normCo(n);if(!k)return null;return data.companies.find(function(c){return normCo(c.name)===k})||null}
 
 /* ---------- 탭 ---------- */
-function setTab(t){CS_TAB=t;try{localStorage.setItem('jino-addr-tab',t)}catch(e){}
+function setTab(t){CS_TAB=t;document.body.classList.toggle('t-cs',t==='cs');var h1=document.querySelector('header.top h1');if(h1)h1.textContent=t==='cs'?'경협 자문실적 관리대장':'거래처 주소록 관리대장';try{localStorage.setItem('jino-addr-tab',t)}catch(e){}
   document.querySelectorAll('#tabs button').forEach(function(b){b.classList.toggle('on',b.dataset.tab===t)});
   $('#pane-addr').hidden=t!=='addr';$('#pane-cs').hidden=t!=='cs';
   if(t==='cs'&&ME&&CS.year==null)csLoad(+$('#cs-year').value||new Date().getFullYear());else if(t==='cs')renderCs();}
