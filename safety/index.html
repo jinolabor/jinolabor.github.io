@@ -753,12 +753,86 @@
             rmUploadFiles(name, pk, images);
         }
         // 사진 칸에 붙이는 끌어다 놓기 설정 (수정할 수 없는 상태에서는 붙이지 않음)
-        function rmDropAttrs(name, pk, locked) {
-            return locked ? '' : `ondragover="rmDragOver(event, this)" ondragleave="rmDragLeave(event, this)" ondrop="rmDropPhotos(event, this, '${name}', '${pk}')"`;
+        function rmDropAttrs(name, pk, locked, label) {
+            if (locked) return '';
+            const M = recMods[name] || {};
+            const lab = label || ((M.itemLabel || '') + ' 사진').trim();
+            return `ondragover="rmDragOver(event, this)" ondragleave="rmDragLeave(event, this)" ondrop="rmDropPhotos(event, this, '${name}', '${pk}')" data-paste="rm|${name}|${pk}" data-paste-label="${esc(lab)}"`;
         }
         // 칸 밖에 잘못 놓았을 때 브라우저가 파일을 열어 프로그램 화면이 사라지는 것을 막음
         window.addEventListener('dragover', (e) => { if (dzIsFileDrag(e)) e.preventDefault(); });
         window.addEventListener('drop', (e) => { if (dzIsFileDrag(e)) e.preventDefault(); });
+
+        // ---------- 사진 붙여넣기 (Ctrl+V) ----------
+        // 다른 화면(카카오톡·메일·캡처 등)에서 복사한 사진을 프로그램 화면에서 Ctrl+V 하면 사진 칸에 바로 올라감
+        const PASTE_HINT = ' · 복사한 사진은 Ctrl+V로 붙여 넣어도 됩니다';
+        function pasteImageFiles(e) {
+            const dt = e.clipboardData; if (!dt) return [];
+            let files = Array.from(dt.files || []);
+            if (!files.length && dt.items) files = Array.from(dt.items).filter(it => it.kind === 'file').map(it => it.getAsFile()).filter(Boolean);
+            return files.filter(f => f && /^image\//.test(f.type));
+        }
+        // 붙여넣은 사진은 이름이 없으므로 날짜·시각을 붙여 알아보기 쉽게 함
+        function pasteRename(files) {
+            const d = new Date(), p = (n) => String(n).padStart(2, '0');
+            const stamp = d.getFullYear() + p(d.getMonth() + 1) + p(d.getDate()) + '_' + p(d.getHours()) + p(d.getMinutes()) + p(d.getSeconds());
+            return files.map((f, i) => {
+                const ext = ((f.type.split('/')[1] || 'png').split('+')[0]).replace('jpeg', 'jpg');
+                const name = '붙여넣은사진_' + stamp + (files.length > 1 ? '_' + (i + 1) : '') + '.' + ext;
+                try { return new File([f], name, { type: f.type }); } catch (err) { return f; }
+            });
+        }
+        let pasteLastZone = '';
+        document.addEventListener('pointerdown', (e) => {
+            const z = (e.target && e.target.closest) ? e.target.closest('[data-paste]') : null;
+            if (z) pasteLastZone = z.getAttribute('data-paste');
+        }, true);
+        function pasteZonesNow() { return Array.from(document.querySelectorAll('[data-paste]')).filter(el => el.offsetParent !== null); }
+        function pasteDispatch(key, files) {
+            const p = String(key || '').split('|');
+            if (p[0] === 'rm') return rmUploadFiles(p[1], p[2], files);
+            if (p[0] === 'tbm') return tbmUploadFiles(files, getCurTbmSiteId());
+            if (p[0] === 'pat') return patAddFiles(files);
+            if (p[0] === 'forms') return formsUploadFiles(files);
+            if (p[0] === 'ntc') return ntcPhotoFiles(p[1], files);
+            if (p[0] === 'ntcfile') return ntcUploadFiles(files);
+        }
+        window.addEventListener('paste', (e) => {
+            if (!appUser) return;
+            const files = pasteImageFiles(e);
+            if (!files.length) return;
+            const zones = pasteZonesNow();
+            if (!zones.length) return;                       // 사진 칸이 없는 화면에서는 아무 일도 하지 않음
+            e.preventDefault();
+            const named = pasteRename(files);
+            if (zones.length === 1) return pasteDispatch(zones[0].getAttribute('data-paste'), named);
+            const last = zones.filter(z => z.getAttribute('data-paste') === pasteLastZone)[0];
+            if (last) return pasteDispatch(pasteLastZone, named);
+            pastePick(named, zones);                         // 사진 칸이 여러 개면 어디에 올릴지 물어봄
+        });
+        function pastePick(files, zones) {
+            pastePickClose();
+            const box = document.createElement('div');
+            box.id = 'pastePickModal';
+            box.style.cssText = 'position:fixed; inset:0; background:rgba(15,23,42,0.6); z-index:9000; display:flex; align-items:center; justify-content:center; padding:16px;';
+            box.innerHTML = `<div style="background:#fff; width:100%; max-width:420px; border-radius:14px; padding:20px; border-top:6px solid var(--blue-600);">
+                    <div style="font-size:15px; font-weight:900; margin-bottom:6px;">📋 붙여넣은 사진 ${files.length}장</div>
+                    <p style="font-size:12.5px; color:var(--slate-600); line-height:1.5; margin-bottom:12px;">어느 칸에 올릴지 골라 주세요. 칸을 한 번 누른 뒤 붙여 넣으면 다음부터는 묻지 않고 그 칸에 올라갑니다.</p>
+                    <div id="pastePickList" style="display:flex; flex-direction:column; gap:6px;"></div>
+                    <div style="display:flex; justify-content:flex-end; margin-top:12px;"><button class="btn btn-outline" onclick="pastePickClose()">취소</button></div>
+                </div>`;
+            document.body.appendChild(box);
+            const list = box.querySelector('#pastePickList');
+            zones.forEach(z => {
+                const b = document.createElement('button');
+                b.className = 'btn btn-blue';
+                b.style.cssText = 'justify-content:flex-start; padding:10px 12px; font-size:13px;';
+                b.innerText = z.getAttribute('data-paste-label') || '사진 칸';
+                b.onclick = () => { const k = z.getAttribute('data-paste'); pasteLastZone = k; pastePickClose(); pasteDispatch(k, files); };
+                list.appendChild(b);
+            });
+        }
+        function pastePickClose() { const m = document.getElementById('pastePickModal'); if (m) m.remove(); }
 
         async function rmUploadFiles(name, pk, files) {
             const c = rmCur(name);
@@ -806,7 +880,7 @@
             return `<span style="display:flex; gap:6px; flex-wrap:wrap;"><label class="btn btn-emerald btn-sm" style="cursor:pointer;">📸 사진 촬영<input type="file" accept="image/*" capture="environment" class="hidden" onchange="rmUpload('${name}', '${pk}', event)"></label>${pick}</span>`;
         }
         function rmPhotoGrid(name, pk, photos, locked) {
-            return `${locked ? '' : '<div style="border:2px dashed var(--slate-300); border-radius:8px; padding:8px; margin:6px 0 8px; text-align:center; font-size:12px; font-weight:700; color:var(--slate-500); background:#fff;">' + (isTouchDevice() ? '📸 [사진 촬영]으로 바로 찍거나, [앨범에서 선택]으로 찍어 둔 사진을 올립니다' : '🖱️ 사진 파일을 이 칸으로 끌어다 놓으면 바로 올라갑니다 (여러 장 가능)') + '</div>'}<div class="photo-grid">${photos.map((p, idx) => `
+            return `${locked ? '' : '<div style="border:2px dashed var(--slate-300); border-radius:8px; padding:8px; margin:6px 0 8px; text-align:center; font-size:12px; font-weight:700; color:var(--slate-500); background:#fff;">' + (isTouchDevice() ? '📸 [사진 촬영]으로 바로 찍거나, [앨범에서 선택]으로 찍어 둔 사진을 올립니다' : '🖱️ 사진 파일을 이 칸으로 끌어다 놓으면 바로 올라갑니다 (여러 장 가능)' + PASTE_HINT) + '</div>'}<div class="photo-grid">${photos.map((p, idx) => `
                 <div class="photo-card">
                     <img src="${photoUrl(p.path)}">
                     ${locked ? '' : `<div class="photo-actions"><button class="btn btn-red btn-sm" onclick="rmRemovePhoto('${name}', '${pk}', ${idx})">✕ 삭제</button></div>`}
@@ -1952,7 +2026,7 @@ function renderModule3() {
                 <div class="section-title">특이사항 및 공종별 전달사항</div>
                 <textarea class="form-textarea" onchange="tbmSet('note', this.value)">${tbmEsc(rec.note)}</textarea>
             </div>
-            <div id="tbmDropZone" class="section-box" style="border-left:4px solid var(--purple-600);" ondragover="tbmDragOver(event)" ondragleave="tbmDragLeave(event)" ondrop="tbmDrop(event, '${siteId}')">
+            <div id="tbmDropZone" class="section-box" style="border-left:4px solid var(--purple-600);" data-paste="tbm" data-paste-label="TBM 현장 실사진" ondragover="tbmDragOver(event)" ondragleave="tbmDragLeave(event)" ondrop="tbmDrop(event, '${siteId}')">
                 <div class="section-title">
                     <span>📸 ${tbmDateLabel(tbmSelectedDate)} TBM 현장 실사진 (${tbmEsc(getSiteLabelById(siteId))})</span>
                     <span style="display:flex; gap:6px; flex-wrap:wrap;">
@@ -1961,7 +2035,7 @@ function renderModule3() {
                     </span>
                 </div>
                 ${tbmUploading > 0 ? `<div style="font-size:12px; font-weight:800; color:var(--blue-700); margin-bottom:6px;">⏳ 사진 ${tbmUploading}장 올리는 중…</div>` : ''}
-                <div style="border:2px dashed var(--slate-300); border-radius:8px; padding:12px; margin-bottom:10px; text-align:center; font-size:12.5px; font-weight:700; color:var(--slate-500); background:#fff;">${tbmIsTouchDevice() ? '📸 [사진 촬영]으로 바로 찍거나, [앨범에서 선택]으로 찍어 둔 사진을 올립니다' : '🖱️ 사진 파일을 이 칸으로 끌어다 놓으면 바로 올라갑니다 (여러 장 가능)'}${rec.photos.length || tbmUploading > 0 ? '' : '<div style="font-size:11.5px; font-weight:600; margin-top:3px;">아직 올린 사진이 없습니다.</div>'}</div>
+                <div style="border:2px dashed var(--slate-300); border-radius:8px; padding:12px; margin-bottom:10px; text-align:center; font-size:12.5px; font-weight:700; color:var(--slate-500); background:#fff;">${tbmIsTouchDevice() ? '📸 [사진 촬영]으로 바로 찍거나, [앨범에서 선택]으로 찍어 둔 사진을 올립니다' : '🖱️ 사진 파일을 이 칸으로 끌어다 놓으면 바로 올라갑니다 (여러 장 가능)' + PASTE_HINT}${rec.photos.length || tbmUploading > 0 ? '' : '<div style="font-size:11.5px; font-weight:600; margin-top:3px;">아직 올린 사진이 없습니다.</div>'}</div>
                 <div class="photo-grid">
                     ${rec.photos.map((p, idx) => `
                         <div class="photo-card">
@@ -2068,7 +2142,7 @@ makeRecordModule({
                 ${rmInput(c.name, r, 'hazardType', '핵심 재해 유형 (추락·낙하·감전·협착 등)', c.dis, 'text', '예: 추락')}
             </div>
             <div class="grid-2">
-                <div style="background:#fef2f2; border:1px solid #fecaca; border-radius:8px; padding:12px;" ${rmDropAttrs(c.name, 'beforePhotos', c.locked)}>
+                <div style="background:#fef2f2; border:1px solid #fecaca; border-radius:8px; padding:12px;" ${rmDropAttrs(c.name, 'beforePhotos', c.locked, '개선 전 사진')}>
                     <div class="section-title">
                         <span style="color:var(--red-700);">🚨 개선 전 (Before) 유해·위험 상태</span>
                         ${rmUploadBtn(c.name, 'beforePhotos', '📷 + 개선 전 사진 추가', 'btn-red', c.locked)}
@@ -2076,7 +2150,7 @@ makeRecordModule({
                     ${rmTextarea(c.name, r, 'beforeDesc', '', c.dis)}
                     ${rmPhotoGrid(c.name, 'beforePhotos', r.beforePhotos, c.locked)}
                 </div>
-                <div style="background:#ecfdf5; border:1px solid #a7f3d0; border-radius:8px; padding:12px;" ${rmDropAttrs(c.name, 'afterPhotos', c.locked)}>
+                <div style="background:#ecfdf5; border:1px solid #a7f3d0; border-radius:8px; padding:12px;" ${rmDropAttrs(c.name, 'afterPhotos', c.locked, '개선 후 사진')}>
                     <div class="section-title">
                         <span style="color:var(--emerald-800);">✅ 개선 후 (After) 안전보건 조치 결과</span>
                         ${rmUploadBtn(c.name, 'afterPhotos', '📷 + 개선 후 사진 추가', 'btn-emerald', c.locked)}
@@ -2943,13 +3017,13 @@ makeRecordModule({
             </div>
             ${rmTextarea(c.name, r, 'desc', '설명 (언제, 어떻게 쓰는 서식인지)', c.dis, '예: 사고 발생 즉시 현장소장이 작성하여 본사에 제출')}
         </div>
-        <div class="section-box" style="border-left:4px solid var(--blue-600);" ${c.locked ? '' : 'ondragover="rmDragOver(event, this)" ondragleave="rmDragLeave(event, this)" ondrop="formsDrop(event, this)"'}>
+        <div class="section-box" style="border-left:4px solid var(--blue-600);" ${c.locked ? '' : 'data-paste="forms" data-paste-label="서식 첨부 파일" ondragover="rmDragOver(event, this)" ondragleave="rmDragLeave(event, this)" ondrop="formsDrop(event, this)"'}>
             <div class="section-title">
                 <span>📎 첨부 파일 (${r.files.length}개)</span>
                 ${c.locked ? '' : `<label class="btn btn-blue btn-sm" style="cursor:pointer;">📎 + 파일 올리기<input type="file" multiple class="hidden" accept="${FORMS_EXT.map(e => '.' + e).join(',')}" onchange="formsUpload(event)"></label>`}
             </div>
             ${formsUploading > 0 ? `<div style="font-size:12px; font-weight:800; color:var(--blue-700); margin-bottom:6px;">⏳ 파일 ${formsUploading}개 올리는 중…</div>` : ''}
-            ${c.locked ? '' : '<div style="border:2px dashed var(--slate-300); border-radius:8px; padding:8px; margin-bottom:8px; text-align:center; font-size:12px; font-weight:700; color:var(--slate-500); background:#fff;">🖱️ 파일을 이 칸으로 끌어다 놓으면 바로 올라갑니다 (여러 개 가능)</div>'}
+            ${c.locked ? '' : '<div style="border:2px dashed var(--slate-300); border-radius:8px; padding:8px; margin-bottom:8px; text-align:center; font-size:12px; font-weight:700; color:var(--slate-500); background:#fff;">🖱️ 파일을 이 칸으로 끌어다 놓으면 바로 올라갑니다 (여러 개 가능)' + PASTE_HINT + '</div>'}
             ${r.files.length || formsUploading > 0 ? '' : `<div style="font-size:12px; color:var(--slate-500);">아직 올린 파일이 없습니다.${c.locked ? '' : ' PDF, 한글(hwp), 워드, 엑셀, 파워포인트, 압축 파일을 올릴 수 있습니다 (1개 20MB 이하).'}</div>`}
             <div style="display:flex; flex-direction:column; gap:6px;">
                 ${r.files.map((f, idx) => `
@@ -3199,7 +3273,7 @@ function ntcCaption(siteId, idx, value) {
 
 // ----- 화면 -----
 function ntcFilesHtml(n, canEdit) {
-    return `<div class="section-box" style="border-left:4px solid var(--blue-600);" ${canEdit ? 'ondragover="rmDragOver(event, this)" ondragleave="rmDragLeave(event, this)" ondrop="ntcFileDrop(event, this)"' : ''}>
+    return `<div class="section-box" style="border-left:4px solid var(--blue-600);" ${canEdit ? 'data-paste="ntcfile" data-paste-label="공지 첨부 파일" ondragover="rmDragOver(event, this)" ondragleave="rmDragLeave(event, this)" ondrop="ntcFileDrop(event, this)"' : ''}>
         <div class="section-title">
             <span>📎 첨부 파일 (${n.files.length}개)</span>
             ${canEdit ? `<label class="btn btn-blue btn-sm" style="cursor:pointer;">📎 + 파일 올리기<input type="file" multiple class="hidden" accept="${FORMS_EXT.map(e => '.' + e).join(',')}" onchange="ntcFilePick(event)"></label>` : ''}
@@ -3221,7 +3295,7 @@ function ntcAckBlock(n, id, site) {
     const a = ntcAck(id, site.id), st = ntcState(n, a), up = ntc.photoUp[site.id] || 0, touch = isTouchDevice();
     const pick = `<label class="btn btn-blue btn-sm" style="cursor:pointer;">📷 + ${touch ? '앨범에서 선택' : '사진 올리기'}<input type="file" accept="image/*" multiple class="hidden" onchange="ntcPhotoPick('${site.id}', event)"></label>`;
     const cam = touch ? `<label class="btn btn-emerald btn-sm" style="cursor:pointer;">📸 사진 촬영<input type="file" accept="image/*" capture="environment" class="hidden" onchange="ntcPhotoPick('${site.id}', event)"></label>` : '';
-    return `<div class="section-box" style="border-left:4px solid ${st.bd};" ondragover="rmDragOver(event, this)" ondragleave="rmDragLeave(event, this)" ondrop="ntcPhotoDrop(event, this, '${site.id}')">
+    return `<div class="section-box" style="border-left:4px solid ${st.bd};" data-paste="ntc|${site.id}" data-paste-label="${esc(site.name)} 이행 사진" ondragover="rmDragOver(event, this)" ondragleave="rmDragLeave(event, this)" ondrop="ntcPhotoDrop(event, this, '${site.id}')">
         <div class="section-title" style="flex-wrap:wrap; gap:6px;"><span>🏗️ ${esc(site.name)}</span>${ntcBadge(st)}</div>
         ${a.confirmedAt
             ? `<div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap; font-size:13px; font-weight:700; margin-bottom:10px;"><span style="color:#047857;">✓ 확인: ${esc(a.confirmer)} · ${ntcWhen(a.confirmedAt)}</span>${isSiteBoss() ? '' : `<button class="btn btn-outline btn-sm" onclick="ntcUnconfirm('${site.id}')">확인 취소</button>`}</div>`
@@ -3744,7 +3818,7 @@ function renderModule12() {
                     <div><div class="form-label">비고</div><input type="text" class="form-input" placeholder="예: 지적사항 2건, 즉시 조치 완료 / 특이사항 없음" value="${esc(rec.note)}" ${dis} onchange="patSet('note', this.value)"></div>
                 </div>
             </div>
-            <div id="patDropZone" class="section-box" style="border-left:4px solid var(--purple-600);" ${locked ? '' : 'ondragover="rmDragOver(event, this)" ondragleave="rmDragLeave(event, this)" ondrop="patDrop(event, this)"'}>
+            <div id="patDropZone" class="section-box" style="border-left:4px solid var(--purple-600);" ${locked ? '' : 'data-paste="pat" data-paste-label="순회점검 일지 파일" ondragover="rmDragOver(event, this)" ondragleave="rmDragLeave(event, this)" ondrop="patDrop(event, this)"'}>
                 <div class="section-title" style="flex-wrap:wrap; gap:6px;">
                     <span>📎 순회점검 일지 파일 (사진 ${rec.photos.length}장 · 문서 ${rec.files.length}개)</span>
                     <span style="display:flex; gap:6px; flex-wrap:wrap;">${camera}${pick}</span>
@@ -3752,7 +3826,7 @@ function renderModule12() {
                 ${patUploading > 0 ? `<div style="font-size:12px; font-weight:800; color:var(--blue-700); margin-bottom:6px;">⏳ 파일 ${patUploading}개 올리는 중…</div>` : ''}
                 ${locked ? '' : `<div style="border:2px dashed var(--slate-300); border-radius:8px; padding:12px; margin-bottom:10px; text-align:center; font-size:12.5px; font-weight:700; color:var(--slate-500); background:#fff;">${isTouchDevice()
                     ? '📸 [사진 촬영]으로 종이 일지를 바로 찍거나, [앨범·파일에서 선택]으로 PDF·한글 파일을 올립니다'
-                    : '🖱️ 작성한 일지 파일(사진·PDF·한글·엑셀)을 이 칸으로 끌어다 놓으면 바로 올라갑니다 (여러 개 가능, 문서 1개 20MB 이하)'}${rec.photos.length || rec.files.length || patUploading > 0 ? '' : '<div style="font-size:11.5px; font-weight:600; margin-top:3px;">아직 올린 일지 파일이 없습니다.</div>'}</div>`}
+                    : '🖱️ 작성한 일지 파일(사진·PDF·한글·엑셀)을 이 칸으로 끌어다 놓으면 바로 올라갑니다 (여러 개 가능, 문서 1개 20MB 이하)' + PASTE_HINT}${rec.photos.length || rec.files.length || patUploading > 0 ? '' : '<div style="font-size:11.5px; font-weight:600; margin-top:3px;">아직 올린 일지 파일이 없습니다.</div>'}</div>`}
                 ${locked && !rec.photos.length && !rec.files.length ? '<div style="font-size:12px; color:var(--slate-500);">올린 일지 파일이 없습니다.</div>' : ''}
                 <div style="display:flex; flex-direction:column; gap:6px;">
                     ${rec.files.map((f, idx) => `
