@@ -7,3 +7,4 @@
 - 중처법 이행관리: https://jinolabor.github.io/safety/
 - 보험료정산: https://jinolabor.github.io/settlement/
 - 페이롤: https://jinolabor.github.io/payroll/
+- 커뮤니티(시범): https://jinolabor.github.io/community/

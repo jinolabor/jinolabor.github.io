@@ -1,0 +1,598 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>TEAM JINO 커뮤니티</title>
+<meta name="robots" content="noindex,nofollow">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&display=swap">
+<style>
+:root{--page:#eef2f7;--paper:#fff;--navy:#0b3a75;--blue:#1d5fb4;--blue-dark:#164a8c;--rule:#b8c5d6;--rule-strong:#7f94b1;--fg:#1b2533;--muted:#556275;--faint:#8a97a8;--bad:#b3261e;
+  --font-body:"Noto Sans KR","Malgun Gothic","맑은 고딕","Apple SD Gothic Neo",sans-serif;color-scheme:light}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--page);color:var(--fg);font-family:var(--font-body);font-size:15.5px;line-height:1.5;padding:0 16px 48px}
+[hidden]{display:none!important}
+.wrap{max-width:1280px;margin:0 auto}
+button,input,select,textarea{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--blue);outline-offset:1px}
+header.top{position:sticky;top:0;z-index:5;margin:0 -16px;padding:0 16px;background:var(--navy);color:#fff;border-bottom:3px solid var(--blue)}
+header.top .in{max-width:1280px;margin:0 auto;display:flex;gap:14px;align-items:center;flex-wrap:wrap;padding:12px 0}
+.emblem{width:36px;height:36px;border:2px solid #fff;display:grid;place-items:center;font-weight:700;font-size:15px;letter-spacing:-.02em}
+header h1{font-size:22px;margin:0;font-weight:700;letter-spacing:-.01em}
+header .sub{font-size:14.5px;opacity:.8;border-left:1px solid rgba(255,255,255,.4);padding-left:12px}
+.savebox{margin-left:auto;display:flex;gap:8px;align-items:center;font-size:14.5px;color:#cfdcf0}
+.btn{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--rule-strong);background:#fff;border-radius:2px;padding:6px 13px;min-height:37px;cursor:pointer;white-space:nowrap;font-size:15px}
+.btn.primary{background:var(--blue);color:#fff;border-color:var(--blue);font-weight:600}
+.btn.sm{min-height:30px;padding:2px 9px;font-size:14px}
+header .btn.primary{background:#fff;color:var(--navy);border-color:#fff}
+.paper{background:var(--paper);border:1px solid var(--rule);margin-top:18px;padding:18px 20px 22px}
+.doc-title{display:flex;align-items:flex-end;gap:12px;flex-wrap:wrap;padding-bottom:10px;margin-bottom:14px}
+.doc-title h2{margin:0;font-size:20.5px;font-weight:700;color:var(--navy)}
+.doc-title .ref{font-size:14.5px;color:var(--muted)}
+.foot{margin-top:16px;font-size:14px;color:var(--muted)}
+.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:20px;background:var(--navy);color:#fff;padding:9px 16px;z-index:90;font-size:15px;box-shadow:0 4px 16px rgba(11,25,45,.3);max-width:calc(100vw - 32px)}
+.login{position:fixed;inset:0;z-index:40;background:var(--page);display:grid;place-items:center;padding:16px}
+.lbox{background:#fff;border:1px solid var(--rule-strong);border-top:4px solid var(--navy);width:min(400px,100%);padding:26px 26px 20px;display:flex;flex-direction:column;gap:12px;box-shadow:0 8px 30px rgba(11,25,45,.12)}
+.lbox input{background:#fff;border:1px solid var(--rule-strong);border-radius:2px;padding:6px 9px;min-height:37px;width:100%}
+.lhead{display:flex;gap:10px;align-items:center;color:var(--navy);font-size:19px}
+.lhead .emblem{border-color:var(--navy);color:var(--navy)}
+.lbox p{margin:0;color:var(--muted);font-size:14px;line-height:1.6}
+.lmsg{min-height:20px;font-size:14px;color:var(--muted)}.lmsg.err{color:var(--bad);font-weight:600}
+.lfoot{font-size:12.5px;color:var(--faint)}
+
+/* ===== JinoComm 모듈 스타일 시작 (모든 이름이 jc- 로 시작해 다른 프로그램과 겹치지 않습니다) ===== */
+.jc{--jc-navy:#0b3a75;--jc-blue:#1d5fb4;--jc-blue-dark:#164a8c;--jc-rule:#b8c5d6;--jc-rule-strong:#7f94b1;--jc-soft:#f4f7fb;--jc-label:#eef3fa;--jc-fg:#1b2533;--jc-muted:#556275;--jc-faint:#8a97a8;--jc-bad:#b3261e;--jc-warm:#fff8e6;--jc-warm-rule:#ead9a8;color:var(--jc-fg);font-size:15.5px;line-height:1.55}
+.jc *{box-sizing:border-box}
+.jc [hidden]{display:none!important}
+.jc button,.jc input,.jc select,.jc textarea{font:inherit;color:inherit}
+.jc input,.jc select,.jc textarea{background:#fff;border:1px solid var(--jc-rule-strong);border-radius:3px;padding:7px 10px;min-height:38px;width:100%}
+.jc textarea{resize:vertical;min-height:84px}
+.jc-btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;border:1px solid var(--jc-rule-strong);background:#fff;border-radius:3px;padding:6px 14px;min-height:38px;cursor:pointer;white-space:nowrap;width:auto;font-size:15px}
+.jc-btn:hover{border-color:var(--jc-blue);color:var(--jc-blue)}
+.jc-btn:disabled{opacity:.55;cursor:default}
+.jc-btn.jc-primary{background:var(--jc-blue);border-color:var(--jc-blue);color:#fff;font-weight:600}
+.jc-btn.jc-primary:hover{background:var(--jc-blue-dark);color:#fff}
+.jc-btn.jc-danger{color:var(--jc-bad);border-color:#e3b3ae}
+.jc-btn.jc-sm{min-height:30px;padding:2px 10px;font-size:14px}
+.jc-btn.jc-link{border-color:transparent;background:transparent;color:var(--jc-blue);padding:2px 4px;min-height:0}
+.jc-sp{flex:1}
+.jc a.jc-btn{text-decoration:none;color:inherit}
+.jc a.jc-btn:hover{color:var(--jc-blue)}
+
+.jc-tabs{display:flex;gap:4px;align-items:flex-end;flex-wrap:wrap;border-bottom:2px solid var(--jc-navy);margin-bottom:14px}
+.jc-tabs .jc-tab{font-size:16px;font-weight:700;padding:9px 22px;border:1px solid var(--jc-rule);border-bottom:0;background:#e9eef5;color:var(--jc-muted);cursor:pointer;border-radius:3px 3px 0 0;margin-bottom:-2px}
+.jc-tabs .jc-tab.on{background:var(--jc-navy);color:#fff;border-color:var(--jc-navy)}
+.jc-stat{font-size:14px;color:var(--jc-muted);align-self:center}
+.jc-stat.jc-warn{color:var(--jc-bad);font-weight:600}
+.jc-tabs .jc-btn{align-self:center;margin-bottom:4px}
+
+/* 지도 */
+.jc-mapwrap{position:relative;border:1px solid var(--jc-rule);background:var(--jc-soft);margin-bottom:12px}
+.jc-map{height:380px}
+.jc-mapnote{padding:18px 20px;color:var(--jc-muted);font-size:14.5px;display:flex;gap:14px;align-items:center;flex-wrap:wrap}
+.jc-mapnote b{color:var(--jc-navy)}
+.jc-mapnote .jc-pinico{width:34px;height:34px;border-radius:50% 50% 50% 0;transform:rotate(-45deg);background:var(--jc-navy);flex:none;position:relative;margin:4px 6px 8px}
+.jc-mapnote .jc-pinico::after{content:"";position:absolute;inset:10px;border-radius:50%;background:#fff}
+@media (max-width:640px){.jc-map{height:280px}}
+
+/* 목록 도구줄 */
+.jc-bar{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:12px}
+.jc-chips{display:flex;gap:6px;flex-wrap:wrap}
+.jc-chipbtn{border:1px solid var(--jc-rule-strong);background:#fff;border-radius:999px;padding:4px 13px;font-size:14.5px;cursor:pointer;min-height:32px}
+.jc-chipbtn[aria-pressed="true"]{background:var(--jc-navy);border-color:var(--jc-navy);color:#fff;font-weight:600}
+.jc-bar select{width:auto}
+.jc-placefilter{display:inline-flex;align-items:center;gap:6px;background:var(--jc-warm);border:1px solid var(--jc-warm-rule);border-radius:999px;padding:3px 6px 3px 12px;font-size:14.5px}
+.jc-placefilter button{border:0;background:transparent;cursor:pointer;font-size:17px;line-height:1;padding:2px 6px;color:var(--jc-muted)}
+.jc-count{font-size:14.5px;color:var(--jc-muted)}
+
+/* 기록 카드 */
+.jc-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(270px,1fr));gap:14px}
+.jc-card{border:1px solid var(--jc-rule);background:#fff;cursor:pointer;display:flex;flex-direction:column;min-width:0;text-align:left;padding:0;border-radius:4px;overflow:hidden;transition:box-shadow .15s,border-color .15s}
+.jc-card:hover,.jc-card:focus-visible{border-color:var(--jc-blue);box-shadow:0 4px 16px rgba(11,58,117,.14)}
+.jc-cover{position:relative;aspect-ratio:4/3;background:linear-gradient(135deg,#e6edf7,#f4f7fb);display:grid;place-items:center;overflow:hidden}
+.jc-cover img{width:100%;height:100%;object-fit:cover;display:block}
+.jc-cover .jc-ph{font-size:15px;font-weight:700;color:#8fa3bf;letter-spacing:.08em}
+.jc-pcount{position:absolute;right:8px;bottom:8px;background:rgba(11,25,45,.72);color:#fff;font-size:12.5px;padding:1px 8px;border-radius:999px}
+.jc-cbody{padding:11px 14px 12px;display:flex;flex-direction:column;gap:4px;min-width:0}
+.jc-meta{display:flex;gap:8px;align-items:center;flex-wrap:wrap;font-size:13.5px;color:var(--jc-muted)}
+.jc-tag{display:inline-block;font-size:12.5px;font-weight:600;padding:0 7px;line-height:21px;border:1px solid #9bbbe3;background:#e8f0fb;color:#174a8c;border-radius:2px;white-space:nowrap}
+.jc-card h3{margin:0;font-size:17px;font-weight:700;color:var(--jc-navy);overflow-wrap:anywhere}
+.jc-ev{font-size:14px;color:var(--jc-blue);font-weight:600}
+.jc-ex{margin:0;font-size:14.5px;color:#3a4657;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;white-space:pre-line;overflow-wrap:anywhere}
+.jc-cfoot{font-size:13.5px;color:var(--jc-faint);margin-top:2px}
+.jc-empty{padding:44px 16px;text-align:center;color:var(--jc-muted);border:1px dashed var(--jc-rule-strong);background:var(--jc-soft)}
+.jc-empty b{display:block;color:var(--jc-navy);font-size:16.5px;margin-bottom:4px}
+.jc-more{text-align:center;margin-top:14px}
+
+/* 오늘의 한마디 */
+.jc-compose{border:1px solid var(--jc-rule);border-top:2px solid var(--jc-navy);background:var(--jc-soft);padding:14px 16px;margin-bottom:16px;display:flex;flex-direction:column;gap:10px}
+.jc-compose textarea{min-height:76px}
+.jc-crow{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.jc-seg{display:inline-flex;border:1px solid var(--jc-rule-strong);border-radius:3px;overflow:hidden}
+.jc-seg button{border:0;border-right:1px solid var(--jc-rule);background:#fff;padding:6px 14px;cursor:pointer;min-height:36px;font-size:14.5px}
+.jc-seg button:last-child{border-right:0}
+.jc-seg button[aria-pressed="true"]{background:var(--jc-navy);color:#fff;font-weight:600}
+.jc-hint{font-size:13.5px;color:var(--jc-muted)}
+.jc-len{font-size:13.5px;color:var(--jc-faint);font-variant-numeric:tabular-nums}
+.jc-wall{columns:3 260px;column-gap:14px}
+.jc-note{break-inside:avoid;margin:0 0 14px;background:#fff;border:1px solid var(--jc-rule);border-left:4px solid var(--jc-blue);padding:13px 15px 10px;border-radius:2px}
+.jc-note.jc-anon{background:var(--jc-warm);border-color:var(--jc-warm-rule);border-left-color:#d1a93a}
+.jc-note p{margin:0 0 8px;white-space:pre-line;overflow-wrap:anywhere;font-size:15.5px}
+.jc-nfoot{display:flex;gap:8px;align-items:center;font-size:13.5px;color:var(--jc-muted)}
+.jc-nfoot b{color:var(--jc-fg);font-weight:600}
+
+/* 창 */
+.jc-ov{position:fixed;inset:0;background:rgba(11,25,45,.5);z-index:70;display:flex;align-items:flex-start;justify-content:center;overflow-y:auto;padding:24px 12px}
+.jc-sheet{background:#fff;border:1px solid var(--jc-rule-strong);width:100%;max-width:760px;box-shadow:0 8px 30px rgba(11,25,45,.25);min-width:0}
+.jc-sheet>h2{margin:0;font-size:17px;background:var(--jc-navy);color:#fff;padding:11px 18px;font-weight:700;display:flex;align-items:center;gap:10px}
+.jc-sheet>h2 .jc-x{margin-left:auto;border:0;background:transparent;color:#fff;font-size:22px;line-height:1;cursor:pointer;padding:0 4px}
+.jc-sbody{padding:16px 18px;display:flex;flex-direction:column;gap:14px}
+.jc-act{display:flex;gap:6px;justify-content:center;flex-wrap:wrap;align-items:center;border-top:1px solid var(--jc-rule);padding:12px 18px;background:#f6f8fb}
+.jc-act .jc-left{margin-right:auto}
+.jc-form{display:grid;grid-template-columns:104px minmax(0,1fr);gap:10px 12px;align-items:start}
+.jc-form>label,.jc-form>.jc-flb{font-weight:600;color:var(--jc-navy);font-size:14.5px;padding-top:8px}
+.jc-form .jc-req{color:var(--jc-bad)}
+@media (max-width:560px){.jc-form{grid-template-columns:1fr;gap:4px 0}.jc-form>label,.jc-form>.jc-flb{padding-top:6px}}
+.jc-two{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.jc-search{display:flex;gap:6px}
+.jc-results{border:1px solid var(--jc-rule);margin-top:6px;max-height:230px;overflow:auto}
+.jc-results button{display:block;width:100%;text-align:left;border:0;border-bottom:1px solid #e3e9f1;background:#fff;padding:7px 10px;cursor:pointer}
+.jc-results button:hover{background:#e9f1fc}
+.jc-results button:last-child{border-bottom:0}
+.jc-results small,.jc-picked small{display:block;color:var(--jc-muted);font-size:13.5px}
+.jc-picked{border:1px solid #9bbbe3;background:#e8f0fb;padding:8px 10px;display:flex;gap:10px;align-items:center}
+.jc-picked>div{flex:1;min-width:0}
+.jc-previews{display:flex;gap:6px;flex-wrap:wrap;margin-top:6px}
+.jc-previews .jc-pv{position:relative;width:78px;height:78px;border:1px solid var(--jc-rule);overflow:hidden;background:var(--jc-soft)}
+.jc-previews img{width:100%;height:100%;object-fit:cover;display:block}
+.jc-pv button{position:absolute;right:2px;top:2px;border:0;background:rgba(11,25,45,.7);color:#fff;width:20px;height:20px;border-radius:50%;cursor:pointer;line-height:1;font-size:14px;padding:0}
+.jc-msg{font-size:14px;color:var(--jc-bad);font-weight:600;min-height:20px}
+
+.jc-dmeta{display:flex;gap:8px 12px;flex-wrap:wrap;align-items:center;font-size:14.5px;color:var(--jc-muted)}
+.jc-dmeta b{color:var(--jc-fg)}
+.jc-addr{display:flex;gap:10px;align-items:center;flex-wrap:wrap;border:1px solid var(--jc-rule);background:var(--jc-soft);padding:8px 12px;font-size:14.5px}
+.jc-addr>span{flex:1;min-width:160px}
+.jc-dbody{white-space:pre-line;overflow-wrap:anywhere;font-size:15.5px;margin:0}
+.jc-sub{display:flex;align-items:center;gap:8px;font-weight:700;color:var(--jc-navy);font-size:15.5px}
+.jc-sub::before{content:"";width:4px;height:14px;background:var(--jc-blue)}
+.jc-sub small{font-weight:400;color:var(--jc-muted);font-size:13.5px}
+.jc-photos{display:grid;grid-template-columns:repeat(auto-fill,minmax(108px,1fr));gap:6px}
+.jc-photos button{border:1px solid var(--jc-rule);padding:0;background:var(--jc-soft);aspect-ratio:1;cursor:pointer;overflow:hidden}
+.jc-photos button:hover{border-color:var(--jc-blue)}
+.jc-photos img{width:100%;height:100%;object-fit:cover;display:block}
+.jc-photos .jc-addph{display:grid;place-items:center;color:var(--jc-blue);font-size:14px;font-weight:600;border-style:dashed;background:#fff;text-align:center;line-height:1.3}
+.jc-reviews{display:flex;flex-direction:column;gap:0;border-top:1px solid var(--jc-rule)}
+.jc-review{padding:9px 2px;border-bottom:1px solid #e3e9f1}
+.jc-review p{margin:0 0 3px;white-space:pre-line;overflow-wrap:anywhere}
+.jc-review .jc-nfoot{font-size:13px}
+.jc-addreview{display:flex;gap:6px;align-items:flex-start}
+.jc-addreview textarea{min-height:42px;height:42px}
+
+.jc-lb{position:fixed;inset:0;z-index:80;background:rgba(6,14,26,.92);display:flex;flex-direction:column}
+.jc-lbtop{display:flex;gap:8px;align-items:center;padding:10px 14px;color:#dfe8f4;font-size:14.5px}
+.jc-lbtop .jc-btn{background:transparent;color:#fff;border-color:rgba(255,255,255,.5)}
+.jc-lbmain{flex:1;min-height:0;display:flex;align-items:center;justify-content:center;gap:8px;padding:0 8px 14px}
+.jc-lbmain img{max-width:100%;max-height:100%;object-fit:contain;min-width:0}
+.jc-lbmain .jc-nav{flex:none;border:0;background:rgba(255,255,255,.12);color:#fff;width:44px;height:64px;font-size:26px;cursor:pointer;border-radius:4px}
+.jc-lbmain .jc-nav:disabled{opacity:.25;cursor:default}
+.jc-lbwait{color:#dfe8f4}
+/* ===== JinoComm 모듈 스타일 끝 ===== */
+</style>
+</head>
+<body>
+<header class="top"><div class="in">
+  <span class="emblem">지노</span>
+  <h1>TEAM JINO 커뮤니티</h1>
+  <span class="sub">노무그룹지노 · 시범 운영</span>
+  <span class="savebox"><b id="who" style="color:#fff"></b><button class="btn primary sm" id="btn-lock">잠그기</button></span>
+</div></header>
+<div class="wrap">
+<div class="paper">
+  <div class="doc-title"><h2>우리들의 이야기</h2><span class="ref">함께한 시간과 남기고 싶은 말을 모아 두는 곳</span></div>
+  <div id="jc-mount"></div>
+  <div class="foot">※ 글과 사진은 TEAM JINO 구성원만 볼 수 있도록 암호화해 저장합니다. 기록과 후기는 쓴 사람만 고치거나 지울 수 있습니다. <span style="color:var(--bad)">비밀번호나 고객사 정보는 이곳에 적지 마세요.</span></div>
+</div>
+</div>
+<div id="login" class="login"><form class="lbox" id="lform" autocomplete="off">
+  <div class="lhead"><span class="emblem">지노</span><b>TEAM JINO 커뮤니티</b></div>
+  <p><b>본인의</b> TEAM JINO 비밀번호를 넣어 주세요.<br><span style="color:var(--bad);font-weight:600">비밀번호는 다른 사람에게 알려 주거나 함께 쓰지 마세요.</span></p>
+  <input type="password" id="pw" placeholder="비밀번호" autocomplete="current-password" autofocus>
+  <button class="btn primary" id="lgo" type="submit" style="width:100%;justify-content:center">열기</button>
+  <div class="lmsg" id="lmsg" role="status"></div>
+  <div class="lfoot">노무그룹지노 · 비밀번호는 서버에 저장되지 않습니다.</div>
+</form></div>
+<div class="toast" id="toast" hidden></div>
+<script>
+/* ===== JinoComm 모듈 시작 =====
+   TEAM JINO 커뮤니티: 「함께 했던 시간」(장소·사진·지도·후기) + 「오늘의 한마디」(이름/익명)
+   다른 프로그램(주소록 등)에 붙일 때는 이 블록과 jc- 스타일 블록을 그대로 옮기고, 로그인 뒤에 한 줄만 부르면 됩니다.
+     JinoComm.init({ mount:붙일 요소, rpc:서버 함수 호출(fn,args), rawKey:팀 열쇠(Uint8Array), me:{id,name,is_master}, kakaoKey:'카카오 JavaScript 키', toast:알림 함수 });
+     JinoComm.stop();   // 잠글 때
+   서버 함수는 comm_ 로, 저장 키는 jino-comm- 으로 시작합니다. 내용과 사진은 팀 열쇠로 암호화해 저장합니다. */
+(function(){
+"use strict";
+var CATS=['식당','카페','여행·나들이','숙소','행사·워크숍','기타'];
+var GROUP_CAT={FD6:'식당',CE7:'카페',AT1:'여행·나들이',CT1:'여행·나들이',AD5:'숙소'};
+var WD=['일','월','화','수','목','금','토'];
+var PAGE=12, WORD_MAX=300, REVIEW_MAX=500, BODY_MAX=3000, PHOTO_MAX=40;
+var S=null, timer=null;
+
+function fresh(){return {rpc:null,key:null,me:null,root:null,kakaoKey:'',toast:null,trips:[],words:[],notes:{},view:'trip',cat:'',year:'',place:null,shown:PAGE,covers:{},coverAsked:{},urls:[],map:null,markers:[],mapState:'',busy:false,anon:false,gen:0}}
+var esc=function(v){return String(v==null?'':v).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]})};
+var unb64=function(s){return Uint8Array.from(atob(s),function(c){return c.charCodeAt(0)})};
+function b64(u){var s='';for(var i=0;i<u.length;i+=8192)s+=String.fromCharCode.apply(null,u.subarray(i,i+8192));return btoa(s)}
+function hex(n){var a=crypto.getRandomValues(new Uint8Array(n));return Array.from(a,function(x){return x.toString(16).padStart(2,'0')}).join('')}
+function newKey(p){return p+'_'+hex(8)}
+async function deriveKey(raw){var base=await crypto.subtle.importKey('raw',raw,'HKDF',false,['deriveKey']);
+  return crypto.subtle.deriveKey({name:'HKDF',hash:'SHA-256',salt:new TextEncoder().encode('jino-comm'),info:new TextEncoder().encode('jino-comm-v1')},base,{name:'AES-GCM',length:256},false,['encrypt','decrypt'])}
+async function encBytes(u8){var iv=crypto.getRandomValues(new Uint8Array(12));var ct=await crypto.subtle.encrypt({name:'AES-GCM',iv:iv},S.key,u8);return {iv:b64(iv),data:b64(new Uint8Array(ct))}}
+async function decBytes(iv,d){return new Uint8Array(await crypto.subtle.decrypt({name:'AES-GCM',iv:unb64(iv)},S.key,unb64(d)))}
+function enc(obj){return encBytes(new TextEncoder().encode(JSON.stringify(obj)))}
+async function dec(iv,d){return JSON.parse(new TextDecoder().decode(await decBytes(iv,d)))}
+function $(sel){return S.root.querySelector(sel)}
+function say(msg){if(S&&S.toast)S.toast(msg);else window.alert(msg)}
+function stat(t,warn){var e=$('.jc-stat');if(e){e.textContent=t;e.classList.toggle('jc-warn',!!warn)}}
+function hm(d){return d.getHours()+':'+String(d.getMinutes()).padStart(2,'0')}
+function today(){var d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')}
+function fmtDay(s){var m=/^(\d{4})-(\d{2})-(\d{2})$/.exec(s||'');if(!m)return s||'';var d=new Date(+m[1],+m[2]-1,+m[3]);return m[1]+'. '+(+m[2])+'. '+(+m[3])+'. ('+WD[d.getDay()]+')'}
+function fmtStamp(iso){var d=new Date(iso);return isNaN(d)?'':d.getFullYear()+'. '+(d.getMonth()+1)+'. '+d.getDate()+'.'}
+function blobUrl(u8){var u=URL.createObjectURL(new Blob([u8],{type:'image/jpeg'}));S.urls.push(u);return u}
+
+/* 익명 글을 쓴 기기만 지울 수 있도록, 글마다 만든 확인값을 이 브라우저에만 보관합니다. */
+function secrets(){try{return JSON.parse(localStorage.getItem('jino-comm-secrets')||'{}')||{}}catch(e){return {}}}
+function keepSecret(k,v){try{var s=secrets();if(v)s[k]=v;else delete s[k];localStorage.setItem('jino-comm-secrets',JSON.stringify(s))}catch(e){}}
+function pref(k,v){try{if(v===undefined)return localStorage.getItem('jino-comm-'+k);localStorage.setItem('jino-comm-'+k,v)}catch(e){return null}}
+
+/* ---------- 틀 ---------- */
+function skeleton(){
+  S.root.innerHTML='<div class="jc">'
+  +'<div class="jc-tabs"><button class="jc-tab on" data-act="view" data-v="trip">함께 했던 시간</button><button class="jc-tab" data-act="view" data-v="word">오늘의 한마디</button><span class="jc-sp"></span><span class="jc-stat" role="status"></span><button class="jc-btn jc-sm" data-act="reload">새로고침</button></div>'
+  +'<section class="jc-sec-trip">'
+  +'<div class="jc-mapwrap"><div class="jc-map" hidden></div><div class="jc-mapnote"></div></div>'
+  +'<div class="jc-bar"><div class="jc-chips"></div><select class="jc-year" aria-label="연도"></select><span class="jc-placebox"></span><span class="jc-count"></span><span class="jc-sp"></span><button class="jc-btn jc-primary" data-act="new-trip">기록 남기기</button></div>'
+  +'<div class="jc-grid"></div><div class="jc-more" hidden><button class="jc-btn" data-act="more">더 보기</button></div>'
+  +'</section>'
+  +'<section class="jc-sec-word" hidden>'
+  +'<div class="jc-compose"><textarea class="jc-wtext" maxlength="'+WORD_MAX+'" placeholder="가끔 남기고 싶은 말을 편하게 적어 주세요."></textarea>'
+  +'<div class="jc-crow"><div class="jc-seg" role="group" aria-label="이름 표시"><button data-act="anon" data-v="0">내 이름으로</button><button data-act="anon" data-v="1">익명으로</button></div><span class="jc-hint jc-anonhint"></span><span class="jc-sp"></span><span class="jc-len">0 / '+WORD_MAX+'</span><button class="jc-btn jc-primary" data-act="post-word">남기기</button></div></div>'
+  +'<div class="jc-wall"></div>'
+  +'</section>'
+  +'<div class="jc-modal-root"></div><div class="jc-lb-root"></div></div>';
+  S.root.firstChild.addEventListener('click',onClick);
+  $('.jc-year').addEventListener('change',function(){S.year=this.value;S.shown=PAGE;S.place=null;renderTrips(true)});
+  $('.jc-wtext').addEventListener('input',function(){$('.jc-len').textContent=this.value.length+' / '+WORD_MAX});
+  setAnon(pref('anon')==='1');
+}
+function setView(v){S.view=v;S.root.querySelectorAll('.jc-tab').forEach(function(b){b.classList.toggle('on',b.dataset.v===v)});$('.jc-sec-trip').hidden=v!=='trip';$('.jc-sec-word').hidden=v!=='word';pref('view',v);if(v==='trip'&&S.map){S.map.relayout();drawPins(true)}}
+function setAnon(on){S.anon=!!on;S.root.querySelectorAll('.jc-seg [data-act=anon]').forEach(function(b){b.setAttribute('aria-pressed',String((b.dataset.v==='1')===S.anon))});
+  $('.jc-anonhint').textContent=S.anon?'익명 글은 누가 썼는지 서버에도 남기지 않습니다. 그래서 글을 쓴 이 기기에서만 지울 수 있습니다.':S.me.name+' 님 이름으로 남깁니다.';pref('anon',S.anon?'1':'0')}
+
+/* ---------- 불러오기 ---------- */
+async function load(quiet){
+  if(!S||S.busy)return;var g=S.gen;if(!quiet)stat('불러오는 중…');
+  try{
+    var rows=await S.rpc('comm_list'),trips=[],words=[],notes={},fail=0;if(!S||S.gen!==g)return;
+    for(var i=0;i<rows.length;i++){var r=rows[i];try{r.c=await dec(r.iv,r.data)}catch(e){fail++;continue}
+      if(r.kind==='trip')trips.push(r);else if(r.kind==='word')words.push(r);else(notes[r.parent]=notes[r.parent]||[]).push(r)}
+    if(!S||S.gen!==g)return;
+    trips.sort(function(a,b){return (b.c.date||'').localeCompare(a.c.date||'')||String(b.created_at).localeCompare(String(a.created_at))});
+    words.sort(function(a,b){return String(b.created_at).localeCompare(String(a.created_at))});
+    S.trips=trips;S.words=words;S.notes=notes;
+    stat('연결됨 · '+hm(new Date())+' 기준'+(fail?' · 열지 못한 글 '+fail+'건':''),!!fail);
+    renderTrips(false);renderWords();
+  }catch(e){if(S&&S.gen===g){stat('불러오지 못했습니다',true);if(!quiet)say((e&&e.message)||'불러오지 못했습니다.')}}
+}
+
+/* ---------- 함께 했던 시간: 목록 ---------- */
+function filtered(){return S.trips.filter(function(t){return (!S.cat||t.c.cat===S.cat)&&(!S.year||(t.c.date||'').slice(0,4)===S.year)&&(!S.place||S.place.keys.indexOf(t.key)>=0)})}
+function renderTrips(refit){
+  var years={};S.trips.forEach(function(t){var y=(t.c.date||'').slice(0,4);if(y)years[y]=1});
+  var ys=Object.keys(years).sort().reverse();if(S.year&&!years[S.year])S.year='';
+  $('.jc-year').innerHTML='<option value="">전체 연도</option>'+ys.map(function(y){return '<option value="'+y+'"'+(y===S.year?' selected':'')+'>'+y+'년</option>'}).join('');
+  $('.jc-chips').innerHTML=[''].concat(CATS).map(function(c){return '<button class="jc-chipbtn" data-act="cat" data-v="'+esc(c)+'" aria-pressed="'+(c===S.cat)+'">'+(c||'전체')+'</button>'}).join('');
+  $('.jc-placebox').innerHTML=S.place?'<span class="jc-placefilter">'+esc(S.place.name)+'<button data-act="clear-place" aria-label="장소 선택 풀기">×</button></span>':'';
+  var list=filtered(),show=list.slice(0,S.shown);
+  $('.jc-count').textContent=S.trips.length?'기록 '+list.length+'건':'';
+  $('.jc-grid').innerHTML=show.length?show.map(card).join(''):'<div class="jc-empty" style="grid-column:1/-1"><b>'+(S.trips.length?'조건에 맞는 기록이 없습니다':'아직 남긴 기록이 없습니다')+'</b>'+(S.trips.length?'구분이나 연도를 바꿔 보세요.':'함께 다녀온 식당, 여행지, 워크숍을 사진과 함께 남겨 보세요.')+'</div>';
+  $('.jc-more').hidden=list.length<=S.shown;
+  askCovers(show);drawPins(refit!==false);
+}
+function card(t){var c=t.c,n=(S.notes[t.key]||[]).length,cv=S.covers[t.key];
+  return '<div class="jc-card" role="button" tabindex="0" data-act="open" data-key="'+t.key+'"><div class="jc-cover" data-cover="'+t.key+'">'+(cv?'<img alt="" src="'+cv+'">':'<span class="jc-ph">'+esc(c.cat||'기록')+'</span>')+(t.photos?'<span class="jc-pcount">사진 '+t.photos+'</span>':'')+'</div>'
+    +'<div class="jc-cbody"><div class="jc-meta"><span>'+esc(fmtDay(c.date))+'</span>'+(c.cat?'<span class="jc-tag">'+esc(c.cat)+'</span>':'')+'</div>'
+    +'<h3>'+esc(c.place&&c.place.name||'')+'</h3>'+(c.title?'<div class="jc-ev">'+esc(c.title)+'</div>':'')+(c.body?'<p class="jc-ex">'+esc(c.body)+'</p>':'')
+    +'<div class="jc-cfoot">'+esc(t.owner_name||'')+(n?' · 후기 '+n:'')+'</div></div></div>'}
+async function askCovers(list){
+  var need=list.filter(function(t){return t.photos>0&&!S.covers[t.key]&&!S.coverAsked[t.key]}).map(function(t){return t.key});if(!need.length)return;
+  need.forEach(function(k){S.coverAsked[k]=1});var g=S.gen;
+  try{var rows=await S.rpc('comm_photo_thumbs',{p_parents:need,p_first_only:true});
+    for(var i=0;i<rows.length;i++){var u8=await decBytes(rows[i].thumb_iv,rows[i].thumb);if(!S||S.gen!==g)return;var url=blobUrl(u8);S.covers[rows[i].parent]=url;
+      var box=S.root.querySelector('[data-cover="'+rows[i].parent+'"]');if(box){var ph=box.querySelector('.jc-ph');if(ph)ph.remove();if(!box.querySelector('img')){var im=document.createElement('img');im.alt='';im.src=url;box.insertBefore(im,box.firstChild)}}}
+  }catch(e){need.forEach(function(k){delete S.coverAsked[k]})}
+}
+
+/* ---------- 지도 (카카오) ---------- */
+function mapLink(p){if(!p)return '';if(p.url)return p.url;if(p.lat&&p.lng)return 'https://map.kakao.com/link/map/'+encodeURIComponent(p.name||'장소')+','+p.lat+','+p.lng;return 'https://map.kakao.com/link/search/'+encodeURIComponent(((p.name||'')+' '+(p.addr||'')).trim())}
+function kakaoOk(){return !!(window.kakao&&kakao.maps&&kakao.maps.services&&kakao.maps.Map)}
+function loadKakao(){
+  if(kakaoOk())return Promise.resolve();
+  if(loadKakao.p)return loadKakao.p;
+  loadKakao.p=new Promise(function(res,rej){var s=document.createElement('script');
+    s.src='https://dapi.kakao.com/v2/maps/sdk.js?appkey='+encodeURIComponent(S.kakaoKey)+'&libraries=services&autoload=false';
+    s.onload=function(){try{kakao.maps.load(function(){res()})}catch(e){rej(e)}};
+    s.onerror=function(){loadKakao.p=null;rej(new Error('지도를 불러오지 못했습니다'))};document.head.appendChild(s)});
+  return loadKakao.p;
+}
+function mapNote(html){var n=$('.jc-mapnote');n.hidden=!html;n.innerHTML=html||''}
+async function initMap(){
+  if(!S.kakaoKey){S.mapState='nokey';mapNote('<span class="jc-pinico"></span><span><b>지도 준비 중입니다.</b><br>카카오 지도 키를 등록하면 이 자리에 다녀온 곳이 핀으로 표시됩니다. 그 전에도 기록마다 「지도에서 보기」 버튼은 쓸 수 있습니다.</span>');return}
+  var g=S.gen;mapNote('<span>지도를 불러오는 중…</span>');
+  try{await loadKakao();if(!S||S.gen!==g)return;
+    var el=$('.jc-map');el.hidden=false;mapNote('');
+    S.map=new kakao.maps.Map(el,{center:new kakao.maps.LatLng(37.5298,126.9648),level:8});
+    S.map.addControl(new kakao.maps.ZoomControl(),kakao.maps.ControlPosition.RIGHT);
+    S.mapState='ok';drawPins(true);
+  }catch(e){if(!S||S.gen!==g)return;S.mapState='err';mapNote('<span class="jc-pinico"></span><span><b>지도를 불러오지 못했습니다.</b><br>카카오 지도 키와 등록한 사이트 주소를 확인해 주세요. 기록마다 「지도에서 보기」 버튼은 쓸 수 있습니다.</span>')}
+}
+function drawPins(refit){
+  if(!S.map||S.mapState!=='ok'||S.view!=='trip')return;
+  S.markers.forEach(function(m){m.setMap(null)});S.markers=[];
+  var groups={},list=S.trips.filter(function(t){return (!S.cat||t.c.cat===S.cat)&&(!S.year||(t.c.date||'').slice(0,4)===S.year)});
+  list.forEach(function(t){var p=t.c.place;if(!p||!p.lat||!p.lng)return;var k=(+p.lat).toFixed(5)+','+(+p.lng).toFixed(5);(groups[k]=groups[k]||{lat:+p.lat,lng:+p.lng,name:p.name,keys:[]}).keys.push(t.key)});
+  var ks=Object.keys(groups);if(!ks.length)return;
+  var b=new kakao.maps.LatLngBounds();
+  ks.forEach(function(k){var gp=groups[k],pos=new kakao.maps.LatLng(gp.lat,gp.lng);b.extend(pos);
+    var m=new kakao.maps.Marker({map:S.map,position:pos,title:gp.name+(gp.keys.length>1?' ('+gp.keys.length+'번)':'')});
+    kakao.maps.event.addListener(m,'click',function(){if(gp.keys.length===1)openTrip(gp.keys[0]);else{S.place={name:gp.name,keys:gp.keys};S.shown=PAGE;renderTrips(false);$('.jc-bar').scrollIntoView({behavior:'smooth',block:'start'})}});
+    S.markers.push(m)});
+  if(refit){if(ks.length===1){S.map.setCenter(new kakao.maps.LatLng(groups[ks[0]].lat,groups[ks[0]].lng));S.map.setLevel(5)}else S.map.setBounds(b)}
+}
+function searchPlaces(q){return new Promise(function(res){try{new kakao.maps.services.Places().keywordSearch(q,function(data,st){res(st===kakao.maps.services.Status.OK?data:[])},{size:8})}catch(e){res([])}})}
+function geocode(addr){return new Promise(function(res){try{new kakao.maps.services.Geocoder().addressSearch(addr,function(r,st){res(st===kakao.maps.services.Status.OK&&r[0]?{lat:+r[0].y,lng:+r[0].x}:null)})}catch(e){res(null)}})}
+
+/* ---------- 창 ---------- */
+function modal(title,body,act){
+  var root=$('.jc-modal-root');
+  root.innerHTML='<div class="jc-ov"><div class="jc-sheet" role="dialog" aria-modal="true"><h2><span>'+esc(title)+'</span><button class="jc-x" data-act="close" aria-label="닫기">×</button></h2><div class="jc-sbody">'+body+'</div>'+(act?'<div class="jc-act">'+act+'</div>':'')+'</div></div>';
+  var ov=root.firstChild;ov.addEventListener('mousedown',function(e){if(e.target===ov&&!ov.dataset.lock)closeModal()});
+  document.addEventListener('keydown',onEsc);return ov;
+}
+function onEsc(e){if(e.key!=='Escape'||!S)return;if($('.jc-lb-root').firstChild){closeLb();return}var ov=$('.jc-modal-root').firstChild;if(ov&&!ov.dataset.lock)closeModal()}
+function closeModal(){if(!S)return;$('.jc-modal-root').innerHTML='';closeLb();document.removeEventListener('keydown',onEsc);S.form=null;S.detail=null}
+function modalOpen(){return !!(S&&($('.jc-modal-root').firstChild||$('.jc-lb-root').firstChild))}
+
+/* ---------- 기록 쓰기·고치기 ---------- */
+function openForm(key){
+  var t=key?S.trips.find(function(x){return x.key===key}):null,c=t?t.c:{date:today(),cat:'식당',place:null,title:'',body:''};
+  S.form={key:key||null,rev:t?t.rev:0,place:c.place?Object.assign({},c.place):null,files:[],manual:!kakaoOk()||(!!c.place&&!c.place.lat)};
+  var titles={};S.trips.forEach(function(x){if(x.c.title)titles[x.c.title]=1});
+  var room=PHOTO_MAX-(t?t.photos:0);
+  modal(t?'기록 고치기':'함께 했던 시간 남기기',
+    '<div class="jc-form">'
+    +'<label for="jc-f-date">날짜 <span class="jc-req">*</span></label><div class="jc-two"><input type="date" id="jc-f-date" value="'+esc(c.date||'')+'" max="2100-12-31"><select id="jc-f-cat" aria-label="구분">'+CATS.map(function(x){return '<option'+(x===c.cat?' selected':'')+'>'+x+'</option>'}).join('')+'</select></div>'
+    +'<span class="jc-flb">장소 <span class="jc-req">*</span></span><div class="jc-placearea"></div>'
+    +'<label for="jc-f-title">모임 이름</label><div><input id="jc-f-title" list="jc-f-titles" maxlength="60" placeholder="예: 2026 가을 워크숍, 송년회 (없으면 비워 두세요)" value="'+esc(c.title||'')+'"><datalist id="jc-f-titles">'+Object.keys(titles).map(function(x){return '<option value="'+esc(x)+'">'}).join('')+'</datalist></div>'
+    +'<label for="jc-f-body">이야기</label><textarea id="jc-f-body" maxlength="'+BODY_MAX+'" placeholder="그날 어땠는지, 무엇이 맛있었는지 적어 주세요.">'+esc(c.body||'')+'</textarea>'
+    +'<span class="jc-flb">사진</span><div><input type="file" id="jc-f-files" accept="image/*" multiple hidden><button class="jc-btn" data-act="pick-files"'+(room<=0?' disabled':'')+'>사진 고르기</button> <span class="jc-hint">'+(t?'지금 '+t.photos+'장 · ':'')+'한 기록에 '+PHOTO_MAX+'장까지. 올릴 때 자동으로 줄여서 저장합니다.</span><div class="jc-previews"></div></div>'
+    +'</div><div class="jc-msg" role="alert"></div>',
+    '<button class="jc-btn jc-primary" data-act="save-trip">저장</button><button class="jc-btn" data-act="close">취소</button>');
+  $('#jc-f-files').addEventListener('change',function(){var fs=Array.from(this.files||[]);this.value='';var left=room-S.form.files.length;if(fs.length>left){fs=fs.slice(0,Math.max(0,left));formMsg('사진은 한 기록에 '+PHOTO_MAX+'장까지 올릴 수 있습니다.')}
+    fs.forEach(function(f){S.form.files.push({file:f,url:URL.createObjectURL(f)})});drawPreviews()});
+  drawPlaceArea();
+}
+function formMsg(t){var m=$('.jc-msg');if(m)m.textContent=t||''}
+function drawPreviews(){$('.jc-previews').innerHTML=S.form.files.map(function(f,i){return '<span class="jc-pv"><img alt="" src="'+f.url+'"><button data-act="drop-file" data-i="'+i+'" aria-label="빼기">×</button></span>'}).join('')}
+function drawPlaceArea(){
+  var a=$('.jc-placearea'),p=S.form.place,can=kakaoOk();if(!a)return;
+  if(S.form.manual){a.innerHTML='<div class="jc-two"><input id="jc-f-pname" maxlength="60" placeholder="장소 이름 (예: 한강진 ○○식당)" value="'+esc(p&&p.name||'')+'"><input id="jc-f-paddr" maxlength="120" placeholder="주소 (선택)" value="'+esc(p&&p.addr||'')+'"></div>'+(can?'<button class="jc-btn jc-link" data-act="place-search">지도에서 검색해 고르기</button>':'');return}
+  if(p&&p.name){a.innerHTML='<div class="jc-picked"><div><b>'+esc(p.name)+'</b><small>'+esc(p.addr||'')+'</small></div><button class="jc-btn jc-sm" data-act="place-clear">다시 고르기</button></div>';return}
+  a.innerHTML='<div class="jc-search"><input id="jc-f-q" placeholder="장소 이름으로 검색 (예: 용산 ○○식당)"><button class="jc-btn" data-act="place-go">검색</button></div><div class="jc-found"></div><button class="jc-btn jc-link" data-act="place-manual">직접 입력하기</button>';
+  $('#jc-f-q').addEventListener('keydown',function(e){if(e.key==='Enter'){e.preventDefault();placeGo()}});
+}
+async function placeGo(){var q=$('#jc-f-q').value.trim(),box=$('.jc-found');if(!q)return;box.innerHTML='<span class="jc-hint">찾는 중…</span>';
+  var r=await searchPlaces(q);if(!S||!S.form||!$('.jc-found'))return;S.form.found=r;
+  $('.jc-found').innerHTML=r.length?'<div class="jc-results">'+r.map(function(d,i){return '<button data-act="place-pick" data-i="'+i+'"><b>'+esc(d.place_name)+'</b><small>'+esc(d.road_address_name||d.address_name||'')+(d.category_group_name?' · '+esc(d.category_group_name):'')+'</small></button>'}).join('')+'</div>':'<span class="jc-hint">찾지 못했습니다. 다른 이름으로 검색하거나 직접 입력해 주세요.</span>'}
+async function loadBitmap(file){try{return await createImageBitmap(file,{imageOrientation:'from-image'})}catch(e){return await new Promise(function(res,rej){var im=new Image(),u=URL.createObjectURL(file);im.onload=function(){URL.revokeObjectURL(u);res(im)};im.onerror=function(){URL.revokeObjectURL(u);rej(new Error('열 수 없는 사진입니다: '+file.name+' (JPG나 PNG로 바꿔 주세요)'))};im.src=u})}}
+async function shrink(src,max,q){var w=src.width,h=src.height,r=Math.min(1,max/Math.max(w,h)),c=document.createElement('canvas');c.width=Math.max(1,Math.round(w*r));c.height=Math.max(1,Math.round(h*r));
+  var x=c.getContext('2d');x.fillStyle='#fff';x.fillRect(0,0,c.width,c.height);x.drawImage(src,0,0,c.width,c.height);
+  var blob=await new Promise(function(res){c.toBlob(res,'image/jpeg',q)});if(!blob)throw new Error('사진을 줄이지 못했습니다');return new Uint8Array(await blob.arrayBuffer())}
+async function uploadPhotos(parent,files,progress){
+  var done=0,errs=[];
+  for(var i=0;i<files.length;i++){if(progress)progress(i+1,files.length);
+    try{var bmp=await loadBitmap(files[i].file),full=await shrink(bmp,1600,.82);if(full.length>1000000)full=await shrink(bmp,1280,.72);
+      var th=await shrink(bmp,360,.7);if(bmp.close)bmp.close();
+      var a=await encBytes(th),b=await encBytes(full);
+      await S.rpc('comm_photo_add',{p_key:newKey('cp'),p_parent:parent,p_thumb_iv:a.iv,p_thumb:a.data,p_iv:b.iv,p_data:b.data});done++;
+    }catch(e){errs.push((e&&e.message)||'사진 올리기 실패')}}
+  return {done:done,errs:errs};
+}
+async function saveTrip(){
+  var f=S.form;if(!f||S.busy)return;
+  var date=$('#jc-f-date').value,cat=$('#jc-f-cat').value,title=$('#jc-f-title').value.trim(),body=$('#jc-f-body').value.trim(),p=f.place;
+  if(f.manual){var nm=$('#jc-f-pname').value.trim(),ad=$('#jc-f-paddr').value.trim();
+    p=nm?(p&&p.name===nm&&(p.addr||'')===ad?p:{name:nm,addr:ad}):null}
+  if(!/^\d{4}-\d{2}-\d{2}$/.test(date)){formMsg('날짜를 넣어 주세요.');return}
+  if(!p||!p.name){formMsg('장소를 넣어 주세요.');return}
+  S.busy=true;var ov=$('.jc-modal-root').firstChild;ov.dataset.lock='1';var btn=ov.querySelector('[data-act=save-trip]');btn.disabled=true;btn.textContent='저장 중…';formMsg('');
+  try{
+    if(!p.lat&&p.addr&&kakaoOk()){var g=await geocode(p.addr);if(g){p.lat=g.lat;p.lng=g.lng}}
+    var key=f.key||newKey('ct'),e=await enc({date:date,cat:cat,title:title,body:body,place:p});
+    var r=await S.rpc('comm_put',{p_key:key,p_kind:'trip',p_parent:null,p_expected_rev:f.rev,p_iv:e.iv,p_data:e.data,p_anon:false,p_secret:null});
+    if(r&&r.conflict){S.busy=false;closeModal();say('다른 곳에서 먼저 고쳤습니다. 최신 내용으로 다시 열어 주세요.');await load();return}
+    var res={done:0,errs:[]};
+    if(f.files.length)res=await uploadPhotos(key,f.files,function(i,n){btn.textContent='사진 올리는 중 '+i+' / '+n});
+    f.files.forEach(function(x){URL.revokeObjectURL(x.url)});
+    delete S.covers[key];delete S.coverAsked[key];
+    S.busy=false;closeModal();say(res.errs.length?'저장했습니다. 다만 사진 '+res.errs.length+'장은 올리지 못했습니다 — '+res.errs[0]:'저장했습니다.');S.place=null;await load();
+  }catch(err){S.busy=false;delete ov.dataset.lock;btn.disabled=false;btn.textContent='저장';formMsg((err&&err.message)||'저장하지 못했습니다.')}
+}
+
+/* ---------- 기록 보기 ---------- */
+function openTrip(key){
+  var t=S.trips.find(function(x){return x.key===key});if(!t)return;var c=t.c,p=c.place||{};
+  S.detail={key:key,photos:null};
+  modal(p.name||'기록',
+    '<div class="jc-dmeta"><b>'+esc(fmtDay(c.date))+'</b>'+(c.cat?'<span class="jc-tag">'+esc(c.cat)+'</span>':'')+(c.title?'<span class="jc-ev">'+esc(c.title)+'</span>':'')+'<span>'+esc(t.owner_name||'')+' 남김</span></div>'
+    +'<div class="jc-addr"><span>'+esc(p.addr||'주소를 적지 않았습니다')+'</span><a class="jc-btn jc-sm" href="'+esc(mapLink(p))+'" target="_blank" rel="noopener noreferrer">지도에서 보기</a></div>'
+    +(c.body?'<p class="jc-dbody">'+esc(c.body)+'</p>':'')
+    +'<div class="jc-sub">사진 <small class="jc-pinfo"></small></div><div class="jc-photos"><span class="jc-hint">'+(t.photos?'사진을 불러오는 중…':'')+'</span></div><input type="file" class="jc-addfiles" accept="image/*" multiple hidden>'
+    +'<div class="jc-sub">후기 <small>함께한 분들의 한 줄</small></div><div class="jc-reviews"></div>'
+    +'<div class="jc-addreview"><textarea class="jc-rtext" maxlength="'+REVIEW_MAX+'" placeholder="후기를 남겨 주세요."></textarea><button class="jc-btn jc-primary" data-act="post-review">남기기</button></div>',
+    (t.mine?'<button class="jc-btn jc-left" data-act="edit-trip">고치기</button>':'')+(t.mine||S.me.is_master?'<button class="jc-btn jc-danger'+(t.mine?'':' jc-left')+'" data-act="del-trip">기록 지우기</button>':'')+'<button class="jc-btn" data-act="close">닫기</button>');
+  $('.jc-addfiles').addEventListener('change',async function(){var fs=Array.from(this.files||[]).map(function(f){return {file:f}});this.value='';if(!fs.length||S.busy)return;
+    var room=PHOTO_MAX-((S.detail.photos||[]).length);if(fs.length>room){fs=fs.slice(0,Math.max(0,room));say('사진은 한 기록에 '+PHOTO_MAX+'장까지 올릴 수 있습니다.')}if(!fs.length)return;
+    S.busy=true;var info=$('.jc-pinfo');var r=await uploadPhotos(key,fs,function(i,n){if(info)info.textContent='올리는 중 '+i+' / '+n});S.busy=false;
+    if(!S)return;say(r.errs.length?(r.done?'사진 '+r.done+'장을 올렸고, ':'')+r.errs.length+'장은 올리지 못했습니다 — '+r.errs[0]:'사진 '+r.done+'장을 올렸습니다.');
+    if(r.done){t.photos+=r.done;delete S.covers[key];delete S.coverAsked[key];if(S.detail&&S.detail.key===key)await loadPhotos(key);renderTrips(false)}});
+  drawReviews(key);loadPhotos(key);
+}
+async function loadPhotos(key){
+  var g=S.gen;
+  try{var rows=await S.rpc('comm_photo_thumbs',{p_parents:[key],p_first_only:false});
+    for(var i=0;i<rows.length;i++){rows[i].url=blobUrl(await decBytes(rows[i].thumb_iv,rows[i].thumb))}
+    if(!S||S.gen!==g||!S.detail||S.detail.key!==key)return;S.detail.photos=rows;drawPhotos();
+  }catch(e){if(S&&S.detail&&S.detail.key===key){var b=$('.jc-photos');if(b)b.innerHTML='<span class="jc-hint">사진을 불러오지 못했습니다.</span>'}}
+}
+function drawPhotos(){var d=S.detail,box=$('.jc-photos');if(!d||!box)return;var ph=d.photos||[];
+  var info=$('.jc-pinfo');if(info)info.textContent=ph.length?ph.length+'장 · 누르면 크게 보입니다':'아직 사진이 없습니다';
+  box.innerHTML=ph.map(function(p,i){return '<button data-act="photo" data-i="'+i+'" aria-label="사진 '+(i+1)+' 크게 보기"><img alt="" src="'+p.url+'"></button>'}).join('')+(ph.length<PHOTO_MAX?'<button class="jc-addph" data-act="add-photos">+ 사진<br>더하기</button>':'')}
+function drawReviews(key){var box=$('.jc-reviews');if(!box)return;var ns=(S.notes[key]||[]);
+  box.innerHTML=ns.length?ns.map(function(n){return '<div class="jc-review"><p>'+esc(n.c.text)+'</p><div class="jc-nfoot"><b>'+esc(n.owner_name||'')+'</b><span>'+esc(fmtStamp(n.created_at))+'</span><span class="jc-sp"></span>'+(n.mine||S.me.is_master?'<button class="jc-btn jc-link" data-act="del-review" data-key="'+n.key+'">지우기</button>':'')+'</div></div>'}).join(''):'<div class="jc-review"><span class="jc-hint">아직 후기가 없습니다. 첫 후기를 남겨 보세요.</span></div>'}
+async function postReview(){var d=S.detail,ta=$('.jc-rtext');if(!d||!ta||S.busy)return;var text=ta.value.trim();if(!text)return;S.busy=true;
+  try{var e=await enc({text:text});await S.rpc('comm_put',{p_key:newKey('cn'),p_kind:'note',p_parent:d.key,p_expected_rev:0,p_iv:e.iv,p_data:e.data,p_anon:false,p_secret:null});S.busy=false;ta.value='';await load(true);if(S.detail&&S.detail.key===d.key)drawReviews(d.key)}
+  catch(err){S.busy=false;say((err&&err.message)||'남기지 못했습니다.')}}
+async function removeDoc(key,what,after){if(S.busy||!window.confirm(what+' 지울까요? 지운 뒤에는 되돌릴 수 없습니다.'))return;S.busy=true;
+  try{await S.rpc('comm_del',{p_key:key,p_secret:secrets()[key]||null});keepSecret(key,null);S.busy=false;say('지웠습니다.');if(after)after();await load(true);if(S.detail)drawReviews(S.detail.key)}
+  catch(err){S.busy=false;say((err&&err.message)||'지우지 못했습니다.')}}
+
+/* 사진 크게 보기 */
+function openLb(i){var d=S.detail;if(!d||!d.photos||!d.photos[i])return;d.at=i;var p=d.photos[i],root=$('.jc-lb-root');
+  root.innerHTML='<div class="jc-lb"><div class="jc-lbtop"><span>'+(i+1)+' / '+d.photos.length+(p.owner_name?' · '+esc(p.owner_name)+' 올림':'')+'</span><span class="jc-sp"></span>'+(p.can_del?'<button class="jc-btn jc-sm" data-act="del-photo">이 사진 지우기</button>':'')+'<button class="jc-btn jc-sm" data-act="lb-close">닫기</button></div>'
+    +'<div class="jc-lbmain"><button class="jc-nav" data-act="lb-prev" aria-label="이전 사진"'+(i?'':' disabled')+'>‹</button><span class="jc-lbwait">불러오는 중…</span><button class="jc-nav" data-act="lb-next" aria-label="다음 사진"'+(i<d.photos.length-1?'':' disabled')+'>›</button></div></div>';
+  (async function(){try{if(!p.full){var r=await S.rpc('comm_photo_get',{p_key:p.key});p.full=blobUrl(await decBytes(r.iv,r.data))}
+      if(!S||!S.detail||S.detail!==d||d.at!==i)return;var w=$('.jc-lbwait');if(w){var im=document.createElement('img');im.alt='사진 '+(i+1);im.src=p.full;w.replaceWith(im)}
+    }catch(e){var w2=S&&$('.jc-lbwait');if(w2)w2.textContent='사진을 불러오지 못했습니다.'}})();
+}
+function closeLb(){if(S)$('.jc-lb-root').innerHTML=''}
+async function delPhoto(){var d=S.detail;if(!d||S.busy)return;var p=d.photos[d.at];if(!p||!window.confirm('이 사진을 지울까요?'))return;S.busy=true;
+  try{await S.rpc('comm_photo_del',{p_key:p.key});S.busy=false;closeLb();d.photos.splice(d.at,1);drawPhotos();var t=S.trips.find(function(x){return x.key===d.key});if(t){t.photos=Math.max(0,t.photos-1);delete S.covers[d.key];delete S.coverAsked[d.key];renderTrips(false)}say('사진을 지웠습니다.')}
+  catch(err){S.busy=false;say((err&&err.message)||'지우지 못했습니다.')}}
+
+/* ---------- 오늘의 한마디 ---------- */
+function renderWords(){var sec=secrets();
+  $('.jc-wall').innerHTML=S.words.length?S.words.map(function(w){var can=w.mine||S.me.is_master||(w.anon&&sec[w.key]);
+    return '<div class="jc-note'+(w.anon?' jc-anon':'')+'"><p>'+esc(w.c.text)+'</p><div class="jc-nfoot"><b>'+(w.anon?'익명':esc(w.owner_name||''))+'</b><span>'+esc(fmtStamp(w.created_at))+'</span>'+(w.anon&&sec[w.key]?'<span>· 내가 쓴 글</span>':'')+'<span class="jc-sp"></span>'+(can?'<button class="jc-btn jc-link" data-act="del-word" data-key="'+w.key+'">지우기</button>':'')+'</div></div>'}).join('')
+    :'<div class="jc-empty" style="column-span:all"><b>아직 남긴 한마디가 없습니다</b>매일 쓰지 않아도 됩니다. 남기고 싶은 말이 생겼을 때 적어 주세요.</div>';
+}
+async function postWord(){var ta=$('.jc-wtext'),text=ta.value.trim();if(!text||S.busy)return;S.busy=true;var btn=$('[data-act=post-word]');btn.disabled=true;
+  try{var key=newKey('cw'),secret=S.anon?hex(32):null,e=await enc({text:text});
+    if(secret)keepSecret(key,secret);
+    try{await S.rpc('comm_put',{p_key:key,p_kind:'word',p_parent:null,p_expected_rev:0,p_iv:e.iv,p_data:e.data,p_anon:S.anon,p_secret:secret})}catch(err){if(secret)keepSecret(key,null);throw err}
+    S.busy=false;btn.disabled=false;ta.value='';$('.jc-len').textContent='0 / '+WORD_MAX;say(S.anon?'익명으로 남겼습니다.':'남겼습니다.');await load(true);
+  }catch(err){S.busy=false;btn.disabled=false;say((err&&err.message)||'남기지 못했습니다.')}}
+
+/* ---------- 누르기 ---------- */
+function onClick(ev){
+  var el=ev.target.closest('[data-act]');if(!el||!S)return;var a=el.dataset.act,f=S.form,d=S.detail;
+  switch(a){
+    case 'view':setView(el.dataset.v);break;
+    case 'reload':load();break;
+    case 'cat':S.cat=el.dataset.v;S.shown=PAGE;S.place=null;renderTrips(true);break;
+    case 'clear-place':S.place=null;renderTrips(false);break;
+    case 'more':S.shown+=PAGE;renderTrips(false);break;
+    case 'new-trip':openForm(null);break;
+    case 'open':openTrip(el.dataset.key);break;
+    case 'close':if(!S.busy)closeModal();break;
+    case 'pick-files':$('#jc-f-files').click();break;
+    case 'drop-file':if(f){var x=f.files.splice(+el.dataset.i,1)[0];if(x)URL.revokeObjectURL(x.url);drawPreviews()}break;
+    case 'place-go':placeGo();break;
+    case 'place-pick':if(f&&f.found){var p=f.found[+el.dataset.i];if(p){f.place={name:p.place_name,addr:p.road_address_name||p.address_name||'',lat:+p.y,lng:+p.x,url:p.place_url||''};var c=GROUP_CAT[p.category_group_code];if(c&&!f.key)$('#jc-f-cat').value=c;drawPlaceArea()}}break;
+    case 'place-clear':if(f){f.place=null;drawPlaceArea()}break;
+    case 'place-manual':if(f){f.manual=true;drawPlaceArea()}break;
+    case 'place-search':if(f){f.manual=false;f.place=null;drawPlaceArea()}break;
+    case 'save-trip':saveTrip();break;
+    case 'edit-trip':if(d){var k=d.key;closeModal();openForm(k)}break;
+    case 'del-trip':if(d)removeDoc(d.key,'이 기록을 사진·후기와 함께',closeModal);break;
+    case 'add-photos':$('.jc-addfiles').click();break;
+    case 'photo':openLb(+el.dataset.i);break;
+    case 'lb-prev':if(d&&d.at>0)openLb(d.at-1);break;
+    case 'lb-next':if(d&&d.at<d.photos.length-1)openLb(d.at+1);break;
+    case 'lb-close':closeLb();break;
+    case 'del-photo':delPhoto();break;
+    case 'post-review':postReview();break;
+    case 'del-review':removeDoc(el.dataset.key,'이 후기를');break;
+    case 'anon':setAnon(el.dataset.v==='1');break;
+    case 'post-word':postWord();break;
+    case 'del-word':removeDoc(el.dataset.key,'이 한마디를');break;
+  }
+}
+function onKey(e){if(S&&(e.key==='Enter'||e.key===' ')&&e.target&&e.target.classList&&e.target.classList.contains('jc-card')){e.preventDefault();openTrip(e.target.dataset.key);return}
+  if(!S||!S.detail||!$('.jc-lb-root').firstChild)return;if(e.key==='ArrowLeft'&&S.detail.at>0)openLb(S.detail.at-1);if(e.key==='ArrowRight'&&S.detail.at<S.detail.photos.length-1)openLb(S.detail.at+1)}
+
+window.JinoComm={
+  init:async function(o){
+    if(S)this.stop();
+    S=fresh();S.rpc=o.rpc;S.me=o.me;S.root=o.mount;S.kakaoKey=o.kakaoKey||'';S.toast=o.toast||null;
+    S.key=await deriveKey(o.rawKey);
+    skeleton();if(pref('view')==='word')setView('word');
+    document.addEventListener('keydown',onKey);
+    initMap();await load();
+    timer=setInterval(function(){if(S&&!document.hidden&&S.root.offsetParent!==null&&!modalOpen())load(true)},120000);
+  },
+  reload:function(){return load()},
+  stop:function(){if(!S)return;if(timer){clearInterval(timer);timer=null}document.removeEventListener('keydown',onKey);document.removeEventListener('keydown',onEsc);S.urls.forEach(function(u){URL.revokeObjectURL(u)});S.root.innerHTML='';S.gen++;S=null}
+};
+})();
+/* ===== JinoComm 모듈 끝 ===== */
+</script>
+<script>
+(function(){
+"use strict";
+/* 이 파일에는 비밀번호도 글·사진도 없습니다. 내용은 팀 열쇠로 암호화된 채 Supabase에만 있고,
+   서버는 급여대행·주소록과 같은 구성원 명단에서 '사용 중'인 사람인지 매번 확인합니다. */
+var SB_URL='https://vsbddasoslqmcvoppvuj.supabase.co', SB_KEY='sb_publishable__6dfg59E_kmUEO9nkLNA_Q_gxt1jidT';
+var KEY_URL='https://raw.githubusercontent.com/jinolabor/config-files/main/key.json', KEY_URLS=[KEY_URL,'https://raw.githubusercontent.com/dhkim0629-ops/config-files/main/key.json'], RECHECK=10*60*1000;
+/* 카카오 지도 JavaScript 키 (공개되어도 되는 키입니다. 카카오 개발자 사이트에서 이 사이트 주소만 쓰도록 등록해 둡니다). 비어 있으면 지도 없이 동작합니다. */
+var KAKAO_JS_KEY='';
+var $=function(s){return document.querySelector(s)};
+var ME=null,TOKEN='',watchT=null;
+var unb64=function(s){return Uint8Array.from(atob(s),function(c){return c.charCodeAt(0)})};
+function toast(msg){var t=$('#toast');t.textContent=msg;t.hidden=false;clearTimeout(toast._t);toast._t=setTimeout(function(){t.hidden=true},3500)}
+async function fetchKeys(){var last=null;for(var i=0;i<KEY_URLS.length;i++){try{var r=await fetch(KEY_URLS[i]+'?t='+Date.now(),{cache:'no-store'});if(!r.ok)throw new Error('열쇠 파일을 불러오지 못했습니다 (HTTP '+r.status+')');return await r.json()}catch(e){last=e}}throw last||new Error('열쇠 파일을 불러오지 못했습니다')}
+async function unwrap(pw,e){
+  var base=await crypto.subtle.importKey('raw',new TextEncoder().encode(pw),'PBKDF2',false,['deriveKey']);
+  var wk=await crypto.subtle.deriveKey({name:'PBKDF2',salt:unb64(e.salt),iterations:e.iter||150000,hash:'SHA-256'},base,{name:'AES-GCM',length:256},false,['decrypt']);
+  return new Uint8Array(await crypto.subtle.decrypt({name:'AES-GCM',iv:unb64(e.iv)},wk,unb64(e.wk)));
+}
+async function mtoken(id,pw){var h=new Uint8Array(await crypto.subtle.digest('SHA-256',new TextEncoder().encode('jino-payroll-member|'+id+'|'+pw)));return btoa(String.fromCharCode.apply(null,h))}
+async function rpc(fn,args){
+  var r=await fetch(SB_URL+'/rest/v1/rpc/'+fn,{method:'POST',headers:{'apikey':SB_KEY,'Content-Type':'application/json'},body:JSON.stringify(Object.assign({p_token:TOKEN},args||{}))});
+  var t=await r.text(),j=null;try{j=t?JSON.parse(t):null}catch(e){}
+  if(!r.ok){var msg=(j&&j.message)||('서버 오류 (HTTP '+r.status+')');if(msg==='denied'){msg='권한이 없습니다';lockOut('사용이 중지된 비밀번호이거나 권한이 없습니다.')}throw new Error(msg)}
+  return j;
+}
+function lockOut(msg){ME=null;TOKEN='';if(watchT){clearInterval(watchT);watchT=null}JinoComm.stop();$('#who').textContent='';$('#login').hidden=false;$('#pw').value='';say(msg||'',!!msg);setTimeout(function(){$('#pw').focus()},50)}
+function say(t,err){var m=$('#lmsg');m.textContent=t;m.className='lmsg'+(err?' err':'')}
+$('#lform').onsubmit=async function(ev){
+  ev.preventDefault();var pw=$('#pw').value.trim();if(!pw){say('비밀번호를 넣어 주세요.',true);return}
+  $('#lgo').disabled=true;say('확인하는 중…');
+  try{
+    var d=await fetchKeys(),list=(d&&d.entries)||[],hit=null;
+    for(var i=0;i<list.length&&!hit;i++){try{hit={id:list[i].id,k:await unwrap(pw,list[i])}}catch(e){}}
+    if(!hit){say('비밀번호가 맞지 않거나 사용이 중지된 비밀번호입니다.',true);return}
+    TOKEN=await mtoken(hit.id,pw);
+    var who;try{who=await rpc('comm_whoami')}catch(e){TOKEN='';say('구성원 명단에 없거나 사용이 중지된 비밀번호입니다.',true);return}
+    ME=who;$('#login').hidden=true;$('#who').textContent=ME.name+' 님';
+    await JinoComm.init({mount:$('#jc-mount'),rpc:rpc,rawKey:hit.k,me:ME,kakaoKey:KAKAO_JS_KEY,toast:toast});
+    watchT=setInterval(async function(){try{var k=await fetchKeys();if(!(k.entries||[]).some(function(e){return e.id===hit.id}))lockOut('이 비밀번호는 더 이상 쓸 수 없습니다.')}catch(e){}},RECHECK);
+  }catch(e){say('열지 못했습니다: '+(e&&e.message||e),true)}
+  finally{$('#lgo').disabled=false}
+};
+$('#btn-lock').onclick=function(){lockOut('')};
+})();
+</script>
+</body>
+</html>
