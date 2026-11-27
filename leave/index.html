@@ -190,6 +190,8 @@ details.mgrp>table{margin:0;border-left:0;border-right:0}
 .pill.p-사용완료{background:#eef0f3;color:#5b6675}.pill.p-승인{background:#e8f0fb;border-color:#9bbbe3;color:#174a8c}.pill.p-신청{background:#fff4d6;border-color:#e9c98f;color:#8a5a00}
 .pill.p-반려,.pill.p-취소{background:#fff;color:#aaa;text-decoration:line-through}
 .sec-h{font-size:17px;font-weight:700;color:var(--navy);border-left:4px solid var(--navy);padding-left:9px;margin:22px 0 10px}
+.f-info{margin-top:10px;padding:9px 12px;background:#f3f6fa;border:1px solid var(--rule);border-left:4px solid var(--navy);font-size:14.5px;line-height:1.7}
+.form input:disabled,.form input[readonly]{background:#f3f5f8;color:var(--muted)}
 .notice{border:1px solid var(--rule);background:#f7f9fc;padding:10px 14px;font-size:14px;color:#445;line-height:1.7;margin-bottom:12px}
 </style>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
@@ -525,21 +527,24 @@ function openForm(r,preset){
       '<label id="f-timew"><span>외출 시간</span><input id="f-time" value="'+esc(c.time||'')+'" placeholder="예: 14:00~16:00"></label>'+
       '<label class="full"><span>사유</span><input id="f-reason" value="'+esc(c.reason||'')+'" placeholder="예: 개인 사정, 병원 진료"></label>'+
       '<label class="full"><span>업무 대행</span><input id="f-handover" value="'+esc(c.handover||'')+'" placeholder="예: 급여 업무 — 정연이, 거래처 전화 — 유재경"></label>'+
+      '<label class="full"><span>업무 공유</span><div class="cell"><span style="display:flex;gap:8px;align-items:center;font-size:15px;cursor:pointer"><input type="checkbox" id="f-shared" style="width:18px;height:18px;min-height:0"'+(c.shared?' checked':'')+'> 연차 전에 진행 중인 업무를 공유했습니다</span><span style="color:var(--bad);font-size:13.5px">(비밀번호는 여기에 적지 마세요)</span></div></label>'+
     '</div>'+
-    '<label style="display:flex;gap:8px;align-items:center;margin-top:10px;font-size:15px"><input type="checkbox" id="f-shared" style="width:auto;min-height:0"'+(c.shared?' checked':'')+'> 연차 전에 진행 중인 업무를 공유했습니다 <span style="color:var(--bad);font-size:13.5px">(비밀번호는 여기에 적지 마세요)</span></label>'+
-    '<p class="note-p" id="f-info" style="margin-top:8px"></p>'+
+    '<div class="f-info" id="f-info" hidden></div>'+
     (r&&r.status==='반려'&&c.reject?'<p class="note-p" style="color:var(--bad)">반려 사유: '+esc(c.reject)+'</p>':'')+
     '<div class="act"><span class="left">'+(r?'<button class="btn" id="f-hist">처리 이력</button> <button class="btn" id="f-doc">신청서</button>':'')+
       (r&&mine(r)&&r.status==='신청'?' <button class="btn danger" id="f-cancel">신청 취소</button>':'')+(r&&isMgr()&&r.status!=='취소'?' <button class="btn danger" id="f-del">삭제</button>':'')+'</span>'+
       '<button class="btn" id="f-close">닫기</button>'+(canEdit?'<button class="btn primary" id="f-save">'+(isNew?'신청하기':(isMgr()&&r.status==='승인'?'저장':'다시 신청'))+'</button>':'')+'</div>');
   var q=function(s){return ov.querySelector(s)};
   if(!canEdit)ov.querySelectorAll('.form input,.form select,#f-shared').forEach(function(i){i.disabled=true});
-  function sync(){var t=q('#f-type').value;q('#f-endw').style.display=t==='연차'?'':'none';q('#f-daysw').style.display=t==='연차'?'':'none';q('#f-timew').style.display=t==='외출'?'':'none';
+  function sync(){var t=q('#f-type').value,fe=q('#f-end'),fd=q('#f-days'),ft=q('#f-time');
+    if(canEdit){fe.disabled=t!=='연차';fe.placeholder=t==='연차'?'하루면 비워 두세요':'연차만 해당';if(t!=='연차')fe.value='';
+      fd.readOnly=t!=='연차';if(t!=='연차'){fd.value=fmtN(W[t])+'일 ('+(t==='외출'?'2시간':t==='오전반차'?'3시간':'5시간')+')';delete fd.dataset.touched}else if(/일/.test(fd.value))fd.value='';
+      ft.disabled=t!=='외출';ft.placeholder=t==='외출'?'예: 14:00~16:00':'외출만 해당';if(t!=='외출')ft.value=''}
     var s=parseDay(q('#f-start').value,L.year),e=parseDay(q('#f-end').value,L.year)||s,info=[];
     if(t==='연차'&&s){var n=weekdays(s,e);if(!q('#f-days').dataset.touched)q('#f-days').value=n||'';info.push('사용일 '+dayK(s)+(e!==s?' ~ '+dayK(e):'')+' · 주말 뺀 '+n+'일 (공휴일이 끼면 사용 일수를 고쳐 주세요)')}
     else if(s)info.push('사용일 '+dayK(s)+' · '+fmtN(W[t])+'일 차감');
     if(s&&s<today())info.push('<b style="color:#a52a2a">지난 날짜라 사후 신청으로 표시됩니다.</b>');
-    q('#f-info').innerHTML=info.join('<br>')}
+    q('#f-info').innerHTML=info.join('<br>');q('#f-info').hidden=!info.length}
   ['#f-type','#f-start','#f-end'].forEach(function(s){q(s).addEventListener('input',sync);q(s).addEventListener('change',sync)});
   q('#f-days').addEventListener('input',function(){this.dataset.touched='1'});
   ['#f-start','#f-end'].forEach(function(s){q(s).addEventListener('blur',function(){var v=parseDay(this.value,L.year);if(v)this.value=v})});
@@ -554,7 +559,7 @@ function openForm(r,preset){
     if(!s){toast('사용일을 확인해 주세요 (예: 12/3).');q('#f-start').focus();return}
     if(e<s){toast('끝나는 날이 사용일보다 앞입니다.');q('#f-end').focus();return}
     if(t==='연차'&&String(s).slice(0,4)!==String(e).slice(0,4)){toast('연도가 바뀌는 연차는 연도별로 나눠 신청해 주세요.');return}
-    var days=t==='연차'?parseFloat(q('#f-days').value):W[t];if(t==='연차'&&!(days>0)){toast('사용 일수를 확인해 주세요.');q('#f-days').focus();return}
+    var days=t==='연차'?parseFloat(String(q('#f-days').value).replace(/[^\d.]/g,'')):W[t];if(t==='연차'&&!(days>0)){toast('사용 일수를 확인해 주세요.');q('#f-days').focus();return}
     var own=q('#f-owner')?q('#f-owner').value:owner;
     var body={type:t,start:s,end:e,days:t==='연차'?days:'',time:t==='외출'?q('#f-time').value.trim():'',reason:q('#f-reason').value.trim(),handover:q('#f-handover').value.trim(),shared:q('#f-shared').checked,
       late:s<today(),applied_at:isNew?new Date().toISOString():(c.applied_at||r.created_at),applicant:isNew?(L.members.find(function(m){return m.id===own})||{name:ME.name}).name:c.applicant,entered_by:isNew?ME.name:(c.entered_by||ME.name)};
