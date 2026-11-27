@@ -192,6 +192,9 @@ details.mgrp>table{margin:0;border-left:0;border-right:0}
 .sec-h{font-size:17px;font-weight:700;color:var(--navy);border-left:4px solid var(--navy);padding-left:9px;margin:22px 0 10px}
 .f-info{margin-top:10px;padding:9px 12px;background:#f3f6fa;border:1px solid var(--rule);border-left:4px solid var(--navy);font-size:14.5px;line-height:1.7}
 .form input:disabled,.form input[readonly]{background:#f3f5f8;color:var(--muted)}
+.ln-list .ln-it{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:10px 12px;border:1px solid var(--rule);border-left:5px solid var(--navy);margin-bottom:6px;font-size:15px}
+.ln-it.ok{border-left-color:#1d5fb4;background:#f3f7fd}.ln-it.no{border-left-color:#b3261e;background:#fdf3f2}
+.ln-big{font-weight:800;font-size:16px}.ln-it.ok .ln-big{color:#1d5fb4}.ln-it.no .ln-big{color:#b3261e}
 .notice{border:1px solid var(--rule);background:#f7f9fc;padding:10px 14px;font-size:14px;color:#445;line-height:1.7;margin-bottom:12px}
 </style>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
@@ -331,7 +334,6 @@ $('#lform').onsubmit=async function(ev){
     ['#btn-pending','#sec-pend','#lv-import','#lv-xlsx','#lv-who'].forEach(function(s){$(s).hidden=!ME.is_mgr});
     $('#lv-add').textContent=ME.is_mgr?'연차 등록 (구성원)':'연차 신청';
     await loadAll();
-    if(ME.is_mgr&&ME.pending>0){setTimeout(function(){$('#sec-pend').scrollIntoView({behavior:'smooth',block:'start'})},300);toast('승인을 기다리는 신청이 '+ME.pending+'건 있습니다.')}
     watchT=setInterval(async function(){try{var k=await fetchKeys();if(!(k.entries||[]).some(function(e){return e.id===hit.id}))lockOut('이 비밀번호는 더 이상 쓸 수 없습니다.')}catch(e){}},RECHECK);
   }catch(e){say('열지 못했습니다: '+(e&&e.message||e),true)}
   finally{$('#lgo').disabled=false}
@@ -354,6 +356,7 @@ async function loadAll(quiet){
     $('#ref').textContent='조회일: '+fmtDate(new Date());
     var w=$('#lv-who'),cur=w.value;w.innerHTML='<option value="">구성원 전체</option>'+L.members.map(function(m){return '<option value="'+esc(m.id)+'">'+esc(m.name)+'</option>'}).join('');w.value=cur;
     status('연결됨 · '+hm(new Date())+' 기준');render();
+    lnNotice();
   }catch(e){status('불러오지 못했습니다',true);if(!quiet)toast(e.message||'불러오지 못했습니다.')}
 }
 function mine(r){return r.owner_id===ME.id}
@@ -596,6 +599,37 @@ async function openHist(r){
   try{var h=await rpc('leave_history_list',{p_key:r.key}),out=[];for(var i=0;i<h.length;i++){var b=await decSafe(h[i].iv,h[i].data);out.push('<tr><td class="mono nowrap">'+when(h[i].updated_at)+'</td><td>'+esc(h[i].updated_by)+'</td><td class="c"><span class="st s-'+esc(h[i].deleted?'취소':h[i].status)+'">'+(h[i].deleted?'삭제':esc(h[i].status))+'</span></td><td>'+(b?dayK(b.start)+(b.end&&b.end!==b.start?' ~ '+dayK(b.end):'')+' '+esc(b.type)+' '+fmtN(useOf(b))+'일'+(b.reject?' · 반려 사유: '+esc(b.reject):''):'')+'</td></tr>')}
     ov.querySelector('#hb').innerHTML='<table><thead><tr><th>일시</th><th>처리한 사람</th><th>상태</th><th>내용</th></tr></thead><tbody>'+out.join('')+'</tbody></table>'}
   catch(e){ov.querySelector('#hb').textContent='불러오지 못했습니다: '+e.message}
+}
+
+/* ---------- 연차 알림 (처리 결과 · 새 신청) ----------
+   주소록에 합칠 때: 로그인·새로고침 뒤 lnNotice()만 부르면 됩니다. 서버 확인 표시는 leave_seen (주소록 addr_seen 과 별도). */
+var LN={dismissed:{}};
+function lnItems(seen){
+  if(isMgr())return fullRows().filter(function(r){return r.status==='신청'&&new Date(r.updated_at)>seen}).sort(function(a,b){return a.c.start<b.c.start?-1:1});
+  return fullRows().filter(function(r){return mine(r)&&(r.status==='승인'||r.status==='반려')&&r.decided_at&&new Date(r.decided_at)>seen&&r.decided_by!=='예전 연차대장'}).sort(function(a,b){return new Date(b.decided_at)-new Date(a.decided_at)});
+}
+function lnSig(r){return r.key+'|'+r.status+'|'+(r.decided_at||r.updated_at)}
+async function lnNotice(force){
+  if(!ME)return;if(!force&&$('#modal-root').firstChild)return;
+  var sv;try{sv=await rpc('leave_seen_get')}catch(e){return}
+  var seen=sv.seen_at?new Date(sv.seen_at):new Date(0),items=lnItems(seen);
+  if(!items.length){if(force)toast('새로 확인할 내용이 없습니다.');return}
+  if(!force&&items.every(function(r){return LN.dismissed[lnSig(r)]}))return;
+  if(!force&&$('#modal-root').firstChild)return;
+  var mgr=isMgr();
+  var ov=modal('<h2>'+(mgr?'새 연차 신청 '+items.length+'건':'연차 처리 결과')+'</h2>'+
+    '<p class="note-p" style="margin-top:0">'+(mgr?'구성원이 올린 신청입니다. 여기서 바로 승인·반려할 수 있습니다.':'팀장·대표가 처리한 내 연차 신청입니다.')+'</p>'+
+    '<div class="ln-list">'+items.map(function(r){var c=r.c,ok=r.status==='승인';
+      var when2=dayK(c.start)+(c.end&&c.end!==c.start?' ~ '+dayK(c.end):'')+' '+esc(c.type)+' '+fmtN(useOf(c))+'일'+(c.time?' ('+esc(c.time)+')':'');
+      if(mgr)return '<div class="ln-it" data-k="'+esc(r.key)+'"><div><b>'+esc(r.owner_name)+'</b> · '+when2+(c.late?'<span class="late">사후</span>':'')+(c.reason?'<div class="mut">사유: '+esc(c.reason)+(c.handover?' · 대행: '+esc(c.handover):'')+'</div>':'')+'</div><div class="nowrap"><button class="btn primary sm" data-ln-ok="'+esc(r.key)+'">승인</button> <button class="btn sm" data-ln-no="'+esc(r.key)+'">반려</button></div></div>';
+      return '<div class="ln-it '+(ok?'ok':'no')+'"><div><span class="ln-big">'+(ok?'승인':'반려')+'</span> '+when2+'<div class="mut">'+esc(r.decided_by||'')+' · '+when(r.decided_at)+(r.status==='반려'&&c.reject?'<br><b style="color:var(--bad)">반려 사유: '+esc(c.reject)+'</b>':'')+'</div></div><div><a href="#" class="doclink" data-ln-doc="'+esc(r.key)+'">신청서</a></div></div>'}).join('')+'</div>'+
+    '<div class="act"><button class="btn" id="ln-later">나중에 보기</button><button class="btn primary" id="ln-ok">확인했습니다</button></div>');
+  ov.querySelector('#ln-later').onclick=function(){items.forEach(function(r){LN.dismissed[lnSig(r)]=1});closeModal()};
+  ov.querySelector('#ln-ok').onclick=async function(){this.disabled=true;try{await rpc('leave_seen_mark',{p_at:sv.now})}catch(e){}closeModal()};
+  ov.querySelector('.ln-list').addEventListener('click',function(e){var t;
+    if(t=e.target.closest('[data-ln-doc]')){e.preventDefault();openDoc(byKey(t.dataset.lnDoc));return}
+    if(t=e.target.closest('[data-ln-ok]')){var r=byKey(t.dataset.lnOk);closeModal();decide(r,'승인');return}
+    if(t=e.target.closest('[data-ln-no]')){var r2=byKey(t.dataset.lnNo);closeModal();decide(r2,'반려');return}});
 }
 
 /* ---------- 신청서 (보관·인쇄) ---------- */
