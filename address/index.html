@@ -209,8 +209,21 @@ td.cs-content{min-width:260px;white-space:pre-line}
 .lmsg{min-height:20px;font-size:14px;color:var(--muted)}.lmsg.err{color:var(--bad);font-weight:600}
 .lfoot{font-size:12.5px;color:var(--faint)}
 #who{margin-left:6px}
+
+/* TEAM JINO 커뮤니티 탭 (주황 톤) */
+body.t-jc{--page:#fbf2ec;--navy:#7a3412;--blue:#c2571c;--blue-dark:#a04612;--head:#f6e1d3;--label:#fbeee5;--rule:#e2c6b3;--rule-strong:#b98d70;--ok:#c2571c;--ok-soft:#fbeadf}
+.tabs button[data-tab=jc]{color:#c2571c}
+body.t-jc .tabs button[data-tab=jc].on{color:#7a3412;border-top:3px solid #7a3412;background:#fff}
+body.t-jc .jc{--jc-navy:#7a3412;--jc-blue:#c2571c;--jc-blue-dark:#a04612;--jc-rule:#e2c6b3;--jc-rule-strong:#b98d70;--jc-soft:#fdf6f1;--jc-label:#fbeee5}
+body.t-jc .jc-tag{border-color:#e7b48f;background:#fdeee3;color:#8a3d12}
+body.t-jc .jc-picked{border-color:#e7b48f;background:#fdeee3}
+body.t-jc .jc-cover{background:linear-gradient(135deg,#f8e6da,#fdf6f1)}
+body.t-jc .jc-cover .jc-ph{color:#cf9c7c}
+@media (max-width:700px){.tabs{flex-wrap:wrap}.tabs button{padding:8px 14px;font-size:15px}}
 </style>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<link rel="stylesheet" href="../community/jino-comm.css">
+<script src="../community/jino-comm.js"></script>
 </head>
 <body>
 <header class="top"><div class="in">
@@ -225,7 +238,7 @@ td.cs-content{min-width:260px;white-space:pre-line}
 <input type="file" id="import-file" accept=".xlsx,.xls,.html,.htm" hidden>
 <div class="wrap">
 <div class="banner" id="restore" hidden></div>
-<nav class="tabs" id="tabs"><button data-tab="addr" class="on">거래처 주소록</button><button data-tab="cs">경협 자문실적</button><button data-tab="lv">연차 · 팀달력</button></nav>
+<nav class="tabs" id="tabs"><button data-tab="addr" class="on">거래처 주소록</button><button data-tab="cs">경협 자문실적</button><button data-tab="lv">연차 · 팀달력</button><button data-tab="jc">TEAM JINO 커뮤니티</button></nav>
 <div class="paper" id="pane-addr">
   <div class="doc-title"><h2>자문회사 주소록</h2><span class="ref" id="ref"></span></div>
   <div class="summary" id="stats"></div>
@@ -245,6 +258,11 @@ td.cs-content{min-width:260px;white-space:pre-line}
   </div>
   <div id="list"></div>
   <div class="foot">※ 행을 누르면 수정 창이 열립니다. <b>확인</b>을 누르면 바로 저장되어 TEAM JINO 모두의 화면에 반영됩니다. 다른 구성원이 고친 내용은 1분마다 자동으로 새로 받아옵니다. 자리를 비울 때는 오른쪽 위 <b>잠그기</b>를 눌러 주세요.</div>
+</div>
+<div class="paper" id="pane-jc" hidden>
+  <div class="doc-title"><h2>우리들의 이야기</h2><span class="ref">함께한 시간과 남기고 싶은 말을 모아 두는 곳</span></div>
+  <div id="jc-mount"></div>
+  <div class="foot">※ 글과 사진은 TEAM JINO 구성원만 볼 수 있도록 암호화해 저장합니다. 기록과 후기는 쓴 사람만 고치거나 지울 수 있습니다. <span style="color:var(--bad)">비밀번호나 고객사 정보는 이곳에 적지 마세요.</span></div>
 </div>
 <div class="paper" id="pane-lv" hidden>
   <div class="doc-title"><h2>연차사용관리대장 + 팀달력</h2><span class="ref" id="lv-ref"></span></div>
@@ -362,7 +380,7 @@ function status(text,warn){$('#savetext').textContent=text;$('#savebox').classLi
 
 /* ---------- 잠금 화면 ---------- */
 function lockOut(msg){
-  if(window.JinoLeave)window.JinoLeave.stop();
+  if(window.JinoLeave)window.JinoLeave.stop();jcStop();
   ME=null;TOKEN='';AKEY=null;docs={};data={companies:[],at:''};loaded=false;CS.year=null;CS.docs={};CS.del=[];$('#cs-list').innerHTML='';
   if(watchT){clearInterval(watchT);watchT=null}
   closeModal();$('#login').hidden=false;$('#pw').value='';say(msg||'',!!msg);renderAll();setTimeout(function(){$('#pw').focus()},50);
@@ -378,13 +396,13 @@ $('#lform').onsubmit=async function(ev){
     TOKEN=await mtoken(hit.id,pw);
     var who=await rpc('addr_whoami');
     if(!who||who.status!=='active'){TOKEN='';say(who&&who.status==='pending'?'아직 승인되지 않았습니다. 대표님께 승인을 요청해 주세요.':who&&who.status==='revoked'?'사용이 중지된 비밀번호입니다.':'구성원 명단에 없습니다. 급여대행 프로그램에서 먼저 한 번 로그인해 등록해 주세요.',true);return}
-    ME=who;AKEY=await addrKey(hit.k);
+    ME=who;AKEY=await addrKey(hit.k);JC_K=hit.k;
     if(window.JinoLeave)window.JinoLeave.start(TOKEN,hit.k);
     $('#login').hidden=true;$('#who').textContent=ME.name+' 님';
     $('#btn-admin').hidden=!ME.is_master;$('#btn-backup').hidden=!ME.is_master;$('#btn-import').hidden=!ME.is_master;$('#btn-bizno').hidden=!ME.is_master;$('#btn-xlsx').hidden=!ME.can_export;
     status('불러오는 중…');await load();
     showChanges(true);pollEditing();
-    try{var _t=/^#(leave|lv)/.test(location.hash)?'lv':localStorage.getItem('jino-addr-tab');if(_t==='cs'||_t==='lv')setTab(_t)}catch(e){}
+    try{var _t=/^#(leave|lv)/.test(location.hash)?'lv':/^#(community|jc)/.test(location.hash)?'jc':localStorage.getItem('jino-addr-tab');if(_t==='cs'||_t==='lv'||_t==='jc')setTab(_t)}catch(e){}
     watchT=setInterval(async function(){try{var k=await fetchKeys();if(!(k.entries||[]).some(function(e){return e.id===hit.id}))lockOut('이 비밀번호는 더 이상 쓸 수 없습니다.')}catch(e){}},RECHECK);
   }catch(e){say('열지 못했습니다: '+(e&&e.message||e),true)}
   finally{$('#lgo').disabled=false}
@@ -423,7 +441,7 @@ async function putDoc(key,body,deleted,msg){
 }
 function saveCompany(c,msg){var key=c.id||newKey(),body=clone(c);delete body.id;return putDoc(key,body,false,msg)}
 function deleteCompany(id,msg,why){var cur=docs[id];if(!cur)return;var body=clone(cur.c);delete body.id;body._why=why||'';return putDoc(id,body,true,msg)}
-$('#btn-refresh').onclick=function(){if(ME){status('불러오는 중…');load();if(window.JinoLeave)window.JinoLeave.reload()}};
+$('#btn-refresh').onclick=function(){if(ME){status('불러오는 중…');load();if(window.JinoLeave)window.JinoLeave.reload();if(JC_ON&&window.JinoComm)window.JinoComm.reload()}};
 setInterval(function(){if(ME&&!document.hidden&&!$('#modal-root').firstChild)load()},60000);
 document.addEventListener('visibilitychange',function(){if(ME&&!document.hidden&&!$('#modal-root').firstChild)load()});
 
@@ -1009,11 +1027,21 @@ function csRecs(){return Object.keys(CS.docs).map(function(k){var c=CS.docs[k].c
 function addrCoByName(n){var k=normCo(n);if(!k)return null;return data.companies.find(function(c){return normCo(c.name)===k})||null}
 
 /* ---------- 탭 ---------- */
-function setTab(t){CS_TAB=t;document.body.classList.toggle('t-cs',t==='cs');document.body.classList.toggle('t-lv',t==='lv');var h1=document.querySelector('header.top h1');if(h1)h1.textContent=t==='cs'?'경협 자문실적 관리대장':t==='lv'?'연차사용관리대장 + 팀달력':'거래처 주소록 관리대장';try{localStorage.setItem('jino-addr-tab',t)}catch(e){}
+function setTab(t){CS_TAB=t;document.body.classList.toggle('t-cs',t==='cs');document.body.classList.toggle('t-lv',t==='lv');document.body.classList.toggle('t-jc',t==='jc');var h1=document.querySelector('header.top h1');if(h1)h1.textContent=t==='cs'?'경협 자문실적 관리대장':t==='lv'?'연차사용관리대장 + 팀달력':t==='jc'?'TEAM JINO 커뮤니티':'거래처 주소록 관리대장';try{localStorage.setItem('jino-addr-tab',t)}catch(e){}
   document.querySelectorAll('#tabs button').forEach(function(b){b.classList.toggle('on',b.dataset.tab===t)});
-  $('#pane-addr').hidden=t!=='addr';$('#pane-cs').hidden=t!=='cs';$('#pane-lv').hidden=t!=='lv';if(t==='lv'&&window.JinoLeave)window.JinoLeave.render();
+  $('#pane-addr').hidden=t!=='addr';$('#pane-cs').hidden=t!=='cs';$('#pane-lv').hidden=t!=='lv';$('#pane-jc').hidden=t!=='jc';if(t==='jc')jcStart();if(t==='lv'&&window.JinoLeave)window.JinoLeave.render();
   if(t==='cs'&&ME&&CS.year==null)csLoad(+$('#cs-year').value||new Date().getFullYear());else if(t==='cs')renderCs();}
 document.querySelectorAll('#tabs button').forEach(function(b){b.onclick=function(){setTab(b.dataset.tab)}});
+/* ---------- TEAM JINO 커뮤니티 (JinoComm 모듈) : 탭을 처음 열 때 시작 ---------- */
+var JC_K=null,JC_ON=false,KAKAO_JS_KEY='1d868854f53141c1e11a0b2720bfabf4';
+async function jcStart(){
+  if(JC_ON||!ME||!JC_K||!window.JinoComm)return;JC_ON=true;
+  try{var me=await rpc('comm_whoami');if(!ME){JC_ON=false;return}
+    await window.JinoComm.init({mount:$('#jc-mount'),rpc:rpc,rawKey:JC_K,me:me,kakaoKey:KAKAO_JS_KEY,toast:toast});
+  }catch(e){JC_ON=false;$('#jc-mount').innerHTML='<div class="empty">커뮤니티를 열지 못했습니다: '+esc((e&&e.message)||String(e))+'</div>'}
+}
+function jcStop(){JC_K=null;if(JC_ON&&window.JinoComm)window.JinoComm.stop();JC_ON=false;var m=$('#jc-mount');if(m)m.innerHTML=''}
+
 window.JinoTab=setTab;
 (function(){var y=new Date().getFullYear(),s=$('#cs-year'),h='';for(var i=y+(new Date().getMonth()===11?1:0);i>=2024;i--)h+='<option value="'+i+'"'+(i===y?' selected':'')+'>'+i+'년</option>';s.innerHTML=h;
   $('#cs-field').innerHTML='<option value="">전체</option>'+CS_FIELDS.map(function(f){return '<option>'+f+'</option>'}).join('');
