@@ -379,7 +379,7 @@ function modalOpen(){return !!(S&&($('.jc-modal-root').firstChild||$('.jc-lb-roo
 /* ---------- 기록 쓰기·고치기 ---------- */
 function openForm(key){
   var t=key?S.trips.find(function(x){return x.key===key}):null,c=t?t.c:{date:today(),cat:'식당',place:null,title:'',body:''};
-  S.form={key:key||null,rev:t?t.rev:0,place:c.place?Object.assign({},c.place):null,files:[],manual:!kakaoOk()||(!!c.place&&!c.place.lat)};
+  S.form={key:key||null,rev:t?t.rev:0,place:c.place?Object.assign({},c.place):null,files:[],room:PHOTO_MAX-(t?t.photos:0),manual:!kakaoOk()||(!!c.place&&!c.place.lat)};
   var titles={};S.trips.forEach(function(x){if(x.c.title)titles[x.c.title]=1});
   var room=PHOTO_MAX-(t?t.photos:0);
   modal(t?'기록 고치기':'함께 했던 시간 남기기',
@@ -388,13 +388,14 @@ function openForm(key){
     +'<span class="jc-flb">장소 <span class="jc-req">*</span></span><div class="jc-placearea"></div>'
     +'<label for="jc-f-title">모임 이름</label><div><input id="jc-f-title" list="jc-f-titles" maxlength="60" placeholder="예: 2026 가을 워크숍, 송년회 (없으면 비워 두세요)" value="'+esc(c.title||'')+'"><datalist id="jc-f-titles">'+Object.keys(titles).map(function(x){return '<option value="'+esc(x)+'">'}).join('')+'</datalist></div>'
     +'<label for="jc-f-body">이야기</label><textarea id="jc-f-body" maxlength="'+BODY_MAX+'" placeholder="그날 어땠는지, 무엇이 맛있었는지 적어 주세요.">'+esc(c.body||'')+'</textarea>'
-    +'<span class="jc-flb">사진</span><div><input type="file" id="jc-f-files" accept="image/*" multiple hidden><button class="jc-btn" data-act="pick-files"'+(room<=0?' disabled':'')+'>사진 고르기</button> <span class="jc-hint">'+(t?'지금 '+t.photos+'장 · ':'')+'한 기록에 '+PHOTO_MAX+'장까지. 올릴 때 자동으로 줄여서 저장합니다.</span><div class="jc-previews"></div></div>'
+    +'<span class="jc-flb">사진</span><div><input type="file" id="jc-f-files" accept="image/*" multiple hidden><button class="jc-btn" data-act="pick-files"'+(room<=0?' disabled':'')+'>사진 고르기</button> <span class="jc-hint">'+(t?'지금 '+t.photos+'장 · ':'')+'한 기록에 '+PHOTO_MAX+'장까지. 올릴 때 자동으로 줄여서 저장합니다. 복사한 사진은 이 화면에서 <b>Ctrl+V</b>로 붙여넣어도 됩니다.</span><div class="jc-previews"></div></div>'
     +'</div><div class="jc-msg" role="alert"></div>',
     '<button class="jc-btn jc-primary" data-act="save-trip">저장</button><button class="jc-btn" data-act="close">취소</button>');
-  $('#jc-f-files').addEventListener('change',function(){var fs=Array.from(this.files||[]);this.value='';var left=room-S.form.files.length;if(fs.length>left){fs=fs.slice(0,Math.max(0,left));formMsg('사진은 한 기록에 '+PHOTO_MAX+'장까지 올릴 수 있습니다.')}
-    fs.forEach(function(f){S.form.files.push({file:f,url:URL.createObjectURL(f)})});drawPreviews()});
+  $('#jc-f-files').addEventListener('change',function(){var fs=Array.from(this.files||[]);this.value='';addFormFiles(fs)});
   drawPlaceArea();
 }
+function addFormFiles(fs){var f=S.form;if(!f)return;var left=f.room-f.files.length;if(fs.length>left){fs=fs.slice(0,Math.max(0,left));formMsg('사진은 한 기록에 '+PHOTO_MAX+'장까지 올릴 수 있습니다.')}
+  fs.forEach(function(x){f.files.push({file:x,url:URL.createObjectURL(x)})});drawPreviews()}
 function formMsg(t){var m=$('.jc-msg');if(m)m.textContent=t||''}
 function drawPreviews(){$('.jc-previews').innerHTML=S.form.files.map(function(f,i){return '<span class="jc-pv"><img alt="" src="'+f.url+'"><button data-act="drop-file" data-i="'+i+'" aria-label="빼기">×</button></span>'}).join('')}
 function drawPlaceArea(){
@@ -450,16 +451,32 @@ function openTrip(key){
     '<div class="jc-dmeta"><b>'+esc(fmtDay(c.date))+'</b>'+(c.cat?'<span class="jc-tag">'+esc(c.cat)+'</span>':'')+(c.title?'<span class="jc-ev">'+esc(c.title)+'</span>':'')+'<span>'+esc(t.owner_name||'')+' 남김</span></div>'
     +'<div class="jc-addr"><span>'+esc(p.addr||'주소를 적지 않았습니다')+'</span><a class="jc-btn jc-sm" href="'+esc(mapLink(p))+'" target="_blank" rel="noopener noreferrer">지도에서 보기</a></div>'
     +(c.body?'<p class="jc-dbody">'+esc(c.body)+'</p>':'')
-    +'<div class="jc-sub">사진 <small class="jc-pinfo"></small></div><div class="jc-photos"><span class="jc-hint">'+(t.photos?'사진을 불러오는 중…':'')+'</span></div><input type="file" class="jc-addfiles" accept="image/*" multiple hidden>'
+    +'<div class="jc-sub">사진 <small class="jc-pinfo"></small></div><div class="jc-hint">복사한 사진은 이 화면에서 <b>Ctrl+V</b>로 붙여넣으면 바로 올라갑니다.</div><div class="jc-photos"><span class="jc-hint">'+(t.photos?'사진을 불러오는 중…':'')+'</span></div><input type="file" class="jc-addfiles" accept="image/*" multiple hidden>'
     +'<div class="jc-sub">평점·후기 <small class="jc-rsum"></small></div><div class="jc-reviews"></div>'
     +'<div class="jc-myreview"><div class="jc-starpick" role="group" aria-label="내 평점"></div><div class="jc-addreview"><textarea class="jc-rtext" maxlength="'+REVIEW_MAX+'" placeholder="후기를 남겨 주세요. (평점만 남겨도 됩니다)"></textarea><button class="jc-btn jc-primary" data-act="post-review">남기기</button></div></div>',
     (t.mine?'<button class="jc-btn jc-left" data-act="edit-trip">고치기</button>':'')+(t.mine||S.me.is_master?'<button class="jc-btn jc-danger'+(t.mine?'':' jc-left')+'" data-act="del-trip">기록 지우기</button>':'')+'<button class="jc-btn" data-act="close">닫기</button>');
-  $('.jc-addfiles').addEventListener('change',async function(){var fs=Array.from(this.files||[]).map(function(f){return {file:f}});this.value='';if(!fs.length||S.busy)return;
-    var room=PHOTO_MAX-((S.detail.photos||[]).length);if(fs.length>room){fs=fs.slice(0,Math.max(0,room));say('사진은 한 기록에 '+PHOTO_MAX+'장까지 올릴 수 있습니다.')}if(!fs.length)return;
-    S.busy=true;var info=$('.jc-pinfo');var r=await uploadPhotos(key,fs,function(i,n){if(info)info.textContent='올리는 중 '+i+' / '+n});S.busy=false;
-    if(!S)return;say(r.errs.length?(r.done?'사진 '+r.done+'장을 올렸고, ':'')+r.errs.length+'장은 올리지 못했습니다 — '+r.errs[0]:'사진 '+r.done+'장을 올렸습니다.');
-    if(r.done){t.photos+=r.done;delete S.covers[key];delete S.coverAsked[key];if(S.detail&&S.detail.key===key)await loadPhotos(key);renderTrips(false)}});
+  $('.jc-addfiles').addEventListener('change',function(){var fs=Array.from(this.files||[]);this.value='';addPhotosTo(key,fs)});
   drawReviews(key);loadPhotos(key);
+}
+async function addPhotosTo(key,list){
+  var t=S.trips.find(function(x){return x.key===key}),fs=list.map(function(f){return {file:f}});if(!t||!fs.length)return;
+  if(S.busy){say('앞의 작업이 끝난 뒤 다시 해 주세요.');return}
+  var room=PHOTO_MAX-((S.detail&&S.detail.photos)||[]).length;if(fs.length>room){fs=fs.slice(0,Math.max(0,room));say('사진은 한 기록에 '+PHOTO_MAX+'장까지 올릴 수 있습니다.')}if(!fs.length)return;
+  S.busy=true;var info=$('.jc-pinfo');var r=await uploadPhotos(key,fs,function(i,n){if(info)info.textContent='올리는 중 '+i+' / '+n});if(!S)return;S.busy=false;
+  say(r.errs.length?(r.done?'사진 '+r.done+'장을 올렸고, ':'')+r.errs.length+'장은 올리지 못했습니다 — '+r.errs[0]:'사진 '+r.done+'장을 올렸습니다.');
+  if(r.done){t.photos+=r.done;delete S.covers[key];delete S.coverAsked[key];if(S.detail&&S.detail.key===key)await loadPhotos(key);renderTrips(false)}
+}
+/* 복사한 사진을 Ctrl+V로 붙여넣기: 기록을 쓰는 중이면 고른 사진에 더하고, 기록을 보는 중이면 바로 올립니다. */
+function onPaste(e){
+  if(!S||!e.clipboardData)return;var imgs=[],items=e.clipboardData.items||[];
+  for(var i=0;i<items.length;i++){if(items[i].kind==='file'&&/^image\//.test(items[i].type)){var f=items[i].getAsFile();if(f)imgs.push(f)}}
+  if(!imgs.length)return;
+  if(S.root.offsetParent===null)return;
+  e.preventDefault();
+  imgs=imgs.map(function(f,i){var ext=(f.type.split('/')[1]||'png').replace('jpeg','jpg');return f.name&&f.name!=='image.png'?f:new File([f],'붙여넣은 사진 '+(i+1)+'.'+ext,{type:f.type})});
+  if(S.form){addFormFiles(imgs);formMsg('');say('붙여넣은 사진 '+imgs.length+'장을 더했습니다. 저장하면 올라갑니다.')}
+  else if(S.detail&&!$('.jc-lb-root').firstChild)addPhotosTo(S.detail.key,imgs);
+  else if(S.view==='trip')say('사진을 붙여넣으려면 기록을 열거나 「기록 남기기」 화면에서 Ctrl+V 해 주세요.');
 }
 async function loadPhotos(key){
   var g=S.gen;
@@ -557,12 +574,12 @@ window.JinoComm={
     S=fresh();S.rpc=o.rpc;S.me=o.me;S.root=o.mount;S.kakaoKey=o.kakaoKey||'';S.toast=o.toast||null;
     S.key=await deriveKey(o.rawKey);
     skeleton();if(pref('view')==='word')setView('word');
-    document.addEventListener('keydown',onKey);
+    document.addEventListener('keydown',onKey);document.addEventListener('paste',onPaste);
     initMap();await load();
     timer=setInterval(function(){if(S&&!document.hidden&&S.root.offsetParent!==null&&!modalOpen())load(true)},120000);
   },
   reload:function(){return load()},
-  stop:function(){if(!S)return;if(timer){clearInterval(timer);timer=null}document.removeEventListener('keydown',onKey);document.removeEventListener('keydown',onEsc);S.urls.forEach(function(u){URL.revokeObjectURL(u)});S.root.innerHTML='';S.gen++;S=null}
+  stop:function(){if(!S)return;if(timer){clearInterval(timer);timer=null}document.removeEventListener('keydown',onKey);document.removeEventListener('paste',onPaste);document.removeEventListener('keydown',onEsc);S.urls.forEach(function(u){URL.revokeObjectURL(u)});S.root.innerHTML='';S.gen++;S=null}
 };
 })();
 /* ===== JinoComm 모듈 끝 ===== */
