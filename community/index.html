@@ -168,6 +168,15 @@ header .btn.primary{background:#fff;color:var(--navy);border-color:#fff}
 .jc-review{padding:9px 2px;border-bottom:1px solid #e3e9f1}
 .jc-review p{margin:0 0 3px;white-space:pre-line;overflow-wrap:anywhere}
 .jc-review .jc-nfoot{font-size:13px}
+.jc-stars{color:#e0a100;letter-spacing:1px;white-space:nowrap}
+.jc-stars i{color:#cfd6e0;font-style:normal}
+.jc-cfoot b,.jc-rsum b{color:var(--jc-fg)}
+.jc-myreview{border:1px solid var(--jc-rule);background:var(--jc-soft);padding:10px 12px}
+.jc-starpick{display:flex;align-items:center;gap:1px;margin-bottom:6px}
+.jc-starpick span{margin-left:8px;font-size:14px;color:var(--jc-muted)}
+.jc-star{border:0;background:transparent;font-size:27px;line-height:1;color:#cfd6e0;cursor:pointer;padding:1px 2px}
+.jc-star.on{color:#e0a100}
+.jc-star:hover{color:#f0b93a}
 .jc-addreview{display:flex;gap:6px;align-items:flex-start}
 .jc-addreview textarea{min-height:42px;height:42px}
 
@@ -214,7 +223,7 @@ header .btn.primary{background:#fff;color:var(--navy);border-color:#fff}
    서버 함수는 comm_ 로, 저장 키는 jino-comm- 으로 시작합니다. 내용과 사진은 팀 열쇠로 암호화해 저장합니다. */
 (function(){
 "use strict";
-var CATS=['식당','카페','여행·나들이','숙소','행사·워크숍','기타'];
+var CATS=['식당','카페','배달','여행·나들이','숙소','행사·워크숍','기타'];
 var GROUP_CAT={FD6:'식당',CE7:'카페',AT1:'여행·나들이',CT1:'여행·나들이',AD5:'숙소'};
 var WD=['일','월','화','수','목','금','토'];
 var PAGE=12, WORD_MAX=300, REVIEW_MAX=500, BODY_MAX=3000, PHOTO_MAX=40;
@@ -239,6 +248,9 @@ function hm(d){return d.getHours()+':'+String(d.getMinutes()).padStart(2,'0')}
 function today(){var d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')}
 function fmtDay(s){var m=/^(\d{4})-(\d{2})-(\d{2})$/.exec(s||'');if(!m)return s||'';var d=new Date(+m[1],+m[2]-1,+m[3]);return m[1]+'. '+(+m[2])+'. '+(+m[3])+'. ('+WD[d.getDay()]+')'}
 function fmtStamp(iso){var d=new Date(iso);return isNaN(d)?'':d.getFullYear()+'. '+(d.getMonth()+1)+'. '+d.getDate()+'.'}
+function starsHtml(n){n=Math.max(0,Math.min(5,Math.round(n||0)));return '<span class="jc-stars" aria-label="별 '+n+'개">'+'★'.repeat(n)+'<i>'+'★'.repeat(5-n)+'</i></span>'}
+function rating(key){var ns=(S.notes[key]||[]).filter(function(n){return n.c&&n.c.stars>0}),sum=0;ns.forEach(function(n){sum+=n.c.stars});return {n:ns.length,avg:ns.length?sum/ns.length:0}}
+function myNote(key){return (S.notes[key]||[]).find(function(n){return n.mine})||null}
 function blobUrl(u8){var u=URL.createObjectURL(new Blob([u8],{type:'image/jpeg'}));S.urls.push(u);return u}
 
 /* 익명 글을 쓴 기기만 지울 수 있도록, 글마다 만든 확인값을 이 브라우저에만 보관합니다. */
@@ -300,11 +312,11 @@ function renderTrips(refit){
   $('.jc-more').hidden=list.length<=S.shown;
   askCovers(show);drawPins(refit!==false);
 }
-function card(t){var c=t.c,n=(S.notes[t.key]||[]).length,cv=S.covers[t.key];
+function card(t){var c=t.c,n=(S.notes[t.key]||[]).length,cv=S.covers[t.key],rt=rating(t.key);
   return '<div class="jc-card" role="button" tabindex="0" data-act="open" data-key="'+t.key+'"><div class="jc-cover" data-cover="'+t.key+'">'+(cv?'<img alt="" src="'+cv+'">':'<span class="jc-ph">'+esc(c.cat||'기록')+'</span>')+(t.photos?'<span class="jc-pcount">사진 '+t.photos+'</span>':'')+'</div>'
     +'<div class="jc-cbody"><div class="jc-meta"><span>'+esc(fmtDay(c.date))+'</span>'+(c.cat?'<span class="jc-tag">'+esc(c.cat)+'</span>':'')+'</div>'
     +'<h3>'+esc(c.place&&c.place.name||'')+'</h3>'+(c.title?'<div class="jc-ev">'+esc(c.title)+'</div>':'')+(c.body?'<p class="jc-ex">'+esc(c.body)+'</p>':'')
-    +'<div class="jc-cfoot">'+esc(t.owner_name||'')+(n?' · 후기 '+n:'')+'</div></div></div>'}
+    +'<div class="jc-cfoot">'+(rt.n?'<span class="jc-stars">★</span> <b>'+rt.avg.toFixed(1)+'</b> ('+rt.n+'명) · ':'')+esc(t.owner_name||'')+(n?' · 후기 '+n:'')+'</div></div></div>'}
 async function askCovers(list){
   var need=list.filter(function(t){return t.photos>0&&!S.covers[t.key]&&!S.coverAsked[t.key]}).map(function(t){return t.key});if(!need.length)return;
   need.forEach(function(k){S.coverAsked[k]=1});var g=S.gen;
@@ -439,8 +451,8 @@ function openTrip(key){
     +'<div class="jc-addr"><span>'+esc(p.addr||'주소를 적지 않았습니다')+'</span><a class="jc-btn jc-sm" href="'+esc(mapLink(p))+'" target="_blank" rel="noopener noreferrer">지도에서 보기</a></div>'
     +(c.body?'<p class="jc-dbody">'+esc(c.body)+'</p>':'')
     +'<div class="jc-sub">사진 <small class="jc-pinfo"></small></div><div class="jc-photos"><span class="jc-hint">'+(t.photos?'사진을 불러오는 중…':'')+'</span></div><input type="file" class="jc-addfiles" accept="image/*" multiple hidden>'
-    +'<div class="jc-sub">후기 <small>함께한 분들의 한 줄</small></div><div class="jc-reviews"></div>'
-    +'<div class="jc-addreview"><textarea class="jc-rtext" maxlength="'+REVIEW_MAX+'" placeholder="후기를 남겨 주세요."></textarea><button class="jc-btn jc-primary" data-act="post-review">남기기</button></div>',
+    +'<div class="jc-sub">평점·후기 <small class="jc-rsum"></small></div><div class="jc-reviews"></div>'
+    +'<div class="jc-myreview"><div class="jc-starpick" role="group" aria-label="내 평점"></div><div class="jc-addreview"><textarea class="jc-rtext" maxlength="'+REVIEW_MAX+'" placeholder="후기를 남겨 주세요. (평점만 남겨도 됩니다)"></textarea><button class="jc-btn jc-primary" data-act="post-review">남기기</button></div></div>',
     (t.mine?'<button class="jc-btn jc-left" data-act="edit-trip">고치기</button>':'')+(t.mine||S.me.is_master?'<button class="jc-btn jc-danger'+(t.mine?'':' jc-left')+'" data-act="del-trip">기록 지우기</button>':'')+'<button class="jc-btn" data-act="close">닫기</button>');
   $('.jc-addfiles').addEventListener('change',async function(){var fs=Array.from(this.files||[]).map(function(f){return {file:f}});this.value='';if(!fs.length||S.busy)return;
     var room=PHOTO_MAX-((S.detail.photos||[]).length);if(fs.length>room){fs=fs.slice(0,Math.max(0,room));say('사진은 한 기록에 '+PHOTO_MAX+'장까지 올릴 수 있습니다.')}if(!fs.length)return;
@@ -459,10 +471,16 @@ async function loadPhotos(key){
 function drawPhotos(){var d=S.detail,box=$('.jc-photos');if(!d||!box)return;var ph=d.photos||[];
   var info=$('.jc-pinfo');if(info)info.textContent=ph.length?ph.length+'장 · 누르면 크게 보입니다':'아직 사진이 없습니다';
   box.innerHTML=ph.map(function(p,i){return '<button data-act="photo" data-i="'+i+'" aria-label="사진 '+(i+1)+' 크게 보기"><img alt="" src="'+p.url+'"></button>'}).join('')+(ph.length<PHOTO_MAX?'<button class="jc-addph" data-act="add-photos">+ 사진<br>더하기</button>':'')}
-function drawReviews(key){var box=$('.jc-reviews');if(!box)return;var ns=(S.notes[key]||[]);
-  box.innerHTML=ns.length?ns.map(function(n){return '<div class="jc-review"><p>'+esc(n.c.text)+'</p><div class="jc-nfoot"><b>'+esc(n.owner_name||'')+'</b><span>'+esc(fmtStamp(n.created_at))+'</span><span class="jc-sp"></span>'+(n.mine||S.me.is_master?'<button class="jc-btn jc-link" data-act="del-review" data-key="'+n.key+'">지우기</button>':'')+'</div></div>'}).join(''):'<div class="jc-review"><span class="jc-hint">아직 후기가 없습니다. 첫 후기를 남겨 보세요.</span></div>'}
-async function postReview(){var d=S.detail,ta=$('.jc-rtext');if(!d||!ta||S.busy)return;var text=ta.value.trim();if(!text)return;S.busy=true;
-  try{var e=await enc({text:text});await S.rpc('comm_put',{p_key:newKey('cn'),p_kind:'note',p_parent:d.key,p_expected_rev:0,p_iv:e.iv,p_data:e.data,p_anon:false,p_secret:null});S.busy=false;ta.value='';await load(true);if(S.detail&&S.detail.key===d.key)drawReviews(d.key)}
+function drawReviews(key){var box=$('.jc-reviews');if(!box)return;var ns=(S.notes[key]||[]),rt=rating(key),sm=$('.jc-rsum');
+  if(sm)sm.innerHTML=rt.n?starsHtml(rt.avg)+' <b>'+rt.avg.toFixed(1)+'</b> · '+rt.n+'명 평가':'구성원마다 평점과 후기를 하나씩 남길 수 있습니다';
+  box.innerHTML=ns.length?ns.map(function(n){return '<div class="jc-review">'+(n.c.stars>0?'<div>'+starsHtml(n.c.stars)+'</div>':'')+(n.c.text?'<p>'+esc(n.c.text)+'</p>':'')+'<div class="jc-nfoot"><b>'+esc(n.owner_name||'')+'</b><span>'+esc(fmtStamp(n.created_at))+'</span>'+(n.mine?'<span>· 내 후기</span>':'')+'<span class="jc-sp"></span>'+(n.mine||S.me.is_master?'<button class="jc-btn jc-link" data-act="del-review" data-key="'+n.key+'">지우기</button>':'')+'</div></div>'}).join(''):'<div class="jc-review"><span class="jc-hint">아직 평점·후기가 없습니다. 처음으로 남겨 보세요.</span></div>';
+  var d=S.detail,mine=myNote(key);if(d&&d.key===key){d.stars=mine&&mine.c.stars||0;var ta=$('.jc-rtext');if(ta)ta.value=mine&&mine.c.text||'';var b=$('[data-act=post-review]');if(b)b.textContent=mine?'고치기':'남기기';drawStarPick()}}
+function drawStarPick(){var d=S.detail,box=$('.jc-starpick');if(!d||!box)return;var h='';for(var i=1;i<=5;i++)h+='<button class="jc-star'+(i<=(d.stars||0)?' on':'')+'" data-act="star" data-v="'+i+'" aria-label="별 '+i+'개" aria-pressed="'+(i===d.stars)+'">★</button>';
+  box.innerHTML=h+'<span>'+(d.stars?d.stars+'점':'별을 눌러 평점을 남겨 주세요')+'</span>'}
+async function postReview(){var d=S.detail,ta=$('.jc-rtext');if(!d||!ta||S.busy)return;var text=ta.value.trim(),stars=d.stars||0;if(!text&&!stars){say('평점이나 후기를 넣어 주세요.');return}S.busy=true;
+  try{var mine=myNote(d.key),e=await enc({text:text,stars:stars});
+    var r=await S.rpc('comm_put',{p_key:mine?mine.key:newKey('cn'),p_kind:'note',p_parent:d.key,p_expected_rev:mine?mine.rev:0,p_iv:e.iv,p_data:e.data,p_anon:false,p_secret:null});S.busy=false;
+    say(r&&r.conflict?'다른 곳에서 먼저 고쳤습니다. 최신 내용을 다시 불러왔습니다.':(mine?'고쳤습니다.':'남겼습니다.'));await load(true);if(S.detail&&S.detail.key===d.key)drawReviews(d.key)}
   catch(err){S.busy=false;say((err&&err.message)||'남기지 못했습니다.')}}
 async function removeDoc(key,what,after){if(S.busy||!window.confirm(what+' 지울까요? 지운 뒤에는 되돌릴 수 없습니다.'))return;S.busy=true;
   try{await S.rpc('comm_del',{p_key:key,p_secret:secrets()[key]||null});keepSecret(key,null);S.busy=false;say('지웠습니다.');if(after)after();await load(true);if(S.detail)drawReviews(S.detail.key)}
@@ -522,6 +540,7 @@ function onClick(ev){
     case 'lb-next':if(d&&d.at<d.photos.length-1)openLb(d.at+1);break;
     case 'lb-close':closeLb();break;
     case 'del-photo':delPhoto();break;
+    case 'star':if(d){var sv=+el.dataset.v;d.stars=d.stars===sv?0:sv;drawStarPick()}break;
     case 'post-review':postReview();break;
     case 'del-review':removeDoc(el.dataset.key,'이 후기를');break;
     case 'anon':setAnon(el.dataset.v==='1');break;
