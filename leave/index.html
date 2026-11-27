@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>TEAM JINO 연차 관리</title>
+<title>연차사용관리대장 + 팀달력</title>
 <meta name="robots" content="noindex,nofollow">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -202,14 +202,14 @@ details.mgrp>table{margin:0;border-left:0;border-right:0}
 <body>
 <header class="top"><div class="in">
   <span class="emblem">지노</span>
-  <h1>TEAM JINO 연차 관리</h1>
+  <h1>연차사용관리대장 + 팀달력</h1>
   <span class="sub">노무그룹지노 · 시범 운영</span>
   <span class="savebox" id="savebox"><span id="savetext"></span><b id="who" style="color:#fff"></b><button class="btn sm" id="btn-pending" hidden>승인 대기<b id="pend-n" class="cnt" hidden></b></button><button class="btn sm" id="btn-refresh">새로고침</button><button class="btn primary sm" id="btn-lock">잠그기</button></span>
 </div></header>
 <input type="file" id="lv-file" accept=".xlsx,.xls" hidden>
 <div class="wrap">
 <div class="paper">
-  <div class="doc-title"><h2>연차 사용 관리대장</h2><span class="ref" id="ref"></span></div>
+  <div class="doc-title"><h2>연차사용관리대장 + 팀달력</h2><span class="ref" id="ref"></span></div>
   <div class="notice">
     · 연차 1일 = 8시간 · <b>오전반차</b> 3시간(09:30~13:30, 점심 포함) = 3/8일 · <b>오후반차</b> 5시간(12:30~18:30, 점심 포함) = 5/8일 · <b>외출</b> 2시간권 = 2/8일 (연 8회)<br>
     · 대표·팀장은 연차 관리 대상이 아니며 승인·관리만 합니다. · 연차 사용 전 원활한 업무 공유를 부탁드립니다. <span style="color:var(--bad)">비밀번호는 이 프로그램에 적지 마세요.</span>
@@ -240,7 +240,7 @@ details.mgrp>table{margin:0;border-left:0;border-right:0}
 </div>
 </div>
 <div id="login" class="login"><form class="lbox" id="lform" autocomplete="off">
-  <div class="lhead"><span class="emblem">지노</span><b>TEAM JINO 연차 관리</b></div>
+  <div class="lhead"><span class="emblem">지노</span><b>연차사용관리대장 + 팀달력</b></div>
   <p><b>본인의</b> TEAM JINO 비밀번호를 넣어 주세요.<br><span style="color:var(--bad);font-weight:600">비밀번호는 다른 사람에게 알려 주거나 함께 쓰지 마세요.</span></p>
   <input type="password" id="pw" placeholder="비밀번호" autocomplete="current-password" autofocus>
   <button class="btn primary" id="lgo" type="submit" style="width:100%;justify-content:center">열기</button>
@@ -655,7 +655,7 @@ function openDoc(r){
     '<tr><th>처리 결과</th><td colspan="3"><span class="stamp'+(r.status==='승인'?' ok':'')+'">'+esc(st)+'</span>'+(r.decided_at?' &nbsp; '+esc(r.decided_by||'')+(r.decided_by==='예전 연차대장'?'':' · '+when(r.decided_at)):'')+(c.reject?'<br>반려 사유: '+esc(c.reject):'')+'</td></tr></table>'+
     '<p class="decl">위와 같이 휴가를 신청합니다.</p><p class="decl">'+fmtDate(c.applied_at||r.created_at)+'</p><p class="decl">신청인 : '+esc(r.owner_name)+' &nbsp;(전자 신청)</p>'+
     '<p class="foot">노무그룹지노 대표 귀하</p>'+
-    '<div class="meta">문서번호 '+esc(r.key)+' · 신청 '+when(c.applied_at||r.created_at)+(c.entered_by&&c.entered_by!==r.owner_name?' (등록: '+esc(c.entered_by)+')':'')+' · 최종 처리 '+when(r.decided_at||r.updated_at)+' · TEAM JINO 연차 관리에서 출력</div></div></body></html>';
+    '<div class="meta">문서번호 '+esc(r.key)+' · 신청 '+when(c.applied_at||r.created_at)+(c.entered_by&&c.entered_by!==r.owner_name?' (등록: '+esc(c.entered_by)+')':'')+' · 최종 처리 '+when(r.decided_at||r.updated_at)+' · 연차사용관리대장 + 팀달력에서 출력</div></div></body></html>';
   var w=window.open('','_blank');if(!w){toast('팝업이 막혀 있습니다. 브라우저 주소창 오른쪽에서 팝업을 허용해 주세요.');return}w.document.open();w.document.write(html);w.document.close();
 }
 
@@ -729,7 +729,7 @@ $('#lv-xlsx').onclick=async function(){
       my.forEach(function(r,j){var done=(r.c.end||r.c.start)<t0,fl=done?DONE:undefined;cell(7+j,c0,r.c.start+(r.c.end&&r.c.end!==r.c.start?' ~ '+r.c.end.slice(5):''),{fill:fl});cell(7+j,c0+1,r.c.type+(r.c.type==='연차'&&r.c.days!==1?' '+r.c.days+'일':''),{fill:fl})});
       maxN=Math.max(maxN,my.length)});
     for(var r=7;r<7+maxN;r++){cell(r,1,'',{});ws.getRow(r).height=19}
-    var nr=8+maxN;ws.mergeCells(nr,1,nr,cols);var n=ws.getCell(nr,1);n.value='※ 회색 = 사용 완료 · 오전반차 3/8일, 오후반차 5/8일, 외출 2/8일로 계산 · '+fmtDate(new Date())+' 기준, TEAM JINO 연차 관리에서 만듦';n.font={name:F,size:10,color:{argb:'FF666666'}};
+    var nr=8+maxN;ws.mergeCells(nr,1,nr,cols);var n=ws.getCell(nr,1);n.value='※ 회색 = 사용 완료 · 오전반차 3/8일, 오후반차 5/8일, 외출 2/8일로 계산 · '+fmtDate(new Date())+' 기준, 연차사용관리대장 + 팀달력에서 만듦';n.font={name:F,size:10,color:{argb:'FF666666'}};
     var buf=await wb.xlsx.writeBuffer(),a=document.createElement('a');a.href=URL.createObjectURL(new Blob([buf],{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'}));a.download='TEAM_JINO_연차사용대장_'+L.year+'년.xlsx';document.body.appendChild(a);a.click();setTimeout(function(){URL.revokeObjectURL(a.href);a.remove()},1500);toast('내려받았습니다 (다운로드 폴더).');
   }catch(e){toast(e.message||'만들지 못했습니다.')}b.disabled=false;
 };
