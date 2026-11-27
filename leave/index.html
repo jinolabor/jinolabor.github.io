@@ -481,39 +481,55 @@ function openDay(k){
 var EV_KINDS=['외근','출장','미팅','교육','기타'];
 function ekey(y){var a=crypto.getRandomValues(new Uint8Array(8));return 'e_'+y+'_'+Array.from(a,function(x){return x.toString(16).padStart(2,'0')}).join('')}
 $('#ev-add').onclick=function(){openEvent(null)};
+function parseDays(v){var parts=String(v||'').split(/[,、·\s]+/).filter(Boolean),out=[];for(var i=0;i<parts.length;i++){var d=parseDay(parts[i],L.year);if(!d)return null;if(out.indexOf(d)<0)out.push(d)}return out.sort()}
 function openEvent(e,preset){
   var isNew=!e,c=e?clone(e.c):Object.assign({date:today(),end:'',time:'',kind:'외근',title:'',place:'',memo:''},preset||{});
-  var owner=e?e.owner_id:ME.id,can=isNew||e.owner_id===ME.id||isMgr();
+  var owner=e?e.owner_id:(c.owner||ME.id),can=isNew||e.owner_id===ME.id||isMgr();
   var opts=(isMgr()?L.names:L.names.filter(function(n){return n.id===ME.id})).map(function(n){return '<option value="'+esc(n.id)+'"'+(n.id===owner?' selected':'')+'>'+esc(n.name)+'</option>'}).join('');
   var ov=modal('<h2>'+(isNew?'외부 일정 추가':'외부 일정')+'</h2>'+(can?'':'<p class="note-p">'+esc(e.owner_name)+' 님 일정입니다. 고치려면 본인이나 팀장·대표에게 요청해 주세요.</p>')+
     '<div class="form">'+
       '<label><span>구성원</span>'+(isNew?'<select id="e-owner">'+opts+'</select>':'<input value="'+esc(e.owner_name)+'" disabled style="background:#f3f5f8">')+'</label>'+
       '<label><span>구분</span><select id="e-kind">'+EV_KINDS.map(function(k){return '<option'+(k===c.kind?' selected':'')+'>'+k+'</option>'}).join('')+'</select></label>'+
-      '<label><span>날짜</span><input id="e-date" value="'+esc(c.date)+'" placeholder="예: 12/3" autocomplete="off"></label>'+
-      '<label><span>끝나는 날</span><input id="e-end" value="'+esc(c.end&&c.end!==c.date?c.end:'')+'" placeholder="하루면 비워 두세요" autocomplete="off"></label>'+
+      '<label><span>날짜</span><input id="e-date" value="'+esc(c.date)+'" placeholder="'+(isNew?'예: 12/3 (여러 날은 12/3, 12/5, 12/10)':'예: 12/3')+'" autocomplete="off"></label>'+
+      '<label><span>끝나는 날</span><input id="e-end" value="'+esc(c.end&&c.end!==c.date?c.end:'')+'" placeholder="며칠 이어지는 일정만 (예: 출장)" autocomplete="off"></label>'+
       '<label><span>시간</span><input id="e-time" value="'+esc(c.time)+'" placeholder="예: 14:00~16:00"></label>'+
       '<label><span>장소</span><input id="e-place" value="'+esc(c.place)+'" placeholder="예: 수원 ○○건설"></label>'+
       '<label class="full"><span>일정 내용</span><input id="e-title" value="'+esc(c.title)+'" placeholder="예: ○○건설 노무비 신고 방문"></label>'+
       '<label class="full"><span>메모</span><input id="e-memo" value="'+esc(c.memo)+'" placeholder="연락처, 준비물 등 (선택)"></label>'+
-    '</div><p class="note-p" id="e-info"></p>'+
-    '<div class="act">'+(!isNew&&can?'<span class="left"><button class="btn danger" id="e-del">삭제</button></span>':'')+'<button class="btn" id="e-c">닫기</button>'+(can?'<button class="btn primary" id="e-save">저장</button>':'')+'</div>');
+    '</div><div class="f-info" id="e-info" hidden></div>'+
+    (isNew?'<p class="note-p" style="margin-top:8px">※ 한 사람이 일정을 몇 개든 넣을 수 있습니다. 같은 일정을 여러 날에 넣으려면 날짜를 쉼표로 이어 적으세요.</p>':'')+
+    '<div class="act"><span class="left">'+(!isNew&&can?'<button class="btn danger" id="e-del">삭제</button> ':'')+(!isNew?'<button class="btn" id="e-more">이 날 일정 하나 더 추가</button>':'')+'</span><button class="btn" id="e-c">닫기</button>'+
+      (can&&isNew?'<button class="btn" id="e-again">저장하고 하나 더 추가</button>':'')+(can?'<button class="btn primary" id="e-save">저장</button>':'')+'</div>');
   var q=function(x){return ov.querySelector(x)};
   if(!can)ov.querySelectorAll('.form input,.form select').forEach(function(i){i.disabled=true});
-  function info(){var s=parseDay(q('#e-date').value,L.year),en=parseDay(q('#e-end').value,L.year);q('#e-info').textContent=s?dayK(s)+(en&&en!==s?' ~ '+dayK(en):''):(q('#e-date').value?'날짜를 확인해 주세요':'')}
-  ['#e-date','#e-end'].forEach(function(x){q(x).addEventListener('input',info);q(x).addEventListener('blur',function(){var v=parseDay(this.value,L.year);if(v)this.value=v;info()})});info();
+  function info(){var ds=parseDays(q('#e-date').value),en=parseDay(q('#e-end').value,L.year),box=q('#e-info'),t='';
+    if(ds===null)t='<span style="color:var(--bad)">날짜를 확인해 주세요 (예: 12/3, 12/5)</span>';
+    else if(ds.length>1){t='<b>'+ds.length+'개 날짜</b>에 같은 일정을 각각 넣습니다: '+ds.map(dayK).join(', ');q('#e-end').disabled=true;q('#e-end').value=''}
+    else if(ds.length===1){q('#e-end').disabled=!can;t=dayK(ds[0])+(en&&en!==ds[0]?' ~ '+dayK(en):'')}
+    box.innerHTML=t;box.hidden=!t}
+  q('#e-date').addEventListener('input',info);q('#e-end').addEventListener('input',info);
+  q('#e-date').addEventListener('blur',function(){var ds=parseDays(this.value);if(ds&&ds.length===1)this.value=ds[0];info()});
+  q('#e-end').addEventListener('blur',function(){var v=parseDay(this.value,L.year);if(v)this.value=v;info()});info();
   q('#e-c').onclick=closeModal;
-  async function save(del){
-    var s=parseDay(q('#e-date').value,L.year),en=parseDay(q('#e-end').value,L.year)||s;
-    if(!s){toast('날짜를 확인해 주세요 (예: 12/3).');q('#e-date').focus();return}
-    if(en<s){toast('끝나는 날이 앞입니다.');return}
+  if(q('#e-more'))q('#e-more').onclick=function(){openEvent(null,{date:c.date,owner:isMgr()?e.owner_id:ME.id,kind:c.kind})};
+  async function save(del,again){
+    var ds=del?[c.date]:parseDays(q('#e-date').value),en=parseDay(q('#e-end').value,L.year);
+    if(!ds||!ds.length){toast('날짜를 확인해 주세요 (예: 12/3).');q('#e-date').focus();return}
+    if(!isNew&&ds.length>1){toast('이미 넣은 일정은 날짜 하나만 넣을 수 있습니다. 다른 날은 "하나 더 추가"로 넣어 주세요.');return}
+    if(ds.length===1&&en&&en<ds[0]){toast('끝나는 날이 앞입니다.');return}
     if(!del&&!q('#e-title').value.trim()){toast('일정 내용을 적어 주세요.');q('#e-title').focus();return}
-    var body={date:s,end:en,time:q('#e-time').value.trim(),kind:q('#e-kind').value,title:q('#e-title').value.trim(),place:q('#e-place').value.trim(),memo:q('#e-memo').value.trim()};
-    try{var x=await enc(body),own=isNew?q('#e-owner').value:e.owner_id;
-      var res=await rpc('event_put',{p_key:isNew?ekey(s.slice(0,4)):e.key,p_expected_rev:isNew?0:e.rev,p_owner_id:own,p_year:+s.slice(0,4),p_iv:x.iv,p_data:x.data,p_deleted:!!del});
-      if(res&&res.conflict){toast((res.updated_by||'다른 사람')+' 님이 방금 고쳤습니다. 다시 열어 주세요.');closeModal();loadAll(true);return}
-      closeModal();toast(del?'일정을 지웠습니다.':'저장했습니다. 팀 달력에 보입니다.');loadAll(true)}
-    catch(err){toast(err.message||'저장하지 못했습니다.')}}
+    var own=isNew?q('#e-owner').value:e.owner_id,base={time:q('#e-time').value.trim(),kind:q('#e-kind').value,title:q('#e-title').value.trim(),place:q('#e-place').value.trim(),memo:q('#e-memo').value.trim()};
+    ov.querySelectorAll('.act button').forEach(function(b){b.disabled=true});
+    try{var n=0;
+      for(var i=0;i<ds.length;i++){var body=Object.assign({date:ds[i],end:ds.length===1?(en||ds[i]):ds[i]},base),x=await enc(body);
+        var res=await rpc('event_put',{p_key:isNew?ekey(ds[i].slice(0,4)):e.key,p_expected_rev:isNew?0:e.rev,p_owner_id:own,p_year:+ds[i].slice(0,4),p_iv:x.iv,p_data:x.data,p_deleted:!!del});
+        if(res&&res.conflict){toast((res.updated_by||'다른 사람')+' 님이 방금 고쳤습니다. 다시 열어 주세요.');closeModal();loadAll(true);return}n++}
+      toast(del?'일정을 지웠습니다.':(n>1?n+'개 날짜에 일정을 넣었습니다.':'저장했습니다. 팀 달력에 보입니다.'));
+      if(again){openEvent(null,{date:ds[0],owner:own,kind:base.kind});setTimeout(function(){var t=document.querySelector('#e-title');if(t)t.focus()},50)}else closeModal();
+      loadAll(true)}
+    catch(err){ov.querySelectorAll('.act button').forEach(function(b){b.disabled=false});toast(err.message||'저장하지 못했습니다.')}}
   if(q('#e-save'))q('#e-save').onclick=function(){save(false)};
+  if(q('#e-again'))q('#e-again').onclick=function(){save(false,true)};
   if(q('#e-del'))q('#e-del').onclick=function(){if(this.dataset.sure!=='1'){this.dataset.sure='1';this.textContent='한 번 더 누르면 지웁니다';return}save(true)};
 }
 
