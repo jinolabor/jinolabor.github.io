@@ -100,6 +100,55 @@ td.note{min-width:110px;max-width:220px;white-space:pre-line;font-size:14.5px;co
 .stack>div.gone{color:var(--faint)}
 .stack>div.gone .nm{text-decoration:line-through}
  /* 경협 자문실적 탭: 초록 톤 */
+body.t-lv{--page:#f1effa;--navy:#3b2f7a;--blue:#5a46b8;--blue-dark:#4a3a9a;--head:#e4e0f6;--label:#efedf9;--rule:#c6c0e2;--rule-strong:#8d84bd;--ok:#5a46b8;--ok-soft:#ebe8fa}
+.tabs button[data-tab=lv]{color:#5a46b8}
+body.t-lv .tabs button[data-tab=lv].on{color:#3b2f7a;border-top:3px solid #3b2f7a;background:#fff}
+/* --- 연차·팀달력 --- */
+.lv-tabs{display:flex;gap:4px;margin:6px 0 12px;border-bottom:2px solid var(--navy)}
+.lv-tabs button{font:inherit;font-size:15.5px;font-weight:700;padding:9px 20px;border:1px solid var(--rule);border-bottom:0;background:#e9eef5;color:var(--muted);cursor:pointer;border-radius:3px 3px 0 0;margin-bottom:-2px}
+.lv-tabs button.on{background:var(--navy);color:#fff;border-color:var(--navy)}
+.st{display:inline-block;white-space:nowrap;font-size:13px;font-weight:700;padding:0 7px;border-radius:2px;line-height:22px;border:1px solid}
+.st.s-신청{background:#fff4d6;border-color:#e9c98f;color:#8a5a00}
+.st.s-승인{background:#e8f0fb;border-color:#9bbbe3;color:#174a8c}
+.st.s-사용완료{background:#eef0f3;border-color:#c5ccd6;color:#5b6675}
+.st.s-반려{background:#fdecec;border-color:#e3b3ae;color:#a52a2a}
+.st.s-취소{background:#f4f4f4;border-color:#ddd;color:#999;text-decoration:line-through}
+.late{font-size:12px;color:#a52a2a;font-weight:700;margin-left:4px}
+td.num{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+.left-big{font-size:18px;font-weight:800;color:var(--navy)}
+.cal{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));border-top:2px solid var(--navy);border-left:1px solid var(--rule)}
+.cal>div{border-right:1px solid var(--rule);border-bottom:1px solid var(--rule);min-height:64px;padding:3px 5px;font-size:13.5px;background:#fff}
+.cal>.h{min-height:0;background:var(--label);font-weight:700;color:var(--navy);text-align:center;padding:6px}
+.cal>.off{background:#f7f8fa;color:#aab}
+.cal .dn{font-weight:700;color:#334}.cal .sun .dn,.cal>.sun .dn{color:#c0392b}.cal>.sat .dn{color:#1f5fbf}
+.cal>.today{outline:2px solid var(--navy);outline-offset:-2px}
+.legend{display:flex;flex-wrap:wrap;gap:6px 12px;align-items:center;font-size:13.5px;margin:0 0 8px}
+.legend .sw{display:inline-block;width:12px;height:12px;border-radius:2px;margin-right:4px;vertical-align:-1px}
+.ev.x{background:#fff!important;border:1px solid #ccd3dd;border-left-width:4px;font-weight:500;color:#223}
+.ev.leave{border:1px solid transparent}
+.daylist .it{display:flex;gap:8px;align-items:center;padding:7px 9px;border:1px solid var(--rule);margin-bottom:5px;cursor:pointer;border-left-width:5px}
+.ev{display:block;cursor:pointer;margin-top:3px;padding:1px 5px;border-radius:2px;background:#e8f0fb;color:#174a8c;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ev.t-오전반차,.ev.t-오후반차{background:#eaf6ee;color:#1d6b3a}.ev.t-외출{background:#f3ecfb;color:#5b2d91}.ev.pend{background:#fff;border:1px dashed #e9c98f;color:#8a5a00}
+.calnav{display:flex;align-items:center;gap:10px;margin-bottom:8px}.calnav b{font-size:18px;color:var(--navy)}
+.grid.lv td{padding:6px 10px;font-size:14.5px;vertical-align:middle}.grid.lv th{padding:7px 10px}
+.mut{color:var(--muted);font-size:13.5px}td.r{text-align:right}td.memo{font-size:14px;color:#333;max-width:420px}
+a.doclink{font-size:13.5px;color:var(--blue);text-decoration:underline;margin-left:4px}
+details.mgrp{margin-bottom:8px;border:1px solid var(--rule)}details.mgrp>summary{cursor:pointer;padding:9px 12px;background:#f3f6fa;font-size:15px;color:var(--navy);list-style:none}
+details.mgrp>summary::before{content:'▸ ';color:var(--muted)}details.mgrp[open]>summary::before{content:'▾ '}
+details.mgrp>table{margin:0;border-left:0;border-right:0}
+.pill{display:inline-block;margin:2px 3px 2px 0;padding:1px 7px;border-radius:10px;font-size:13px;border:1px solid #c5ccd6;cursor:pointer;white-space:nowrap}
+.pill.p-사용완료{background:#eef0f3;color:#5b6675}.pill.p-승인{background:#e8f0fb;border-color:#9bbbe3;color:#174a8c}.pill.p-신청{background:#fff4d6;border-color:#e9c98f;color:#8a5a00}
+.pill.p-반려,.pill.p-취소{background:#fff;color:#aaa;text-decoration:line-through}
+.sec-h{font-size:17px;font-weight:700;color:var(--navy);border-left:4px solid var(--navy);padding-left:9px;margin:22px 0 10px}
+.f-info{margin-top:10px;padding:9px 12px;background:#f3f6fa;border:1px solid var(--rule);border-left:4px solid var(--navy);font-size:14.5px;line-height:1.7}
+.form input:disabled,.form input[readonly]{background:#f3f5f8;color:var(--muted)}
+.ln-list .ln-it{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:10px 12px;border:1px solid var(--rule);border-left:5px solid var(--navy);margin-bottom:6px;font-size:15px}
+.ln-it.ok{border-left-color:#1d5fb4;background:#f3f7fd}.ln-it.no{border-left-color:#b3261e;background:#fdf3f2}
+.ln-big{font-weight:800;font-size:16px}.ln-it.ok .ln-big{color:#1d5fb4}.ln-it.no .ln-big{color:#b3261e}
+.admbox{display:inline-flex;align-items:center;gap:6px;border:1px dashed var(--rule-strong);padding:4px 6px;border-radius:3px;background:#f7f8fa}
+.admbox[hidden]{display:none}.admtag{font-size:12.5px;font-weight:700;color:var(--muted);padding:0 4px}
+.notice{border:1px solid var(--rule);background:#f7f9fc;padding:10px 14px;font-size:14px;color:#445;line-height:1.7;margin-bottom:12px}
+
 body.t-cs{--page:#ecf5ef;--navy:#0e5a35;--blue:#1f8a4f;--blue-dark:#16703f;--head:#d8eedf;--label:#eaf6ee;--rule:#b2d0bd;--rule-strong:#76a487;--ok:#1f8a4f;--ok-soft:#e0f3e7}
 body{transition:background-color .2s}
 .tabs button[data-tab=addr]{border-top-color:#0b3a75}.tabs button[data-tab=cs]{color:#1f8a4f}
@@ -168,14 +217,15 @@ td.cs-content{min-width:260px;white-space:pre-line}
   <span class="emblem">지노</span>
   <h1>거래처 주소록 관리대장</h1>
   <span class="sub">노무그룹지노 · 자문회사</span>
-  <span class="savebox" id="savebox"><span id="savetext"></span><b id="who" style="color:#fff"></b><button class="btn sm" id="btn-changes">최근 30일 변경<b id="chg-n" class="cnt" hidden></b></button><button class="btn sm" id="btn-history">수정이력</button><button class="btn sm" id="btn-trash">휴지통<b id="trash-n" class="cnt" style="background:#6b7a8f" hidden></b></button><button class="btn sm" id="btn-backup" hidden>백업</button><button class="btn sm" id="btn-admin" hidden>관리</button><button class="btn sm" id="btn-bizno" hidden>사업자번호 넣기</button><button class="btn sm" id="btn-import" hidden>주소록 가져오기</button><button class="btn sm" id="btn-refresh">새로고침</button><button class="btn primary sm" id="btn-lock">잠그기</button></span>
+  <span class="savebox" id="savebox"><span id="savetext"></span><b id="who" style="color:#fff"></b><button class="btn sm" id="lv-btn-pend" hidden>연차 승인 대기<b id="lv-pend-n" class="cnt" hidden></b></button><button class="btn sm" id="btn-changes">최근 30일 변경<b id="chg-n" class="cnt" hidden></b></button><button class="btn sm" id="btn-history">수정이력</button><button class="btn sm" id="btn-trash">휴지통<b id="trash-n" class="cnt" style="background:#6b7a8f" hidden></b></button><button class="btn sm" id="btn-backup" hidden>백업</button><button class="btn sm" id="btn-admin" hidden>관리</button><button class="btn sm" id="btn-bizno" hidden>사업자번호 넣기</button><button class="btn sm" id="btn-import" hidden>주소록 가져오기</button><button class="btn sm" id="btn-refresh">새로고침</button><button class="btn primary sm" id="btn-lock">잠그기</button></span>
 </div></header>
 <input type="file" id="bizno-file" accept=".xlsx,.xls,.csv" hidden>
+<input type="file" id="lv-file" accept=".xlsx,.xls" hidden>
 <input type="file" id="cs-file" accept=".xlsx,.xls" hidden>
 <input type="file" id="import-file" accept=".xlsx,.xls,.html,.htm" hidden>
 <div class="wrap">
 <div class="banner" id="restore" hidden></div>
-<nav class="tabs" id="tabs"><button data-tab="addr" class="on">거래처 주소록</button><button data-tab="cs">경협 자문실적</button></nav>
+<nav class="tabs" id="tabs"><button data-tab="addr" class="on">거래처 주소록</button><button data-tab="cs">경협 자문실적</button><button data-tab="lv">연차 · 팀달력</button></nav>
 <div class="paper" id="pane-addr">
   <div class="doc-title"><h2>자문회사 주소록</h2><span class="ref" id="ref"></span></div>
   <div class="summary" id="stats"></div>
@@ -195,6 +245,35 @@ td.cs-content{min-width:260px;white-space:pre-line}
   </div>
   <div id="list"></div>
   <div class="foot">※ 행을 누르면 수정 창이 열립니다. <b>확인</b>을 누르면 바로 저장되어 TEAM JINO 모두의 화면에 반영됩니다. 다른 구성원이 고친 내용은 1분마다 자동으로 새로 받아옵니다. 자리를 비울 때는 오른쪽 위 <b>잠그기</b>를 눌러 주세요.</div>
+</div>
+<div class="paper" id="pane-lv" hidden>
+  <div class="doc-title"><h2>연차사용관리대장 + 팀달력</h2><span class="ref" id="lv-ref"></span></div>
+  <div class="notice">
+    · 연차 1일 = 8시간 · <b>오전반차</b> 3시간(09:30~13:30, 점심 포함) = 3/8일 · <b>오후반차</b> 5시간(12:30~18:30, 점심 포함) = 5/8일 · <b>외출</b> 2시간권 = 2/8일 (연 8회)<br>
+    · 대표·팀장은 연차 관리 대상이 아니며 승인·관리만 합니다. · 연차 사용 전 원활한 업무 공유를 부탁드립니다. <span style="color:var(--bad)">비밀번호는 이 프로그램에 적지 마세요.</span>
+  </div>
+  <div class="toolbar" style="margin-top:0">
+    <span class="lb" style="font-weight:700;color:var(--navy)">연도</span><select id="lv-year" style="width:auto"></select>
+    <span style="flex:1"></span>
+    <span class="admbox" id="lv-adm" hidden><span class="admtag">관리자 전용</span><button class="btn sm" id="lv-import">예전 연차대장 옮기기</button><button class="btn sm" id="lv-xlsx">연차대장 엑셀</button></span>
+    <button class="btn" id="ev-add">외부 일정 추가</button>
+    <button class="btn primary" id="lv-add">연차 신청</button>
+  </div>
+  <h3 class="sec-h">팀 달력</h3>
+  <div id="cal-body"></div>
+  <div id="sec-pend" hidden><h3 class="sec-h">승인 대기 <span id="pend-cnt" class="mut"></span></h3><div id="pend-body"></div></div>
+  <h3 class="sec-h">구성원 사용내역</h3>
+  <div id="lv-sum"></div>
+  <h3 class="sec-h">신청·사용 기록</h3>
+  <div class="toolbar" id="lv-filter" style="margin-top:0">
+    <span id="lv-count" style="color:var(--muted);font-size:14.5px"></span><span style="flex:1"></span>
+    <select id="lv-who" style="width:auto" hidden></select>
+    <select id="lv-st" style="width:auto"><option value="">상태 전체</option><option>신청</option><option>승인</option><option>사용완료</option><option>반려</option><option>취소</option></select>
+    <select id="lv-mode" style="width:auto" hidden><option value="month">월별 목록</option><option value="person">사람별 한눈에</option></select>
+    <select id="lv-sort" style="width:auto"><option value="desc">최근 날짜부터</option><option value="asc">오래된 날짜부터</option></select>
+  </div>
+  <div id="lv-body"></div>
+  <div class="foot">※ 구성원은 본인 기록만 보고, 팀 달력에서는 다른 구성원의 승인된 연차 날짜·종류만 보입니다. 승인·반려와 발생일수 설정은 팀장·대표만 할 수 있습니다. 모든 신청서는 처리 결과와 함께 보관되어 <b>신청서</b> 버튼으로 언제든 다시 열고 인쇄할 수 있습니다.</div>
 </div>
 <div class="paper" id="pane-cs" hidden>
   <div class="doc-title"><h2>경협 자문실적 <span style="font-size:15px;font-weight:500;color:var(--muted)">대한건설협회 경기도회 상담실적</span></h2><span class="ref" id="cs-ref"></span></div>
@@ -283,6 +362,7 @@ function status(text,warn){$('#savetext').textContent=text;$('#savebox').classLi
 
 /* ---------- 잠금 화면 ---------- */
 function lockOut(msg){
+  if(window.JinoLeave)window.JinoLeave.stop();
   ME=null;TOKEN='';AKEY=null;docs={};data={companies:[],at:''};loaded=false;CS.year=null;CS.docs={};CS.del=[];$('#cs-list').innerHTML='';
   if(watchT){clearInterval(watchT);watchT=null}
   closeModal();$('#login').hidden=false;$('#pw').value='';say(msg||'',!!msg);renderAll();setTimeout(function(){$('#pw').focus()},50);
@@ -299,11 +379,12 @@ $('#lform').onsubmit=async function(ev){
     var who=await rpc('addr_whoami');
     if(!who||who.status!=='active'){TOKEN='';say(who&&who.status==='pending'?'아직 승인되지 않았습니다. 대표님께 승인을 요청해 주세요.':who&&who.status==='revoked'?'사용이 중지된 비밀번호입니다.':'구성원 명단에 없습니다. 급여대행 프로그램에서 먼저 한 번 로그인해 등록해 주세요.',true);return}
     ME=who;AKEY=await addrKey(hit.k);
+    if(window.JinoLeave)window.JinoLeave.start(TOKEN,hit.k);
     $('#login').hidden=true;$('#who').textContent=ME.name+' 님';
     $('#btn-admin').hidden=!ME.is_master;$('#btn-backup').hidden=!ME.is_master;$('#btn-import').hidden=!ME.is_master;$('#btn-bizno').hidden=!ME.is_master;$('#btn-xlsx').hidden=!ME.can_export;
     status('불러오는 중…');await load();
     showChanges(true);pollEditing();
-    try{if(localStorage.getItem('jino-addr-tab')==='cs')setTab('cs')}catch(e){}
+    try{var _t=/^#(leave|lv)/.test(location.hash)?'lv':localStorage.getItem('jino-addr-tab');if(_t==='cs'||_t==='lv')setTab(_t)}catch(e){}
     watchT=setInterval(async function(){try{var k=await fetchKeys();if(!(k.entries||[]).some(function(e){return e.id===hit.id}))lockOut('이 비밀번호는 더 이상 쓸 수 없습니다.')}catch(e){}},RECHECK);
   }catch(e){say('열지 못했습니다: '+(e&&e.message||e),true)}
   finally{$('#lgo').disabled=false}
@@ -342,7 +423,7 @@ async function putDoc(key,body,deleted,msg){
 }
 function saveCompany(c,msg){var key=c.id||newKey(),body=clone(c);delete body.id;return putDoc(key,body,false,msg)}
 function deleteCompany(id,msg,why){var cur=docs[id];if(!cur)return;var body=clone(cur.c);delete body.id;body._why=why||'';return putDoc(id,body,true,msg)}
-$('#btn-refresh').onclick=function(){if(ME){status('불러오는 중…');load()}};
+$('#btn-refresh').onclick=function(){if(ME){status('불러오는 중…');load();if(window.JinoLeave)window.JinoLeave.reload()}};
 setInterval(function(){if(ME&&!document.hidden&&!$('#modal-root').firstChild)load()},60000);
 document.addEventListener('visibilitychange',function(){if(ME&&!document.hidden&&!$('#modal-root').firstChild)load()});
 
@@ -752,7 +833,7 @@ $('#btn-backup').onclick=async function(){
 function modal(html){var root=$('#modal-root');var m=html.match(/^<h2>[\s\S]*?<\/h2>/);var h2=m?m[0]:'';var rest=html.slice(h2.length);var ai=rest.lastIndexOf('<div class="act">');
   root.innerHTML='<div class="overlay"><div class="sheet" role="dialog" aria-modal="true">'+h2+'<div class="body">'+(ai>=0?rest.slice(0,ai):rest)+'</div>'+(ai>=0?rest.slice(ai):'')+'</div></div>';var ov=root.firstChild;ov.addEventListener('mousedown',function(e){if(e.target===ov)closeModal()});document.addEventListener('keydown',escClose);var f=ov.querySelector('input,select,textarea');if(f)f.focus();return ov}
 function escClose(e){if(e.key==='Escape')closeModal()}
-function closeModal(){editStop();$('#modal-root').innerHTML='';document.removeEventListener('keydown',escClose)}
+function closeModal(){editStop();$('#modal-root').innerHTML='';if(window.JinoLeave){clearTimeout(closeModal._t);closeModal._t=setTimeout(window.JinoLeave.notice,400)}document.removeEventListener('keydown',escClose)}
 
 var CSTATUS=['재직','휴직','출산휴가','육아휴직','퇴사'];
 function contactRow(p){
@@ -928,11 +1009,12 @@ function csRecs(){return Object.keys(CS.docs).map(function(k){var c=CS.docs[k].c
 function addrCoByName(n){var k=normCo(n);if(!k)return null;return data.companies.find(function(c){return normCo(c.name)===k})||null}
 
 /* ---------- 탭 ---------- */
-function setTab(t){CS_TAB=t;document.body.classList.toggle('t-cs',t==='cs');var h1=document.querySelector('header.top h1');if(h1)h1.textContent=t==='cs'?'경협 자문실적 관리대장':'거래처 주소록 관리대장';try{localStorage.setItem('jino-addr-tab',t)}catch(e){}
+function setTab(t){CS_TAB=t;document.body.classList.toggle('t-cs',t==='cs');document.body.classList.toggle('t-lv',t==='lv');var h1=document.querySelector('header.top h1');if(h1)h1.textContent=t==='cs'?'경협 자문실적 관리대장':t==='lv'?'연차사용관리대장 + 팀달력':'거래처 주소록 관리대장';try{localStorage.setItem('jino-addr-tab',t)}catch(e){}
   document.querySelectorAll('#tabs button').forEach(function(b){b.classList.toggle('on',b.dataset.tab===t)});
-  $('#pane-addr').hidden=t!=='addr';$('#pane-cs').hidden=t!=='cs';
+  $('#pane-addr').hidden=t!=='addr';$('#pane-cs').hidden=t!=='cs';$('#pane-lv').hidden=t!=='lv';if(t==='lv'&&window.JinoLeave)window.JinoLeave.render();
   if(t==='cs'&&ME&&CS.year==null)csLoad(+$('#cs-year').value||new Date().getFullYear());else if(t==='cs')renderCs();}
 document.querySelectorAll('#tabs button').forEach(function(b){b.onclick=function(){setTab(b.dataset.tab)}});
+window.JinoTab=setTab;
 (function(){var y=new Date().getFullYear(),s=$('#cs-year'),h='';for(var i=y+(new Date().getMonth()===11?1:0);i>=2024;i--)h+='<option value="'+i+'"'+(i===y?' selected':'')+'>'+i+'년</option>';s.innerHTML=h;
   $('#cs-field').innerHTML='<option value="">전체</option>'+CS_FIELDS.map(function(f){return '<option>'+f+'</option>'}).join('');
   $('#cs-type').innerHTML='<option value="">전체</option>'+CS_TYPES.map(function(f){return '<option>'+f+'</option>'}).join('');
@@ -1208,6 +1290,511 @@ $('#cs-file').addEventListener('change',function(e){var f=e.target.files[0];if(!
     }catch(err){closeModal();toast(err.message||'파일을 읽지 못했습니다.')}
   };rd.readAsArrayBuffer(f)});
 
+})();
+</script>
+<script>
+/* =========================================================
+   연차사용관리대장 + 팀달력 (예전 leave/ 시범 화면을 주소록에 합침)
+   서버: leave_* · event_* · team_names · leave_seen — 주소록 데이터와 따로 저장
+   ========================================================= */
+(function(){
+"use strict";
+var $=function(s){return document.querySelector(s)};
+var esc=function(v){return String(v==null?'':v).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]})};
+var clone=function(o){return JSON.parse(JSON.stringify(o))};
+function toast(msg){var t=$('#toast');t.textContent=msg;t.hidden=false;clearTimeout(toast._t);toast._t=setTimeout(function(){t.hidden=true},3500)}
+function fmtDate(iso){var d=new Date(iso);return isNaN(d)?'':d.getFullYear()+'. '+(d.getMonth()+1)+'. '+d.getDate()+'.'}
+function hm(d){return d.getHours()+':'+String(d.getMinutes()).padStart(2,'0')}
+function when(iso){if(!iso)return '';var d=new Date(iso);return fmtDate(iso)+' '+hm(d)}
+
+/* ---------- JINO 열쇠 · Supabase (주소록과 같은 로그인) ---------- */
+var SB_URL='https://vsbddasoslqmcvoppvuj.supabase.co', SB_KEY='sb_publishable__6dfg59E_kmUEO9nkLNA_Q_gxt1jidT';
+var KEY_URL='https://raw.githubusercontent.com/jinolabor/config-files/main/key.json', KEY_URLS=[KEY_URL,'https://raw.githubusercontent.com/dhkim0629-ops/config-files/main/key.json'], RECHECK=10*60*1000;
+var ME=null,TOKEN='',LKEY=null,watchT=null;
+var unb64=function(s){return Uint8Array.from(atob(s),function(c){return c.charCodeAt(0)})};
+function b64(u){var s='';for(var i=0;i<u.length;i+=8192)s+=String.fromCharCode.apply(null,u.subarray(i,i+8192));return btoa(s)}
+async function fetchKeys(){var last=null;for(var i=0;i<KEY_URLS.length;i++){try{var r=await fetch(KEY_URLS[i]+'?t='+Date.now(),{cache:'no-store'});if(!r.ok)throw new Error('열쇠 파일을 불러오지 못했습니다 (HTTP '+r.status+')');return await r.json()}catch(e){last=e}}throw last||new Error('열쇠 파일을 불러오지 못했습니다')}
+async function unwrap(pw,e){
+  var base=await crypto.subtle.importKey('raw',new TextEncoder().encode(pw),'PBKDF2',false,['deriveKey']);
+  var wk=await crypto.subtle.deriveKey({name:'PBKDF2',salt:unb64(e.salt),iterations:e.iter||150000,hash:'SHA-256'},base,{name:'AES-GCM',length:256},false,['decrypt']);
+  return new Uint8Array(await crypto.subtle.decrypt({name:'AES-GCM',iv:unb64(e.iv)},wk,unb64(e.wk)));
+}
+async function mtoken(id,pw){var h=new Uint8Array(await crypto.subtle.digest('SHA-256',new TextEncoder().encode('jino-payroll-member|'+id+'|'+pw)));return btoa(String.fromCharCode.apply(null,h))}
+async function leaveKey(k){var base=await crypto.subtle.importKey('raw',k,'HKDF',false,['deriveKey']);
+  return crypto.subtle.deriveKey({name:'HKDF',hash:'SHA-256',salt:new TextEncoder().encode('jino-leave'),info:new TextEncoder().encode('jino-leave-v1')},base,{name:'AES-GCM',length:256},false,['encrypt','decrypt'])}
+async function enc(obj){var iv=crypto.getRandomValues(new Uint8Array(12));var ct=await crypto.subtle.encrypt({name:'AES-GCM',iv:iv},LKEY,new TextEncoder().encode(JSON.stringify(obj)));return {iv:b64(iv),data:b64(new Uint8Array(ct))}}
+async function dec(iv,d){var pt=await crypto.subtle.decrypt({name:'AES-GCM',iv:unb64(iv)},LKEY,unb64(d));return JSON.parse(new TextDecoder().decode(pt))}
+async function decSafe(iv,d){if(!iv||!d)return null;try{return await dec(iv,d)}catch(e){return null}}
+function lkey(y){var a=crypto.getRandomValues(new Uint8Array(8));return 'l_'+y+'_'+Array.from(a,function(x){return x.toString(16).padStart(2,'0')}).join('')}
+async function rpc(fn,args){
+  var r=await fetch(SB_URL+'/rest/v1/rpc/'+fn,{method:'POST',headers:{'apikey':SB_KEY,'Content-Type':'application/json'},body:JSON.stringify(Object.assign({p_token:TOKEN},args||{}))});
+  var t=await r.text(),j=null;try{j=t?JSON.parse(t):null}catch(e){}
+  if(!r.ok){var msg=(j&&j.message)||('서버 오류 (HTTP '+r.status+')');if(msg==='denied'){msg='권한이 없습니다';}throw new Error(msg)}
+  return j;
+}
+function status(){}
+function modal(html){var root=$('#modal-root');var m=html.match(/^<h2>[\s\S]*?<\/h2>/);var h2=m?m[0]:'';var rest=html.slice(h2.length);var ai=rest.lastIndexOf('<div class="act">');
+  root.innerHTML='<div class="overlay"><div class="sheet" role="dialog" aria-modal="true">'+h2+'<div class="body">'+(ai>=0?rest.slice(0,ai):rest)+'</div>'+(ai>=0?rest.slice(ai):'')+'</div></div>';var ov=root.firstChild;ov.addEventListener('mousedown',function(e){if(e.target===ov)closeModal()});document.addEventListener('keydown',escClose);var f=ov.querySelector('input:not([type=hidden]),select,textarea');if(f)f.focus();return ov}
+function escClose(e){if(e.key==='Escape')closeModal()}
+function closeModal(){$('#modal-root').innerHTML='';document.removeEventListener('keydown',escClose)}
+
+/* ---------- 날짜·계산 ---------- */
+var TYPES=['연차','오전반차','오후반차','외출'],W={'연차':1,'오전반차':3/8,'오후반차':5/8,'외출':2/8},OUT_MAX=8;
+var WD=['일','월','화','수','목','금','토'];
+function ymd(d){return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')}
+function today(){return ymd(new Date())}
+function pd(s){var p=String(s).split('-');return new Date(+p[0],+p[1]-1,+p[2])}
+function dayK(s){if(!s)return '';var d=pd(s);return (d.getMonth()+1)+'. '+d.getDate()+'.('+WD[d.getDay()]+')'}
+function weekdays(a,b){var n=0,d=pd(a),e=pd(b);if(e<d)return 0;for(;d<=e;d.setDate(d.getDate()+1)){var w=d.getDay();if(w!==0&&w!==6)n++}return n}
+function parseDay(s,baseY){s=String(s||'').trim();if(!s)return '';var now=new Date(),y=baseY||now.getFullYear(),m,d,mt;
+  if(mt=s.match(/^(\d{4})\s*[-./년]\s*(\d{1,2})\s*[-./월]\s*(\d{1,2})/)){y=+mt[1];m=+mt[2];d=+mt[3]}
+  else if(mt=s.match(/^(\d{2})[-./](\d{1,2})[-./](\d{1,2})/)){y=2000+(+mt[1]);m=+mt[2];d=+mt[3]}
+  else if(mt=s.match(/^(\d{1,2})\s*[-./월]\s*(\d{1,2})\s*일?$/)){m=+mt[1];d=+mt[2]}
+  else if(mt=s.match(/^(\d{8})$/)){y=+s.slice(0,4);m=+s.slice(4,6);d=+s.slice(6)}
+  else if(mt=s.match(/^(\d{3,4})$/)){m=+s.slice(0,s.length-2);d=+s.slice(-2)}
+  else if(mt=s.match(/^(\d{1,2})\s*일?$/)){m=now.getMonth()+1;d=+mt[1]}
+  else return '';
+  var dt=new Date(y,m-1,d);if(dt.getFullYear()!==y||dt.getMonth()!==m-1||dt.getDate()!==d)return '';return ymd(dt)}
+function useOf(c){return c.type==='연차'?(+c.days||0):(W[c.type]||0)}
+function fmtN(n){n=Math.round(n*1000)/1000;return (Math.abs(n-Math.round(n))<1e-9?String(Math.round(n)):n.toFixed(3).replace(/0+$/,''))}
+function dispSt(r){return r.status==='승인'&&r.c&&(r.c.end||r.c.start)<today()?'사용완료':r.status}
+function stChip(r){var s=dispSt(r);return '<span class="st s-'+s+'">'+s+'</span>'}
+
+/* ---------- 상태 ---------- */
+var L={year:new Date().getFullYear(),rows:[],members:[],quota:{},view:'list',calM:null,names:[],events:[]};
+function isMgr(){return ME&&ME.is_mgr}
+
+/* ---------- 주소록 로그인과 연결 ----------
+   주소록(address)이 로그인하면 JinoLeave.start(TOKEN, 팀 열쇠)를, 잠그면 JinoLeave.stop()을 부릅니다. */
+window.JinoLeave={
+  start:async function(token,k){try{TOKEN=token;LKEY=await leaveKey(k);ME=await rpc('leave_whoami');
+      ['#lv-btn-pend','#sec-pend','#lv-adm','#lv-who'].forEach(function(s){$(s).hidden=!ME.is_mgr});
+      $('#lv-add').textContent=ME.is_mgr?'연차 등록 (구성원)':'연차 신청';
+      await loadAll(true);}catch(e){ME=null;console.warn('연차 모듈',e)}},
+  stop:function(){ME=null;TOKEN='';LKEY=null;L.rows=[];L.events=[];$('#lv-body').innerHTML='';$('#lv-sum').innerHTML='';$('#cal-body').innerHTML='';$('#pend-body').innerHTML='';$('#lv-btn-pend').hidden=true},
+  reload:function(){if(ME)loadAll(true)},
+  notice:function(){if(ME&&!$('#modal-root').firstChild)lnNotice()},
+  render:function(){if(ME)render()}
+};
+$('#lv-btn-pend').onclick=function(){if(window.JinoTab)window.JinoTab('lv');setTimeout(function(){$('#sec-pend').scrollIntoView({behavior:'smooth',block:'start'})},80)};
+setInterval(function(){if(ME&&!document.hidden&&!$('#modal-root').firstChild)loadAll(true)},90000);
+
+/* ---------- 불러오기 ---------- */
+(function(){var y=new Date().getFullYear(),h='';for(var i=y+1;i>=2025;i--)h+='<option value="'+i+'"'+(i===y?' selected':'')+'>'+i+'년</option>';$('#lv-year').innerHTML=h})();
+$('#lv-year').onchange=function(){L.year=+this.value;L.calM=null;loadAll()};
+async function loadAll(quiet){
+  if(!ME)return;if(!quiet)status('불러오는 중…');
+  try{
+    var x=await Promise.all([rpc('leave_list',{p_year:L.year}),rpc('leave_members'),rpc('leave_quota_list',{p_year:L.year}),rpc('leave_whoami'),rpc('team_names'),rpc('event_list',{p_year:L.year})]);
+    L.names=x[4];var evs=[];for(var ei=0;ei<x[5].length;ei++){var er=x[5][ei],ec=await decSafe(er.iv,er.data);if(ec){er.c=ec;evs.push(er)}}L.events=evs;
+    var rows=[];for(var i=0;i<x[0].length;i++){var r=x[0][i];r.c=r.full_view?await decSafe(r.iv,r.data):null;r.cal=await decSafe(r.cal_iv,r.cal_data);if(!r.c&&r.cal)r.c=r.cal;if(r.c)rows.push(r)}
+    rows.forEach(function(r){r.decided_by=dname(null,r.decided_by)});L.rows=rows;L.members=byOrder(x[1]);L.names=byOrder(L.names).map(function(n){return {id:n.id,name:dname(n.id,n.name)}});L.events.forEach(function(e){e.owner_name=e.owner_id==='all'?'전체':dname(e.owner_id,e.owner_name)});L.quota={};x[2].forEach(function(q){L.quota[q.member_id]=q});ME.pending=x[3].pending;
+    var pn=$('#lv-pend-n');pn.hidden=!ME.pending;pn.textContent=ME.pending;
+    $('#lv-ref').textContent='조회일: '+fmtDate(new Date());
+    var w=$('#lv-who'),cur=w.value;w.innerHTML='<option value="">구성원 전체</option>'+L.members.map(function(m){return '<option value="'+esc(m.id)+'">'+esc(m.name)+'</option>'}).join('');w.value=cur;
+    status('연결됨 · '+hm(new Date())+' 기준');render();
+    lnNotice();
+  }catch(e){status('불러오지 못했습니다',true);if(!quiet)toast(e.message||'불러오지 못했습니다.')}
+}
+// 화면에 보이는 구성원 순서 (대표 → 팀장 → 구성원). 명단에 없는 새 구성원은 맨 뒤에 이름순
+var ORDER=['master','대표','안수지','유재경','이다애','정연이','천유림','김선경','장수현'];
+// 화면 표시 이름: 대표·팀장은 직함으로
+var TITLE={'master':'대표','fab5aef7':'팀장'},TITLE_BY_NAME={'안수지':'팀장'};
+function dname(id,name){return (id&&TITLE[id])||TITLE_BY_NAME[name]||name}
+function ordIdx(m){var i=ORDER.indexOf(m.id);if(i<0)i=ORDER.indexOf(m.name);return i<0?99:i}
+function byOrder(list){return (list||[]).slice().sort(function(a,b){return ordIdx(a)-ordIdx(b)||String(a.name).localeCompare(String(b.name),'ko')})}
+function mine(r){return r.owner_id===ME.id}
+function fullRows(){return L.rows.filter(function(r){return r.full_view})}
+
+/* ---------- 화면 ---------- */
+['#lv-who','#lv-st','#lv-sort','#lv-mode'].forEach(function(s){$(s).onchange=render});
+function summary(){
+  var ms=isMgr()?L.members:L.members.filter(function(m){return m.id===ME.id});
+  var t=today();
+  var rows=ms.map(function(m){var q=L.quota[m.id],my=fullRows().filter(function(r){return r.owner_id===m.id});
+    var used=0,plan=0,req=0,out=0;my.forEach(function(r){var u=useOf(r.c);if(r.status==='승인'){if((r.c.end||r.c.start)<t)used+=u;else plan+=u;if(r.c.type==='외출')out++}else if(r.status==='신청')req+=u});
+    var left=q?q.days-used-plan:null;
+    return '<tr'+(isMgr()?' class="click" data-q="'+esc(m.id)+'"':'')+'><td class="nowrap"><b>'+esc(m.name)+'</b></td>'+
+      '<td class="num">'+(q?fmtN(q.days)+'일'+(q.label?' <span style="color:var(--muted);font-size:13px">('+esc(q.label)+')</span>':''):'<span style="color:var(--bad)">미설정</span>')+'</td>'+
+      '<td class="num">'+fmtN(used)+'</td><td class="num">'+fmtN(plan)+'</td><td class="num">'+(req?'<span style="color:#8a5a00">'+fmtN(req)+'</span>':'0')+'</td>'+
+      '<td class="num"><span class="left-big">'+(left==null?'-':fmtN(left))+'</span></td><td class="num">'+out+' / '+OUT_MAX+'회</td></tr>'}).join('');
+  $('#lv-sum').innerHTML='<table class="grid" style="margin-bottom:14px"><thead><tr><th>'+(isMgr()?'구성원':'이름')+'</th><th>'+L.year+'년 발생</th><th>사용완료</th><th>사용 예정(승인)</th><th>신청 중</th><th>남은 연차</th><th>외출 사용</th></tr></thead><tbody>'+(rows||'<tr><td colspan="7" class="c">구성원 정보가 없습니다.</td></tr>')+'</tbody></table>'+(isMgr()?'<div style="font-size:13.5px;color:var(--muted);margin:-8px 0 12px">※ 구성원 줄을 누르면 '+L.year+'년 발생 일수를 정할 수 있습니다. 남은 연차 = 발생 − 사용완료 − 사용 예정</div>':'');
+}
+var OPEN={};
+function rowAct(r){var a='<a href="#" class="doclink" data-doc="'+esc(r.key)+'">신청서</a>';
+  if(isMgr()&&r.status==='신청')a='<button class="btn primary sm" data-ok="'+esc(r.key)+'">승인</button> <button class="btn sm" data-no="'+esc(r.key)+'">반려</button> '+a;return a}
+function rowHtml(r,showName){var c=r.c;
+  var period=dayK(c.start)+(c.end&&c.end!==c.start?' ~ '+dayK(c.end):'');
+  var memo=[c.reason,c.handover?'대행: '+c.handover:'',r.status==='반려'&&c.reject?'<span style="color:var(--bad)">반려 사유: '+esc(c.reject)+'</span>':''].filter(Boolean);
+  return '<tr class="click" data-edit="'+esc(r.key)+'">'+(showName?'<td class="nowrap"><b>'+esc(r.owner_name)+'</b></td>':'')+
+    '<td class="nowrap">'+period+(c.late?'<span class="late">사후</span>':'')+'</td>'+
+    '<td class="nowrap">'+esc(c.type)+(c.time?' <span class="mut">'+esc(c.time)+'</span>':'')+' <span class="mut">· '+fmtN(useOf(c))+'일</span></td>'+
+    '<td class="memo">'+memo.map(function(x,i){return i===memo.length-1&&/^<span/.test(x)?x:esc(x)}).join(' · ')+'</td>'+
+    '<td class="c">'+stChip(r)+'</td><td class="nowrap mut">'+(r.decided_by?esc(r.decided_by):'')+'</td><td class="nowrap r">'+rowAct(r)+'</td></tr>'}
+function listHead(showName){return '<thead><tr>'+(showName?'<th style="width:90px">신청인</th>':'')+'<th style="width:150px">사용일</th><th style="width:170px">종류 · 일수</th><th>사유 · 업무 대행</th><th style="width:84px">상태</th><th style="width:80px">처리</th><th style="width:140px"></th></tr></thead>'}
+function renderPend(){var list=fullRows().filter(function(r){return r.status==='신청'&&!mine(r)}).sort(function(a,b){return a.c.start<b.c.start?-1:1});
+  $('#pend-cnt').textContent=list.length?list.length+'건':'';
+  $('#pend-body').innerHTML=list.length?'<table class="grid lv">'+listHead(true)+'<tbody>'+list.map(function(r){return rowHtml(r,true)}).join('')+'</tbody></table>':'<div class="empty" style="padding:16px">승인을 기다리는 신청이 없습니다.</div>'}
+function render(){
+  if(!ME)return;summary();renderCal();if(isMgr())renderPend();
+  var list=fullRows();
+  var who=$('#lv-who').value,st=$('#lv-st').value,mode=$('#lv-mode').value;
+  if(who)list=list.filter(function(r){return r.owner_id===who});if(st)list=list.filter(function(r){return dispSt(r)===st});
+  var asc=$('#lv-sort').value==='asc';list.sort(function(a,b){var x=a.c.start,y=b.c.start;return x<y?(asc?-1:1):x>y?(asc?1:-1):0});
+  $('#lv-count').textContent='총 '+list.length+'건';
+  $('#lv-mode').hidden=!isMgr();
+  if(!list.length){$('#lv-body').innerHTML='<div class="empty">'+(L.year+'년 기록이 없습니다. <b>연차 신청</b>으로 올려 주세요.')+'</div>';return}
+  var showName=isMgr(),head=listHead(showName);
+  var _unused='<thead><tr>'+(showName?'<th style="width:90px">신청인</th>':'')+'<th style="width:150px">사용일</th><th style="width:170px">종류 · 일수</th><th>사유 · 업무 대행</th><th style="width:84px">상태</th><th style="width:80px">처리</th><th style="width:140px"></th></tr></thead>';
+  if(isMgr()&&mode==='person'){
+    // 사람별 한눈에: 한 사람 한 줄, 사용일을 작은 칸으로
+    var ms=L.members.filter(function(m){return !who||m.id===who});
+    $('#lv-body').innerHTML='<table class="grid lv"><thead><tr><th style="width:90px">구성원</th><th>'+L.year+'년 사용·신청 (누르면 열림 · 회색=사용완료, 파랑=예정, 노랑=신청 중)</th></tr></thead><tbody>'+
+      ms.map(function(m){var my=list.filter(function(r){return r.owner_id===m.id}).slice().sort(function(a,b){return a.c.start<b.c.start?-1:1});
+        return '<tr><td class="nowrap"><b>'+esc(m.name)+'</b><div class="mut">'+my.length+'건</div></td><td>'+(my.length?my.map(function(r){var s=dispSt(r);
+          return '<span class="pill p-'+s+'" data-edit="'+esc(r.key)+'" title="'+esc(r.c.start+' '+r.c.type+' '+s)+'">'+(+r.c.start.slice(5,7))+'.'+(+r.c.start.slice(8,10))+(r.c.end&&r.c.end!==r.c.start?'~'+(+r.c.end.slice(8,10)):'')+' '+esc(r.c.type==='연차'?'연차':r.c.type.replace('반차','반'))+'</span>'}).join(''):'<span class="mut">기록 없음</span>')+'</td></tr>'}).join('')+'</tbody></table>';
+    return}
+  // 월별로 묶기: 이번 달과 앞으로는 펼치고, 지난달은 접어 둠
+  var tm=today().slice(0,7),groups=[],gi={};
+  list.forEach(function(r){var k=r.c.start.slice(0,7);if(gi[k]==null){gi[k]=groups.length;groups.push({k:k,rows:[]})}groups[gi[k]].rows.push(r)});
+  $('#lv-body').innerHTML=groups.map(function(g){var open=OPEN[g.k]!=null?OPEN[g.k]:(g.k>=tm||g.rows.some(function(r){return r.status==='신청'}));
+    var sum=g.rows.reduce(function(s,r){return s+(r.status==='승인'?useOf(r.c):0)},0),pend=g.rows.filter(function(r){return r.status==='신청'}).length;
+    return '<details class="mgrp" data-m="'+g.k+'"'+(open?' open':'')+'><summary><b>'+(+g.k.slice(0,4))+'년 '+(+g.k.slice(5,7))+'월</b> <span class="mut">'+g.rows.length+'건 · 사용 '+fmtN(sum)+'일'+(pend?' · <b style="color:#8a5a00">신청 중 '+pend+'건</b>':'')+'</span></summary>'+
+      '<table class="grid lv">'+head+'<tbody>'+g.rows.map(function(r){return rowHtml(r,showName)}).join('')+'</tbody></table></details>'}).join('');
+  $('#lv-body').querySelectorAll('details.mgrp').forEach(function(d){d.addEventListener('toggle',function(){OPEN[d.dataset.m]=d.open})});
+}
+$('#pane-lv').addEventListener('click',function(e){
+  var t;
+  if(t=e.target.closest('[data-doc]')){e.preventDefault();e.stopPropagation();openDoc(byKey(t.dataset.doc));return}
+  if(t=e.target.closest('[data-ok]')){e.stopPropagation();decide(byKey(t.dataset.ok),'승인');return}
+  if(t=e.target.closest('[data-no]')){e.stopPropagation();decide(byKey(t.dataset.no),'반려');return}
+  if(t=e.target.closest('[data-cal-prev]')){L.calM=shiftM(-1);renderCal();return}
+  if(t=e.target.closest('[data-cal-next]')){L.calM=shiftM(1);renderCal();return}
+  if(t=e.target.closest('#cal-body [data-ev-ext]')){e.stopPropagation();openEvent(L.events.find(function(x){return x.key===t.dataset.evExt}));return}
+  if(t=e.target.closest('#cal-body [data-ev-leave]')){e.stopPropagation();var lr=byKey(t.dataset.evLeave);if(lr&&lr.full_view)openForm(lr);else openDay(t.closest('[data-cal-day]').dataset.calDay);return}
+  if(t=e.target.closest('[data-cal-day]')){openDay(t.dataset.calDay);return}
+  if(t=e.target.closest('[data-edit]')){var r=byKey(t.dataset.edit);if(r&&r.full_view)openForm(r)}
+});
+$('#lv-sum').addEventListener('click',function(e){var t=e.target.closest('[data-q]');if(t&&isMgr())openQuota(t.dataset.q)});
+function byKey(k){return L.rows.find(function(r){return r.key===k})}
+
+/* ---------- 팀 달력 ---------- */
+function shiftM(n){var m=L.calM||defaultM();var d=new Date(m.y,m.m+n,1);return {y:d.getFullYear(),m:d.getMonth()}}
+function defaultM(){var n=new Date();return n.getFullYear()===L.year?{y:L.year,m:n.getMonth()}:{y:L.year,m:0}}
+var PAL=[['#d6e4fb','#1747a6'],['#d8f1df','#17663a'],['#fde2cf','#a04a0b'],['#ecdcfb','#6a2fa3'],['#fbd9e3','#a8264f'],['#d3f0f2','#0f6670'],['#f6ecc4','#7a5c00'],['#e3e6ea','#3c4654'],['#dfe9c8','#4b6614'],['#f9d6d0','#9b2b1a']];
+var ALLC=['#e9ecf1','#1f2937'];
+function colorOf(id){if(id==='all')return ALLC;var i=L.names.findIndex(function(n){return n.id===id});if(i<0)i=L.names.length;return PAL[i%PAL.length]}
+function eventsOn(k){var out=[];
+  L.rows.forEach(function(r){if(r.status!=='승인'&&!(r.status==='신청'&&(mine(r)||isMgr())))return;var c=r.c;if(c.start>k||(c.end||c.start)<k)return;var w=pd(k).getDay();if(c.type==='연차'&&(w===0||w===6))return;out.push({kind:'leave',r:r})});
+  L.events.forEach(function(e){var c=e.c;if(c.date>k||(c.end||c.date)<k)return;out.push({kind:'ext',e:e})});
+  return out.sort(function(a,b){return (a.kind==='leave'?0:1)-(b.kind==='leave'?0:1)||String(a.kind==='ext'?a.e.c.time:'').localeCompare(String(b.kind==='ext'?b.e.c.time:''))})}
+function evChip(x){
+  if(x.kind==='leave'){var r=x.r,col=colorOf(r.owner_id);
+    return '<span class="ev leave'+(r.status==='신청'?' pend':'')+'" data-ev-leave="'+esc(r.key)+'" style="'+(r.status==='신청'?'':'background:'+col[0]+';color:'+col[1]+';')+'border-color:'+col[1]+'" title="'+esc(r.owner_name+' '+r.c.type+(r.status==='신청'?' (승인 전)':''))+'">'+esc(r.owner_name)+' '+esc(r.c.type)+'</span>'}
+  var e=x.e,c=e.c,col=colorOf(e.owner_id);
+  return '<span class="ev x" data-ev-ext="'+esc(e.key)+'" style="border-left-color:'+col[1]+'" title="'+esc(e.owner_name+' · '+(c.kind?'['+c.kind+'] ':'')+c.title+(c.time?' '+c.time:'')+(c.place?' @'+c.place:''))+'"><b style="color:'+col[1]+'">'+esc(e.owner_name)+'</b> '+esc((c.time?c.time.split(/[~-]/)[0]+' ':'')+c.title)+'</span>'}
+function renderCal(){
+  var m=L.calM||defaultM();if(m.y!==L.year){L.year=m.y;$('#lv-year').value=m.y;L.calM=m;loadAll();return}
+  var first=new Date(m.y,m.m,1),start=new Date(first);start.setDate(1-first.getDay());
+  var lg='<div class="legend">'+[{id:'all',name:'전체'}].concat(L.names).map(function(n){var c=colorOf(n.id);return '<span><span class="sw" style="background:'+c[1]+'"></span>'+esc(n.name)+'</span>'}).join('')+
+    '<span style="margin-left:auto;color:var(--muted)">칠한 칸 = 연차 · 흰 칸(왼쪽 색 줄) = 외부 일정 · 점선 = 승인 전</span></div>';
+  var h='<div class="calnav"><button class="btn sm" data-cal-prev>◀</button><b>'+m.y+'년 '+(m.m+1)+'월</b><button class="btn sm" data-cal-next>▶</button><span style="font-size:13.5px;color:var(--muted);margin-left:8px">날짜를 누르면 그날 일정을 보고 연차 신청·외부 일정을 넣을 수 있습니다.</span></div>'+lg+'<div class="cal">'+WD.map(function(w){return '<div class="h">'+w+'</div>'}).join('');
+  for(var i=0;i<42;i++){var d=new Date(start);d.setDate(start.getDate()+i);var k=ymd(d),cls=[];if(d.getMonth()!==m.m)cls.push('off');if(d.getDay()===0)cls.push('sun');if(d.getDay()===6)cls.push('sat');if(k===today())cls.push('today');
+    h+='<div class="'+cls.join(' ')+'" data-cal-day="'+k+'"><span class="dn">'+d.getDate()+'</span>'+eventsOn(k).map(evChip).join('')+'</div>';
+    if(i===34&&new Date(start.getTime()+35*864e5).getMonth()!==m.m)break}
+  $('#cal-body').innerHTML=h+'</div>';
+}
+function openDay(k){
+  var list=eventsOn(k);
+  var ov=modal('<h2>'+(+k.slice(5,7))+'월 '+(+k.slice(8,10))+'일 ('+WD[pd(k).getDay()]+') 팀 일정</h2>'+
+    '<div class="daylist">'+(list.length?list.map(function(x){
+      if(x.kind==='leave'){var r=x.r,col=colorOf(r.owner_id);return '<div class="it" data-ev-leave="'+esc(r.key)+'" style="border-left-color:'+col[1]+'"><b style="color:'+col[1]+'">'+esc(r.owner_name)+'</b> '+esc(r.c.type)+(r.c.time?' '+esc(r.c.time):'')+' '+stChip(r)+'</div>'}
+      var e=x.e,c=e.c,col2=colorOf(e.owner_id);return '<div class="it" data-ev-ext="'+esc(e.key)+'" style="border-left-color:'+col2[1]+'"><b style="color:'+col2[1]+'">'+esc(e.owner_name)+'</b> <span class="chip info">'+esc(c.kind||'외부')+'</span> '+esc(c.time||'')+' <b>'+esc(c.title)+'</b>'+(c.place?' <span class="mut">@'+esc(c.place)+'</span>':'')+'</div>'}).join(''):'<p class="note-p">이 날 일정이 없습니다.</p>')+'</div>'+
+    '<div class="act"><button class="btn" id="dy-c">닫기</button><button class="btn" id="dy-ev">외부 일정 추가</button><button class="btn primary" id="dy-lv">연차 신청</button></div>');
+  ov.querySelector('#dy-c').onclick=closeModal;
+  ov.querySelector('#dy-ev').onclick=function(){openEvent(null,{date:k})};
+  ov.querySelector('#dy-lv').onclick=function(){openForm(null,{start:k})};if(isMgr())ov.querySelector('#dy-lv').textContent='연차 등록 (구성원)';
+  ov.querySelector('.daylist').addEventListener('click',function(e){var t=e.target.closest('[data-ev-leave],[data-ev-ext]');if(!t)return;if(t.dataset.evExt)openEvent(L.events.find(function(x){return x.key===t.dataset.evExt}));else{var r=byKey(t.dataset.evLeave);if(r&&r.full_view)openForm(r);else toast(r?r.owner_name+' 님 '+r.c.type+' (승인됨)':'')}});
+}
+
+/* ---------- 외부 일정 ---------- */
+var EV_KINDS=['외근','출장','미팅','교육','기타'];
+function ekey(y){var a=crypto.getRandomValues(new Uint8Array(8));return 'e_'+y+'_'+Array.from(a,function(x){return x.toString(16).padStart(2,'0')}).join('')}
+$('#ev-add').onclick=function(){openEvent(null)};
+function parseDays(v){var parts=String(v||'').split(/[,、·\s]+/).filter(Boolean),out=[];for(var i=0;i<parts.length;i++){var d=parseDay(parts[i],L.year);if(!d)return null;if(out.indexOf(d)<0)out.push(d)}return out.sort()}
+function openEvent(e,preset){
+  var isNew=!e,c=e?clone(e.c):Object.assign({date:today(),end:'',time:'',kind:'외근',title:'',place:'',memo:''},preset||{});
+  var owner=e?e.owner_id:(c.owner||ME.id),can=isNew||isMgr()||(e.owner_id==='all'?e.created_by_id===ME.id:e.owner_id===ME.id);
+  var opts='<option value="all"'+(owner==='all'?' selected':'')+'>전체 (팀 공통 일정)</option>'+(isMgr()?L.names:L.names.filter(function(n){return n.id===ME.id})).map(function(n){return '<option value="'+esc(n.id)+'"'+(n.id===owner?' selected':'')+'>'+esc(n.name)+'</option>'}).join('');
+  var ov=modal('<h2>'+(isNew?'외부 일정 추가':'외부 일정')+'</h2>'+(can?'':'<p class="note-p">'+(e.owner_id==='all'?'전체 일정입니다. 넣은 사람이나 팀장·대표가 고칠 수 있습니다.':esc(e.owner_name)+' 님 일정입니다. 고치려면 본인이나 팀장·대표에게 요청해 주세요.')+'</p>')+
+    '<div class="form">'+
+      '<label><span>구성원</span>'+(isNew?'<select id="e-owner">'+opts+'</select>':'<input value="'+esc(e.owner_name)+'" disabled style="background:#f3f5f8">')+'</label>'+
+      '<label><span>구분</span><select id="e-kind">'+EV_KINDS.map(function(k){return '<option'+(k===c.kind?' selected':'')+'>'+k+'</option>'}).join('')+'</select></label>'+
+      '<label><span>날짜</span><input id="e-date" value="'+esc(c.date)+'" placeholder="'+(isNew?'예: 12/3 (여러 날은 12/3, 12/5, 12/10)':'예: 12/3')+'" autocomplete="off"></label>'+
+      '<label><span>끝나는 날</span><input id="e-end" value="'+esc(c.end&&c.end!==c.date?c.end:'')+'" placeholder="며칠 이어지는 일정만 (예: 출장)" autocomplete="off"></label>'+
+      '<label><span>시간</span><input id="e-time" value="'+esc(c.time)+'" placeholder="예: 14:00~16:00"></label>'+
+      '<label><span>장소</span><input id="e-place" value="'+esc(c.place)+'" placeholder="예: 수원 ○○건설"></label>'+
+      '<label class="full"><span>일정 내용</span><input id="e-title" value="'+esc(c.title)+'" placeholder="예: ○○건설 노무비 신고 방문"></label>'+
+      '<label class="full"><span>메모</span><input id="e-memo" value="'+esc(c.memo)+'" placeholder="연락처, 준비물 등 (선택)"></label>'+
+    '</div><div class="f-info" id="e-info" hidden></div>'+
+    (isNew?'<p class="note-p" style="margin-top:8px">※ 한 사람이 일정을 몇 개든 넣을 수 있습니다. 같은 일정을 여러 날에 넣으려면 날짜를 쉼표로 이어 적으세요.</p>':'')+
+    '<div class="act"><span class="left">'+(!isNew&&can?'<button class="btn danger" id="e-del">삭제</button> ':'')+(!isNew?'<button class="btn" id="e-more">이 날 일정 하나 더 추가</button>':'')+'</span><button class="btn" id="e-c">닫기</button>'+
+      (can&&isNew?'<button class="btn" id="e-again">저장하고 하나 더 추가</button>':'')+(can?'<button class="btn primary" id="e-save">저장</button>':'')+'</div>');
+  var q=function(x){return ov.querySelector(x)};
+  if(!can)ov.querySelectorAll('.form input,.form select').forEach(function(i){i.disabled=true});
+  function info(){var ds=parseDays(q('#e-date').value),en=parseDay(q('#e-end').value,L.year),box=q('#e-info'),t='';
+    if(ds===null)t='<span style="color:var(--bad)">날짜를 확인해 주세요 (예: 12/3, 12/5)</span>';
+    else if(ds.length>1){t='<b>'+ds.length+'개 날짜</b>에 같은 일정을 각각 넣습니다: '+ds.map(dayK).join(', ');q('#e-end').disabled=true;q('#e-end').value=''}
+    else if(ds.length===1){q('#e-end').disabled=!can;t=dayK(ds[0])+(en&&en!==ds[0]?' ~ '+dayK(en):'')}
+    box.innerHTML=t;box.hidden=!t}
+  q('#e-date').addEventListener('input',info);q('#e-end').addEventListener('input',info);
+  q('#e-date').addEventListener('blur',function(){var ds=parseDays(this.value);if(ds&&ds.length===1)this.value=ds[0];info()});
+  q('#e-end').addEventListener('blur',function(){var v=parseDay(this.value,L.year);if(v)this.value=v;info()});info();
+  q('#e-c').onclick=closeModal;
+  if(q('#e-more'))q('#e-more').onclick=function(){openEvent(null,{date:c.date,owner:isMgr()?e.owner_id:ME.id,kind:c.kind})};
+  async function save(del,again){
+    var ds=del?[c.date]:parseDays(q('#e-date').value),en=parseDay(q('#e-end').value,L.year);
+    if(!ds||!ds.length){toast('날짜를 확인해 주세요 (예: 12/3).');q('#e-date').focus();return}
+    if(!isNew&&ds.length>1){toast('이미 넣은 일정은 날짜 하나만 넣을 수 있습니다. 다른 날은 "하나 더 추가"로 넣어 주세요.');return}
+    if(ds.length===1&&en&&en<ds[0]){toast('끝나는 날이 앞입니다.');return}
+    if(!del&&!q('#e-title').value.trim()){toast('일정 내용을 적어 주세요.');q('#e-title').focus();return}
+    var own=isNew?q('#e-owner').value:e.owner_id,base={time:q('#e-time').value.trim(),kind:q('#e-kind').value,title:q('#e-title').value.trim(),place:q('#e-place').value.trim(),memo:q('#e-memo').value.trim()};
+    ov.querySelectorAll('.act button').forEach(function(b){b.disabled=true});
+    try{var n=0;
+      for(var i=0;i<ds.length;i++){var body=Object.assign({date:ds[i],end:ds.length===1?(en||ds[i]):ds[i]},base),x=await enc(body);
+        var res=await rpc('event_put',{p_key:isNew?ekey(ds[i].slice(0,4)):e.key,p_expected_rev:isNew?0:e.rev,p_owner_id:own,p_year:+ds[i].slice(0,4),p_iv:x.iv,p_data:x.data,p_deleted:!!del});
+        if(res&&res.conflict){toast((res.updated_by||'다른 사람')+' 님이 방금 고쳤습니다. 다시 열어 주세요.');closeModal();loadAll(true);return}n++}
+      toast(del?'일정을 지웠습니다.':(n>1?n+'개 날짜에 일정을 넣었습니다.':'저장했습니다. 팀 달력에 보입니다.'));
+      if(again){openEvent(null,{date:ds[0],owner:own,kind:base.kind});setTimeout(function(){var t=document.querySelector('#e-title');if(t)t.focus()},50)}else closeModal();
+      loadAll(true)}
+    catch(err){ov.querySelectorAll('.act button').forEach(function(b){b.disabled=false});toast(err.message||'저장하지 못했습니다.')}}
+  if(q('#e-save'))q('#e-save').onclick=function(){save(false)};
+  if(q('#e-again'))q('#e-again').onclick=function(){save(false,true)};
+  if(q('#e-del'))q('#e-del').onclick=function(){if(this.dataset.sure!=='1'){this.dataset.sure='1';this.textContent='한 번 더 누르면 지웁니다';return}save(true)};
+}
+
+/* ---------- 신청·수정 ---------- */
+$('#lv-add').onclick=function(){openForm(null)};
+function openForm(r,preset){
+  var isNew=!r,c=r?clone(r.c):Object.assign({type:'연차',start:'',end:'',days:'',time:'',reason:'',handover:'',shared:false},preset||{});
+  var owner=r?r.owner_id:(isMgr()?'':ME.id);
+  var canEdit=isNew||isMgr()||(mine(r)&&(r.status==='신청'||r.status==='반려'));
+  var ownerSel=isMgr()&&isNew?'<select id="f-lvowner"><option value="">구성원 선택</option>'+L.members.map(function(m){return '<option value="'+esc(m.id)+'"'+(m.id===owner?' selected':'')+'>'+esc(m.name)+'</option>'}).join('')+'</select>':'<input value="'+esc(r?r.owner_name:ME.name)+'" disabled style="background:#f3f5f8">';
+  var ov=modal('<h2>'+(isNew?(isMgr()?'연차 등록 (구성원)':'연차 신청'):'연차 신청 내용')+(r?' <span style="font-size:14px">'+stChip(r)+'</span>':'')+'</h2>'+
+    (canEdit?'':'<p class="note-p" style="color:var(--bad)">승인된 신청은 본인이 고칠 수 없습니다. 바꿔야 하면 팀장·대표에게 요청해 주세요.</p>')+
+    '<div class="form">'+
+      '<label><span>신청인</span>'+ownerSel+'</label>'+
+      '<label><span>종류</span><select id="f-type">'+TYPES.map(function(t){return '<option'+(t===c.type?' selected':'')+'>'+t+'</option>'}).join('')+'</select></label>'+
+      '<label><span>사용일</span><input id="f-start" value="'+esc(c.start)+'" placeholder="예: 12/3, 1203" autocomplete="off"></label>'+
+      '<label id="f-endw"><span>끝나는 날</span><input id="f-end" value="'+esc(c.end&&c.end!==c.start?c.end:'')+'" placeholder="하루면 비워 두세요" autocomplete="off"></label>'+
+      '<label id="f-daysw"><span>사용 일수</span><input id="f-days" value="'+esc(c.type==='연차'?(c.days||''):'')+'" placeholder="주말 빼고 자동 계산" autocomplete="off"></label>'+
+      '<label id="f-timew"><span>외출 시간</span><input id="f-time" value="'+esc(c.time||'')+'" placeholder="예: 14:00~16:00"></label>'+
+      '<label class="full"><span>사유</span><input id="f-reason" value="'+esc(c.reason||'')+'" placeholder="예: 개인 사정, 병원 진료"></label>'+
+      '<label class="full"><span>업무 대행</span><input id="f-handover" value="'+esc(c.handover||'')+'" placeholder="예: 급여 업무 — 정연이, 거래처 전화 — 유재경"></label>'+
+      '<label class="full"><span>업무 공유</span><div class="cell"><span style="display:flex;gap:8px;align-items:center;font-size:15px;cursor:pointer"><input type="checkbox" id="f-shared" style="width:18px;height:18px;min-height:0"'+(c.shared?' checked':'')+'> 연차 전에 진행 중인 업무를 공유했습니다</span><span style="color:var(--bad);font-size:13.5px">(비밀번호는 여기에 적지 마세요)</span></div></label>'+
+    '</div>'+
+    '<div class="f-info" id="f-info" hidden></div>'+
+    (r&&r.status==='반려'&&c.reject?'<p class="note-p" style="color:var(--bad)">반려 사유: '+esc(c.reject)+'</p>':'')+
+    '<div class="act"><span class="left">'+(r?'<button class="btn" id="f-hist">처리 이력</button> <button class="btn" id="f-doc">신청서</button>':'')+
+      (r&&mine(r)&&r.status==='신청'?' <button class="btn danger" id="f-cancel">신청 취소</button>':'')+(r&&isMgr()&&r.status!=='취소'?' <button class="btn danger" id="f-del">삭제</button>':'')+'</span>'+
+      '<button class="btn" id="f-close">닫기</button>'+(canEdit?'<button class="btn primary" id="f-save">'+(isNew?(isMgr()?'등록 (바로 승인)':'신청하기'):(isMgr()&&r.status==='승인'?'저장':'다시 신청'))+'</button>':'')+'</div>');
+  var q=function(s){return ov.querySelector(s)};
+  if(!canEdit)ov.querySelectorAll('.form input,.form select,#f-shared').forEach(function(i){i.disabled=true});
+  function sync(){var t=q('#f-type').value,fe=q('#f-end'),fd=q('#f-days'),ft=q('#f-time');
+    if(canEdit){fe.disabled=t!=='연차';fe.placeholder=t==='연차'?'하루면 비워 두세요':'연차만 해당';if(t!=='연차')fe.value='';
+      fd.readOnly=t!=='연차';if(t!=='연차'){fd.value=fmtN(W[t])+'일 ('+(t==='외출'?'2시간':t==='오전반차'?'3시간':'5시간')+')';delete fd.dataset.touched}else if(/일/.test(fd.value))fd.value='';
+      ft.disabled=t!=='외출';ft.placeholder=t==='외출'?'예: 14:00~16:00':'외출만 해당';if(t!=='외출')ft.value=''}
+    var s=parseDay(q('#f-start').value,L.year),e=parseDay(q('#f-end').value,L.year)||s,info=[];
+    if(t==='연차'&&s){var n=weekdays(s,e);if(!q('#f-days').dataset.touched)q('#f-days').value=n||'';info.push('사용일 '+dayK(s)+(e!==s?' ~ '+dayK(e):'')+' · 주말 뺀 '+n+'일 (공휴일이 끼면 사용 일수를 고쳐 주세요)')}
+    else if(s)info.push('사용일 '+dayK(s)+' · '+fmtN(W[t])+'일 차감');
+    if(s&&s<today())info.push('<b style="color:#a52a2a">지난 날짜라 사후 신청으로 표시됩니다.</b>');
+    q('#f-info').innerHTML=info.join('<br>');q('#f-info').hidden=!info.length}
+  ['#f-type','#f-start','#f-end'].forEach(function(s){q(s).addEventListener('input',sync);q(s).addEventListener('change',sync)});
+  q('#f-days').addEventListener('input',function(){this.dataset.touched='1'});
+  ['#f-start','#f-end'].forEach(function(s){q(s).addEventListener('blur',function(){var v=parseDay(this.value,L.year);if(v)this.value=v})});
+  sync();
+  q('#f-close').onclick=closeModal;
+  if(q('#f-hist'))q('#f-hist').onclick=function(){openHist(r)};
+  if(q('#f-doc'))q('#f-doc').onclick=function(){openDoc(r)};
+  if(q('#f-cancel'))q('#f-cancel').onclick=async function(){if(this.dataset.sure!=='1'){this.dataset.sure='1';this.textContent='한 번 더 누르면 취소합니다';return}if(await put(r,r.c,'취소')){closeModal();toast('신청을 취소했습니다.');loadAll(true)}};
+  if(q('#f-del'))q('#f-del').onclick=async function(){if(this.dataset.sure!=='1'){this.dataset.sure='1';this.textContent='한 번 더 누르면 삭제합니다';return}if(await put(r,r.c,r.status,true)){closeModal();toast('삭제했습니다.');loadAll(true)}};
+  if(q('#f-save'))q('#f-save').onclick=async function(){
+    var t=q('#f-type').value,s=parseDay(q('#f-start').value,L.year),e=t==='연차'?(parseDay(q('#f-end').value,L.year)||s):s;
+    if(!s){toast('사용일을 확인해 주세요 (예: 12/3).');q('#f-start').focus();return}
+    if(e<s){toast('끝나는 날이 사용일보다 앞입니다.');q('#f-end').focus();return}
+    if(t==='연차'&&String(s).slice(0,4)!==String(e).slice(0,4)){toast('연도가 바뀌는 연차는 연도별로 나눠 신청해 주세요.');return}
+    var days=t==='연차'?parseFloat(String(q('#f-days').value).replace(/[^\d.]/g,'')):W[t];if(t==='연차'&&!(days>0)){toast('사용 일수를 확인해 주세요.');q('#f-days').focus();return}
+    var own=q('#f-lvowner')?q('#f-lvowner').value:owner;if(!own){toast('구성원을 골라 주세요.');q('#f-lvowner').focus();return}
+    var body={type:t,start:s,end:e,days:t==='연차'?days:'',time:t==='외출'?q('#f-time').value.trim():'',reason:q('#f-reason').value.trim(),handover:q('#f-handover').value.trim(),shared:q('#f-shared').checked,
+      late:s<today(),applied_at:isNew?new Date().toISOString():(c.applied_at||r.created_at),applicant:isNew?(L.members.find(function(m){return m.id===own})||{name:ME.name}).name:c.applicant,entered_by:isNew?ME.name:(c.entered_by||ME.name)};
+    var stNew='신청';
+    if(isMgr()&&r&&r.status==='승인')stNew='승인';
+    var direct=isMgr()&&isNew;
+    if(direct)stNew='승인';
+    this.disabled=true;
+    var ok=await put(r||{key:lkey(s.slice(0,4)),owner_id:own,rev:0,status:'신청'},body,stNew);
+    this.disabled=false;if(!ok)return;
+    closeModal();toast(direct?'등록하고 바로 승인했습니다.':isNew?'신청했습니다. 팀장·대표의 승인을 기다립니다.':'저장했습니다.');loadAll(true);
+  };
+}
+async function put(r,body,st,del){
+  try{var x=await enc(body),cal=await enc({type:body.type,start:body.start,end:body.end,days:body.days,time:body.time});
+    var res=await rpc('leave_put',{p_key:r.key,p_expected_rev:r.rev||0,p_owner_id:r.owner_id,p_year:+String(body.start).slice(0,4),p_status:st,p_iv:x.iv,p_data:x.data,p_cal_iv:cal.iv,p_cal_data:cal.data,p_deleted:!!del});
+    if(res&&res.conflict){toast((res.updated_by||'다른 사람')+' 님이 방금 고쳤습니다. 다시 열어 확인해 주세요.');closeModal();loadAll(true);return false}
+    return !!(res&&res.ok);
+  }catch(e){toast(e.message||'저장하지 못했습니다.');return false}
+}
+async function decide(r,st){
+  if(!r)return;
+  if(st==='반려'){
+    var ov=modal('<h2>반려</h2><p class="note-p"><b>'+esc(r.owner_name)+'</b> · '+dayK(r.c.start)+' '+esc(r.c.type)+'</p><div class="form"><label class="full"><span>반려 사유</span><input id="rj" placeholder="예: 같은 날 다른 구성원 연차, 일정 조정 요청"></label></div><div class="act"><button class="btn" id="rj-c">취소</button><button class="btn danger" id="rj-ok">반려하기</button></div>');
+    ov.querySelector('#rj-c').onclick=closeModal;
+    ov.querySelector('#rj-ok').onclick=async function(){var why=ov.querySelector('#rj').value.trim();if(!why){toast('반려 사유를 적어 주세요.');return}var b=clone(r.c);b.reject=why;this.disabled=true;if(await put(r,b,'반려')){closeModal();toast('반려했습니다.');loadAll(true)}else this.disabled=false};
+    return;
+  }
+  var b=clone(r.c);delete b.reject;if(await put(r,b,'승인')){toast(r.owner_name+' 님 '+dayK(r.c.start)+' '+r.c.type+' — 승인했습니다.');loadAll(true)}
+}
+async function openHist(r){
+  var ov=modal('<h2>처리 이력</h2><div id="hb" class="note-p">불러오는 중…</div><div class="act"><button class="btn primary" id="hc">닫기</button></div>');ov.querySelector('#hc').onclick=closeModal;
+  try{var h=await rpc('leave_history_list',{p_key:r.key}),out=[];for(var i=0;i<h.length;i++){var b=await decSafe(h[i].iv,h[i].data);out.push('<tr><td class="mono nowrap">'+when(h[i].updated_at)+'</td><td>'+esc(String(h[i].updated_by||'').replace(/^안수지/,'팀장'))+'</td><td class="c"><span class="st s-'+esc(h[i].deleted?'취소':h[i].status)+'">'+(h[i].deleted?'삭제':esc(h[i].status))+'</span></td><td>'+(b?dayK(b.start)+(b.end&&b.end!==b.start?' ~ '+dayK(b.end):'')+' '+esc(b.type)+' '+fmtN(useOf(b))+'일'+(b.reject?' · 반려 사유: '+esc(b.reject):''):'')+'</td></tr>')}
+    ov.querySelector('#hb').innerHTML='<table><thead><tr><th>일시</th><th>처리한 사람</th><th>상태</th><th>내용</th></tr></thead><tbody>'+out.join('')+'</tbody></table>'}
+  catch(e){ov.querySelector('#hb').textContent='불러오지 못했습니다: '+e.message}
+}
+
+/* ---------- 연차 알림 (처리 결과 · 새 신청) ----------
+   주소록에 합칠 때: 로그인·새로고침 뒤 lnNotice()만 부르면 됩니다. 서버 확인 표시는 leave_seen (주소록 addr_seen 과 별도). */
+var LN={dismissed:{}};
+function lnItems(seen){
+  if(isMgr())return fullRows().filter(function(r){return r.status==='신청'&&new Date(r.updated_at)>seen}).sort(function(a,b){return a.c.start<b.c.start?-1:1});
+  return fullRows().filter(function(r){return mine(r)&&(r.status==='승인'||r.status==='반려')&&r.decided_at&&new Date(r.decided_at)>seen&&r.decided_by!=='예전 연차대장'}).sort(function(a,b){return new Date(b.decided_at)-new Date(a.decided_at)});
+}
+function lnSig(r){return r.key+'|'+r.status+'|'+(r.decided_at||r.updated_at)}
+async function lnNotice(force){
+  if(!ME)return;if(!force&&$('#modal-root').firstChild)return;
+  var sv;try{sv=await rpc('leave_seen_get')}catch(e){return}
+  var seen=sv.seen_at?new Date(sv.seen_at):new Date(0),items=lnItems(seen);
+  if(!items.length){if(force)toast('새로 확인할 내용이 없습니다.');return}
+  if(!force&&items.every(function(r){return LN.dismissed[lnSig(r)]}))return;
+  if(!force&&$('#modal-root').firstChild)return;
+  var mgr=isMgr();
+  var ov=modal('<h2>'+(mgr?'새 연차 신청 '+items.length+'건':'연차 처리 결과')+'</h2>'+
+    '<p class="note-p" style="margin-top:0">'+(mgr?'구성원이 올린 신청입니다. 여기서 바로 승인·반려할 수 있습니다.':'팀장·대표가 처리한 내 연차 신청입니다.')+'</p>'+
+    '<div class="ln-list">'+items.map(function(r){var c=r.c,ok=r.status==='승인';
+      var when2=dayK(c.start)+(c.end&&c.end!==c.start?' ~ '+dayK(c.end):'')+' '+esc(c.type)+' '+fmtN(useOf(c))+'일'+(c.time?' ('+esc(c.time)+')':'');
+      if(mgr)return '<div class="ln-it" data-k="'+esc(r.key)+'"><div><b>'+esc(r.owner_name)+'</b> · '+when2+(c.late?'<span class="late">사후</span>':'')+(c.reason?'<div class="mut">사유: '+esc(c.reason)+(c.handover?' · 대행: '+esc(c.handover):'')+'</div>':'')+'</div><div class="nowrap"><button class="btn primary sm" data-ln-ok="'+esc(r.key)+'">승인</button> <button class="btn sm" data-ln-no="'+esc(r.key)+'">반려</button></div></div>';
+      return '<div class="ln-it '+(ok?'ok':'no')+'"><div><span class="ln-big">'+(ok?'승인':'반려')+'</span> '+when2+'<div class="mut">'+esc(r.decided_by||'')+' · '+when(r.decided_at)+(r.status==='반려'&&c.reject?'<br><b style="color:var(--bad)">반려 사유: '+esc(c.reject)+'</b>':'')+'</div></div><div><a href="#" class="doclink" data-ln-doc="'+esc(r.key)+'">신청서</a></div></div>'}).join('')+'</div>'+
+    '<div class="act"><button class="btn" id="ln-later">나중에 보기</button><button class="btn primary" id="ln-ok">확인했습니다</button></div>');
+  ov.querySelector('#ln-later').onclick=function(){items.forEach(function(r){LN.dismissed[lnSig(r)]=1});closeModal()};
+  ov.querySelector('#ln-ok').onclick=async function(){this.disabled=true;try{await rpc('leave_seen_mark',{p_at:sv.now})}catch(e){}closeModal()};
+  ov.querySelector('.ln-list').addEventListener('click',function(e){var t;
+    if(t=e.target.closest('[data-ln-doc]')){e.preventDefault();openDoc(byKey(t.dataset.lnDoc));return}
+    if(t=e.target.closest('[data-ln-ok]')){var r=byKey(t.dataset.lnOk);closeModal();decide(r,'승인');return}
+    if(t=e.target.closest('[data-ln-no]')){var r2=byKey(t.dataset.lnNo);closeModal();decide(r2,'반려');return}});
+}
+
+/* ---------- 신청서 (보관·인쇄) ---------- */
+function openDoc(r){
+  if(!r||!r.full_view)return;var c=r.c,st=dispSt(r);
+  var period=c.start+(c.end&&c.end!==c.start?' ~ '+c.end:'')+(c.time?' ('+c.time+')':'');
+  var html='<!doctype html><html lang="ko"><head><meta charset="utf-8"><title>휴가 신청서 - '+esc(r.owner_name)+' '+esc(c.start)+'</title><style>'+
+    'body{font-family:"Malgun Gothic","맑은 고딕",sans-serif;color:#111;margin:0;background:#eef1f5}.pg{width:180mm;min-height:250mm;margin:10mm auto;background:#fff;padding:18mm 16mm;box-sizing:border-box;position:relative}'+
+    'h1{text-align:center;font-size:26pt;letter-spacing:12px;margin:0 0 10mm;border-bottom:3px double #0b3a75;padding-bottom:5mm;color:#0b3a75}'+
+    '.appr{border-collapse:collapse;margin:0 0 6mm auto}.appr td{border:1px solid #333;width:24mm;text-align:center;font-size:10pt;padding:2mm 1mm}.appr .s{height:14mm;font-size:9.5pt;color:#174a8c}'+
+    'table.f{width:100%;border-collapse:collapse;margin-top:14mm}table.f th,table.f td{border:1px solid #333;padding:4mm 3mm;font-size:11.5pt;text-align:left}table.f th{width:32mm;background:#eef3fa;text-align:center}'+
+    '.stamp{display:inline-block;border:2px solid #b3261e;color:#b3261e;font-weight:700;padding:1mm 4mm;transform:rotate(-6deg);font-size:12pt}.stamp.ok{border-color:#174a8c;color:#174a8c}'+
+    '.decl{margin:14mm 0 6mm;text-align:center;font-size:12.5pt;line-height:2}.foot{text-align:center;font-size:13pt;margin-top:12mm;font-weight:700}.meta{font-size:9pt;color:#666;margin-top:14mm;border-top:1px solid #ccc;padding-top:3mm}'+
+    '.bar{text-align:center;margin:10px}.bar button{font-size:14px;padding:8px 18px;margin:0 4px;cursor:pointer}@media print{body{background:#fff}.bar{display:none}.pg{margin:0;width:auto;min-height:0}}</style></head><body>'+
+    '<div class="bar"><button onclick="print()">인쇄 / PDF로 저장</button><button onclick="close()">닫기</button></div><div class="pg">'+
+    '<table class="appr"><tr><td>신청인</td><td>승인</td></tr><tr><td class="s">'+esc(r.owner_name)+'<br>(전자 신청)</td><td class="s">'+(r.status==='승인'?esc(r.decided_by||'')+'<br>(전자 승인)':r.status==='반려'?'<span style="color:#b3261e">반려<br>'+esc(r.decided_by||'')+'</span>':'')+'</td></tr></table>'+
+    '<h1>휴 가 신 청 서</h1>'+
+    '<table class="f"><tr><th>소 속</th><td>노무그룹지노 TEAM JINO</td><th>성 명</th><td>'+esc(r.owner_name)+'</td></tr>'+
+    '<tr><th>휴가 종류</th><td>'+esc(c.type)+'</td><th>사용 일수</th><td>'+fmtN(useOf(c))+'일</td></tr>'+
+    '<tr><th>기 간</th><td colspan="3">'+esc(period)+(c.late?' <b style="color:#b3261e">(사후 신청)</b>':'')+'</td></tr>'+
+    '<tr><th>사 유</th><td colspan="3">'+esc(c.reason||'')+'</td></tr>'+
+    '<tr><th>업무 대행</th><td colspan="3">'+esc(c.handover||'')+'<br><span style="font-size:10pt;color:#444">업무 공유: '+(c.shared?'완료':'미확인')+'</span></td></tr>'+
+    '<tr><th>처리 결과</th><td colspan="3"><span class="stamp'+(r.status==='승인'?' ok':'')+'">'+esc(st)+'</span>'+(r.decided_at?' &nbsp; '+esc(r.decided_by||'')+(r.decided_by==='예전 연차대장'?'':' · '+when(r.decided_at)):'')+(c.reject?'<br>반려 사유: '+esc(c.reject):'')+'</td></tr></table>'+
+    '<p class="decl">위와 같이 휴가를 신청합니다.</p><p class="decl">'+fmtDate(c.applied_at||r.created_at)+'</p><p class="decl">신청인 : '+esc(r.owner_name)+' &nbsp;(전자 신청)</p>'+
+    '<p class="foot">노무그룹지노 대표 귀하</p>'+
+    '<div class="meta">문서번호 '+esc(r.key)+' · 신청 '+when(c.applied_at||r.created_at)+(c.entered_by&&c.entered_by!==r.owner_name?' (등록: '+esc(c.entered_by)+')':'')+' · 최종 처리 '+when(r.decided_at||r.updated_at)+' · 연차사용관리대장 + 팀달력에서 출력</div></div></body></html>';
+  var w=window.open('','_blank');if(!w){toast('팝업이 막혀 있습니다. 브라우저 주소창 오른쪽에서 팝업을 허용해 주세요.');return}w.document.open();w.document.write(html);w.document.close();
+}
+
+/* ---------- 발생 일수 (관리자) ---------- */
+function openQuota(id){
+  var m=L.members.find(function(x){return x.id===id}),q=L.quota[id]||{};
+  var ov=modal('<h2>'+esc(m.name)+' — '+L.year+'년 연차 발생 일수</h2><div class="form"><label><span>발생 일수</span><input id="q-days" value="'+esc(q.days!=null?q.days:'')+'" placeholder="예: 17"></label><label><span>표시 (선택)</span><input id="q-label" value="'+esc(q.label||'')+'" placeholder="예: 17-2"></label></div>'+
+    '<p class="note-p">※ 지금 연차대장의 "17-2"처럼 적고 싶으면 표시 칸에 넣으세요. 근속 3년 이상은 2년마다 1일씩 늘어납니다(근로기준법 제60조 제4항).</p><div class="act"><button class="btn" id="q-c">취소</button><button class="btn primary" id="q-ok">저장</button></div>');
+  ov.querySelector('#q-c').onclick=closeModal;
+  ov.querySelector('#q-ok').onclick=async function(){var d=parseFloat(ov.querySelector('#q-days').value);if(!(d>=0)){toast('일수를 숫자로 넣어 주세요.');return}
+    try{await rpc('leave_quota_set',{p_member_id:id,p_year:L.year,p_days:d,p_label:ov.querySelector('#q-label').value.trim()});closeModal();toast('저장했습니다.');loadAll(true)}catch(e){toast(e.message)}};
+}
+
+/* ---------- 예전 연차대장 옮기기 (관리자) ---------- */
+$('#lv-import').onclick=function(){var i=$('#lv-file');i.value='';i.click()};
+$('#lv-file').addEventListener('change',function(e){var f=e.target.files[0];if(!f)return;var rd=new FileReader();
+  rd.onload=async function(){try{
+    var wb=XLSX.read(new Uint8Array(rd.result),{type:'array',cellDates:true}),recs=[],quotas=[],unknown={};
+    var byName={};L.members.forEach(function(m){byName[m.name]=m});
+    wb.SheetNames.forEach(function(sn){var ym=sn.match(/(\d{2})년/);if(!ym)return;var Y=2000+(+ym[1]);
+      var a=XLSX.utils.sheet_to_json(wb.Sheets[sn],{header:1,raw:true,defval:''});
+      var hr=a.findIndex(function(r){return r.some(function(x){return /\(\d+(-\d+)?\)/.test(String(x))})});if(hr<0)return;
+      a[hr].forEach(function(v,ci){var mt=String(v).trim().match(/^([가-힣]{2,4})\s*\((\d+)(?:-(\d+))?\)/);if(!mt)return;var name=mt[1],m=byName[name];
+        if(!m){unknown[name]=1;return}
+        quotas.push({id:m.id,name:name,year:Y,days:+mt[2],label:mt[2]+(mt[3]?'-'+mt[3]:'')});
+        for(var r=hr+3;r<a.length;r++){var dv=a[r][ci],tp=String(a[r][ci+1]||'').trim();if(!dv||!tp)continue;var ds='';
+          if(dv instanceof Date)ds=ymd(new Date(dv.getTime()+12*3600e3));else ds=parseDay(String(dv).replace(/\(.*\)/,'').trim(),Y);
+          if(!ds||TYPES.indexOf(tp)<0)continue;
+          recs.push({owner_id:m.id,name:name,year:+ds.slice(0,4),c:{type:tp,start:ds,end:ds,days:tp==='연차'?1:'',time:'',reason:'',handover:'',shared:true,late:false,applied_at:ds+'T00:00:00',applicant:name,entered_by:ME.name+' (예전 연차대장)'}})}
+      })});
+    if(!recs.length)throw new Error('이 파일에서 연차 기록을 찾지 못했습니다.');
+    var have={};
+    var years={};recs.forEach(function(x){years[x.year]=1});
+    for(var yy in years){var rows=await rpc('leave_list',{p_year:+yy});for(var i=0;i<rows.length;i++){if(!rows[i].full_view)continue;var b=await decSafe(rows[i].iv,rows[i].data);if(b)have[rows[i].owner_id+'|'+b.start+'|'+b.type]=(have[rows[i].owner_id+'|'+b.start+'|'+b.type]||0)+1}}
+    var seen={},add=[],dup=0;recs.forEach(function(x){var k=x.owner_id+'|'+x.c.start+'|'+x.c.type;seen[k]=(seen[k]||0)+1;if((have[k]||0)>=seen[k]){dup++;return}add.push(x)});
+    var per={};add.forEach(function(x){var k=x.year+'년 '+x.name;per[k]=(per[k]||0)+1});
+    var ov=modal('<h2>예전 연차대장 옮기기</h2><p class="note-p"><b>'+esc(f.name)+'</b>에서 기록 <b>'+recs.length+'</b>건을 읽었습니다.</p><table><tbody>'+
+      '<tr><th style="width:170px">새로 옮길 기록</th><td><b>'+add.length+'</b>건<br><span style="font-size:13.5px">'+Object.keys(per).sort().map(function(k){return esc(k)+' '+per[k]}).join(' · ')+'</span></td></tr>'+
+      '<tr><th>이미 있어서 건너뜀</th><td>'+dup+'건</td></tr>'+
+      '<tr><th>발생 일수</th><td style="font-size:13.5px">'+quotas.map(function(q){return q.year+'년 '+esc(q.name)+' '+q.days+'일('+esc(q.label)+')'}).join(' · ')+'</td></tr>'+
+      (Object.keys(unknown).length?'<tr><th>구성원 명단에 없음</th><td style="color:var(--bad)">'+Object.keys(unknown).map(esc).join(', ')+' — 건너뜁니다</td></tr>':'')+
+      '</tbody></table><p class="note-p">옮긴 기록은 모두 "승인"으로 들어가고, 지난 날짜는 "사용완료"로 보입니다. 발생 일수도 함께 저장합니다.</p><p class="note-p" id="im-p" hidden></p>'+
+      '<div class="act"><button class="btn" id="im-c">취소</button><button class="btn primary" id="im-ok"'+(add.length||quotas.length?'':' disabled')+'>옮기기</button></div>');
+    ov.querySelector('#im-c').onclick=closeModal;
+    ov.querySelector('#im-ok').onclick=async function(){this.disabled=true;var p=ov.querySelector('#im-p');p.hidden=false;var n=0;
+      try{for(var i=0;i<quotas.length;i++){p.textContent='발생 일수 저장 중…';await rpc('leave_quota_set',{p_member_id:quotas[i].id,p_year:quotas[i].year,p_days:quotas[i].days,p_label:quotas[i].label})}
+        for(var s=0;s<add.length;s+=200){var part=[];for(var j=s;j<Math.min(add.length,s+200);j++){var x=add[j],e1=await enc(x.c),e2=await enc({type:x.c.type,start:x.c.start,end:x.c.end,days:x.c.days,time:''});part.push({key:lkey(x.year),owner_id:x.owner_id,year:x.year,iv:e1.iv,data:e1.data,cal_iv:e2.iv,cal_data:e2.data})}
+          p.textContent='옮기는 중… '+Math.min(add.length,s+200)+' / '+add.length;var res=await rpc('leave_import',{p_docs:part});n+=res.count||0}
+        closeModal();toast(n+'건을 옮겼습니다.');loadAll()}
+      catch(err){toast('옮기지 못했습니다: '+err.message+' (옮긴 '+n+'건은 저장됨)');this.disabled=false}};
+  }catch(err){toast(err.message||'파일을 읽지 못했습니다.')}};rd.readAsArrayBuffer(f)});
+
+/* ---------- 연차대장 엑셀 (관리자) ---------- */
+function loadExcelJS(){if(window.ExcelJS)return Promise.resolve(window.ExcelJS);var urls=['https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.4.0/exceljs.min.js','https://cdn.jsdelivr.net/npm/exceljs@4.4.0/dist/exceljs.min.js'];
+  return new Promise(function(res,rej){(function next(i){if(i>=urls.length)return rej(new Error('엑셀 도구를 불러오지 못했습니다.'));var s=document.createElement('script');s.src=urls[i];s.onload=function(){window.ExcelJS?res(window.ExcelJS):next(i+1)};s.onerror=function(){s.remove();next(i+1)};document.head.appendChild(s)})(0)})}
+$('#lv-xlsx').onclick=async function(){
+  var b=this;b.disabled=true;
+  try{var EJ=await loadExcelJS(),wb=new EJ.Workbook(),ws=wb.addWorksheet(String(L.year).slice(2)+'년 연차사용대장',{pageSetup:{paperSize:9,orientation:'landscape',fitToPage:true,fitToWidth:1,fitToHeight:0},views:[{state:'frozen',ySplit:6,showGridLines:false}]});
+    var F='맑은 고딕',thin={style:'thin',color:{argb:'FF7F8FA6'}},B={top:thin,left:thin,bottom:thin,right:thin},HEAD={type:'pattern',pattern:'solid',fgColor:{argb:'FFDCE6F2'}},LAB={type:'pattern',pattern:'solid',fgColor:{argb:'FFF2F5F9'}},DONE={type:'pattern',pattern:'solid',fgColor:{argb:'FFE3E6EA'}};
+    function cell(r,c,v,st){var x=ws.getCell(r,c);x.value=v;st=st||{};x.font={name:F,size:st.sz||11,bold:!!st.b,color:st.color?{argb:st.color}:undefined};x.alignment={horizontal:st.h||'center',vertical:'middle',wrapText:true};x.border=B;if(st.fill)x.fill=st.fill;if(st.fmt)x.numFmt=st.fmt;return x}
+    var ms=L.members,cols=ms.length*2+1;
+    ws.mergeCells(1,1,1,cols);var t=ws.getCell(1,1);t.value=L.year+'년 TEAM JINO 연차 사용대장';t.font={name:F,size:18,bold:true,color:{argb:'FF0B3A75'}};t.alignment={horizontal:'center',vertical:'middle'};ws.getRow(1).height=40;
+    ws.getColumn(1).width=14;cell(2,1,'이름',{b:true,fill:LAB});cell(3,1,'발생',{b:true,fill:LAB});cell(4,1,'사용(완료+예정)',{b:true,fill:LAB});cell(5,1,'남은 연차',{b:true,fill:LAB});cell(6,1,'구분',{b:true,fill:HEAD});
+    var maxN=0,t0=today();
+    ms.forEach(function(m,i){var c0=2+i*2;ws.getColumn(c0).width=16;ws.getColumn(c0+1).width=11;var q=L.quota[m.id];
+      ws.mergeCells(2,c0,2,c0+1);cell(2,c0,m.name+(q&&q.label?'('+q.label+')':''),{b:true,fill:HEAD});
+      var my=fullRows().filter(function(r){return r.owner_id===m.id&&r.status==='승인'}).sort(function(a,b){return a.c.start<b.c.start?-1:1});
+      var used=my.reduce(function(s,r){return s+useOf(r.c)},0);
+      ws.mergeCells(3,c0,3,c0+1);cell(3,c0,q?q.days:'',{b:true});ws.mergeCells(4,c0,4,c0+1);cell(4,c0,Math.round(used*1000)/1000,{b:true,fmt:'0.###'});ws.mergeCells(5,c0,5,c0+1);cell(5,c0,q?Math.round((q.days-used)*1000)/1000:'',{b:true,fmt:'0.###',color:'FF0B3A75'});
+      cell(6,c0,'연차사용일',{b:true,fill:HEAD});cell(6,c0+1,'유형',{b:true,fill:HEAD});
+      my.forEach(function(r,j){var done=(r.c.end||r.c.start)<t0,fl=done?DONE:undefined;cell(7+j,c0,r.c.start+(r.c.end&&r.c.end!==r.c.start?' ~ '+r.c.end.slice(5):''),{fill:fl});cell(7+j,c0+1,r.c.type+(r.c.type==='연차'&&r.c.days!==1?' '+r.c.days+'일':''),{fill:fl})});
+      maxN=Math.max(maxN,my.length)});
+    for(var r=7;r<7+maxN;r++){cell(r,1,'',{});ws.getRow(r).height=19}
+    var nr=8+maxN;ws.mergeCells(nr,1,nr,cols);var n=ws.getCell(nr,1);n.value='※ 회색 = 사용 완료 · 오전반차 3/8일, 오후반차 5/8일, 외출 2/8일로 계산 · '+fmtDate(new Date())+' 기준, 연차사용관리대장 + 팀달력에서 만듦';n.font={name:F,size:10,color:{argb:'FF666666'}};
+    var buf=await wb.xlsx.writeBuffer(),a=document.createElement('a');a.href=URL.createObjectURL(new Blob([buf],{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'}));a.download='TEAM_JINO_연차사용대장_'+L.year+'년.xlsx';document.body.appendChild(a);a.click();setTimeout(function(){URL.revokeObjectURL(a.href);a.remove()},1500);toast('내려받았습니다 (다운로드 폴더).');
+  }catch(e){toast(e.message||'만들지 못했습니다.')}b.disabled=false;
+};
+
+setTimeout(function(){$('#pw').focus()},50);
 })();
 </script>
 </body>

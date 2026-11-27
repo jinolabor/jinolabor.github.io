@@ -9,7 +9,7 @@
 | `contract/` | 근로계약서 작성 | dhkim0629-ops/config-files `contract/` |
 | `forms/` | 스마트지노 문서작성 | dhkim0629-ops/config-files `forms/` |
 | `safety/` | 지노 중처법 이행관리 (안전보건 통합관리) | dhkim0629-ops/jino-safety |
-| `leave/` | 연차사용관리대장 + 팀달력 (시범 · 주소록과 같은 로그인, 서버 함수 `leave_*`·`event_*`·`team_names`, 대표·팀장(`leave_managers`)은 연차 대상 아님. 처리 결과·새 신청 알림은 `lnNotice()` + `leave_seen`(주소록 `addr_seen`과 별도) — 주소록에 합칠 때 로그인·새로고침 뒤 `lnNotice()`만 부르면 됨) | 없음 (새로 만듦) |
+| `leave/` | **주소록으로 합침** → `address/` 의 「연차 · 팀달력」 탭 (`address/#leave`). 여기에는 이동 화면만 둡니다. 서버 함수 `leave_*`·`event_*`·`team_names`·`leave_seen` 그대로, 주소록 안에서는 별도 `<script>` 모듈 `window.JinoLeave`(start/stop/reload/notice)로 동작. 대표·팀장(`leave_managers`)은 연차 대상 아님 | 없음 |
 | `community/` | TEAM JINO 커뮤니티 (시범 · 「함께 했던 시간」 「오늘의 한마디」 · 주소록과 같은 로그인, 서버 함수 `comm_*`, 화면은 `JinoComm` 모듈(이름 `jc-`) — 주소록에 탭으로 붙일 예정. 카카오 지도 키는 `KAKAO_JS_KEY`에 넣음) | 없음 (새로 만듦) |
 
 다른 프로그램: 보험료정산은 `jinolabor/settlement`, 페이롤은 `jinolabor/payroll` (https://jinolabor.github.io/payroll/).
