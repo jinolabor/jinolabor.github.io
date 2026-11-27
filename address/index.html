@@ -258,6 +258,11 @@ body.t-jc .jc-picked{border-color:#e7b48f;background:#fdeee3}
 body.t-jc .jc-cover{background:linear-gradient(135deg,#f8e6da,#fdf6f1)}
 body.t-jc .jc-cover .jc-ph{color:#cf9c7c}
 @media (max-width:700px){.tabs{flex-wrap:wrap}.tabs button{padding:8px 14px;font-size:15px}}
+.fsub{margin:14px 0 6px;font-size:15.5px}.fsub:first-of-type{margin-top:0}
+.form em.req{color:var(--bad);font-style:normal;margin-left:2px}
+.form .fwarn{grid-column:1/-1;padding:7px 12px;background:#fff6e0;color:#7a5200;font-size:14px;border-right:1px solid var(--rule);border-bottom:1px solid var(--rule)}
+.form .fwarn[hidden]{display:none}
+.form textarea{min-height:76px;resize:vertical}
 </style>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <link rel="stylesheet" href="../community/jino-comm.css">
@@ -943,24 +948,39 @@ function contactRow(p){
 function openCompany(c){
   var isNew=!c;
   c=c?clone(c):{id:'',status:'자문중',owner:'',mailGroup:'',industry:'건설',name:'',ceo:'',tel:'',fax:'',address:'',note:'',memo:'',contacts:[{status:'재직'}]};
-  var f=function(k,l,v,cls){return '<label class="'+(cls||'')+'"><span>'+l+'</span><input id="m-'+k+'" value="'+esc(v)+'"></label>'};
+  var f=function(k,l,v,cls,ph){return '<label class="'+(cls||'')+'"><span>'+l+'</span><input id="m-'+k+'" value="'+esc(v)+'"'+(ph?' placeholder="'+ph+'"':'')+'></label>'};
   var opt=function(list,cur,blank){return list.map(function(s){return '<option value="'+s+'"'+(s===cur?' selected':'')+'>'+(s||blank)+'</option>'}).join('')};
   var ov=modal('<h2>'+(isNew?'거래처 추가':esc(c.name)+' 수정')+'</h2>'+
-    '<div class="form">'+f('name','회사명',c.name)+
+    '<div class="subhead fsub">회사 정보</div>'+
+    '<div class="form">'+
+      '<label class="full"><span>회사명 <em class="req">*</em></span><input id="m-name" value="'+esc(c.name)+'" placeholder="예: ○○건설(주)"></label>'+
+      '<div class="fwarn" id="m-dup" hidden></div>'+
       '<label><span>상태</span><select id="m-status">'+opt(['자문중','종료','해지','폐업'],c.status)+'</select></label>'+
-      f('owner','우리 담당',c.owner)+
-      '<label><span>메일 그룹</span><select id="m-mailGroup">'+opt(['','유','다애','비건설'],c.mailGroup,'미지정')+'</select></label>'+
       '<label><span>업종</span><select id="m-industry">'+opt(['건설','비건설'],isConstruction(c)?'건설':'비건설')+'</select></label>'+
-      f('bizno','사업자번호',c.bizno)+f('ceo','대표자',c.ceo)+f('tel','회사 전화',c.tel)+f('fax','팩스',c.fax)+
-      f('address','주소',c.address,'full')+f('note','비고',c.note,'full')+
-      '<label class="full"><span>메모</span><textarea id="m-memo">'+esc(c.memo)+'</textarea></label>'+
+      f('bizno','사업자번호',c.bizno,'','123-45-67890 (숫자만 넣어도 됩니다)')+f('ceo','대표자',c.ceo)+
+      f('tel','회사 전화',c.tel,'','02-0000-0000')+f('fax','팩스',c.fax,'','02-0000-0000')+
+      f('address','주소',c.address,'full','예: 서울 용산구 ○○로 00, ○층')+
     '</div>'+
-    '<div><div class="subhead" style="margin-bottom:6px">실무 담당자<span style="font-size:14px;color:var(--muted);font-weight:400">퇴사·휴직은 각 담당자 오른쪽의 상태에서 바꿉니다</span><button class="btn sm" id="m-add-contact">+ 담당자</button></div>'+
+    '<div class="subhead fsub">우리 쪽 관리</div>'+
+    '<div class="form">'+
+      f('owner','우리 담당',c.owner,'','예: 유재경')+
+      '<label><span>메일 그룹</span><select id="m-mailGroup">'+opt(['','유','다애','비건설'],c.mailGroup,'미지정')+'</select></label>'+
+      f('note','비고',c.note,'full','목록에 함께 보이는 짧은 메모 (예: 12월 계약 갱신 · \'메일X\'라고 적으면 통합발송에서 빠집니다)')+
+      '<label class="full"><span>메모</span><textarea id="m-memo" rows="3" placeholder="구성원끼리 알아 둘 내용 (목록에는 보이지 않습니다)">'+esc(c.memo)+'</textarea></label>'+
+    '</div>'+
+    '<div><div class="subhead fsub">실무 담당자<span style="font-size:14px;color:var(--muted);font-weight:400">퇴사·휴직은 각 담당자 오른쪽의 상태에서 바꿉니다</span><button class="btn sm" id="m-add-contact">+ 담당자</button></div>'+
       '<div class="crows" id="m-contacts">'+(c.contacts||[]).map(contactRow).join('')+'</div></div>'+
     '<div class="form" style="margin-top:10px"><label class="full"><span>변경 사유</span><input id="m-why" placeholder="'+(isNew?'예: 11월 신규 자문계약':'예: 담당자 퇴사 통보 받음, 대표자 변경')+' — 다른 구성원 알림 창에 함께 보입니다"></label></div>'+
     '<div class="act">'+(isNew?'':'<span class="left" id="m-delwrap"><button class="btn danger" id="m-del">거래처 삭제</button> <button class="btn" id="m-hist">수정이력</button> <button class="btn" id="m-cs">경협 상담 이력</button></span>')+'<button class="btn" id="m-cancel">취소</button><button class="btn primary" id="m-save">확인</button></div>');
   var cbox=ov.querySelector('#m-contacts');
   if(!isNew)editStart(c.id,ov);
+  var bzi=ov.querySelector('#m-bizno');bzi.addEventListener('blur',function(){var z=bizFmt(bzi.value.trim());if(z)bzi.value=z;dupCheck()});
+  var nmi=ov.querySelector('#m-name'),dupBox=ov.querySelector('#m-dup');
+  function normN(x){return String(x||'').replace(/\(주\)|㈜|주식회사|\s/g,'').toLowerCase()}
+  function dupCheck(){var n=normN(nmi.value),z=bizFmt(bzi.value.trim()),hits=[];
+    (data.companies||[]).forEach(function(x){if(x.id===c.id)return;if((n&&normN(x.name)===n)||(z&&x.bizno===z))hits.push(x)});
+    dupBox.hidden=!hits.length;if(hits.length)dupBox.innerHTML='비슷한 거래처가 이미 있습니다: '+hits.slice(0,3).map(function(x){return '<b>'+esc(x.name)+'</b>'+(x.bizno?' ('+esc(x.bizno)+')':'')+' · '+esc(x.status||'')}).join(', ')+(hits.length>3?' 외 '+(hits.length-3)+'곳':'')}
+  nmi.addEventListener('input',function(){clearTimeout(dupCheck._t);dupCheck._t=setTimeout(dupCheck,250)});dupCheck();
   ov.querySelector('#m-add-contact').onclick=function(){cbox.insertAdjacentHTML('beforeend',contactRow({status:'재직'}));cbox.lastElementChild.querySelector('input').focus()};
   cbox.addEventListener('click',function(e){if(e.target.closest('[data-del-contact]'))e.target.closest('.crow').remove()});
   cbox.addEventListener('change',function(e){if(e.target.dataset.k==='status')e.target.classList.toggle('off',e.target.value!=='재직')});
