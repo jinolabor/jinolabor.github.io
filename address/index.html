@@ -284,7 +284,7 @@ body.t-jc .jc-cover .jc-ph{color:#cf9c7c}
     <span class="lb">검색어</span><span class="wide"><input type="search" id="q" placeholder="회사명, 담당자, 전화번호 뒷자리, 이메일, 주소"></span>
     <span class="lb">자문 상태</span><span><select id="f-status" aria-label="상태"><option value="자문중">자문중</option><option value="종료">종료·해지·폐업</option><option value="">전체</option></select></span>
     <span class="lb">우리 담당</span><span><select id="f-owner" aria-label="우리 담당"><option value="">전체</option></select></span>
-    <span class="lb">메일 그룹</span><span><select id="f-group" aria-label="메일 그룹"><option value="">전체</option><option>유</option><option>다애</option><option>비건설</option><option value="-">미지정</option></select></span>
+    <span class="lb">메일 그룹</span><span><select id="f-group" aria-label="메일 그룹"><option value="">전체</option><option value="send">통합발송 대상</option><option>유</option><option>다애</option><option>비건설</option><option value="-">미지정</option></select></span>
     <span class="lb">업종</span><span><select id="f-ind" aria-label="업종"><option value="">전체</option><option value="건설">건설</option><option value="비건설">비건설</option></select></span>
   </div>
   <div class="toolbar">
@@ -654,7 +654,16 @@ function normCo(n){return String(n||'').replace(/\(주\)|㈜|주식회사|\(유\
 function isConstruction(c){return /^건설/.test(c.industry||'')}
 function activeContact(p){return !p.status||p.status==='재직'}
 function emailsOf(p){return (p.email||'').match(EMAIL_RE)||[]}
-function noMail(p){return /수신\s*x/i.test((p.email||'')+' '+(p.emailNote||''))}
+/* 안내메일을 보내지 않는 주소: 수신x·수신거부·수신 안함, 안내자료x, 휴면메일, 카톡으로만, 메모가 '급여'·'급여관련'뿐인 급여 전용 주소 */
+function noMail(p){return /수신\s*(x|거부|안\s*함)|안내\s*자료\s*x|휴면|카톡으로만/i.test((p.email||'')+' '+(p.emailNote||''))||/^\s*급여(\s*관련)?\s*$/.test(p.emailNote||'')}
+/* 통합발송 대상: 자문중 회사의 재직 담당자 중 보낼 수 있는 사람. 회사 비고·메모에 '메일X'가 있으면 회사 전체 제외,
+   담당자 메모에 '○○ 메일만 발송'이 있으면 그 담당자에게만 보냄 */
+function sendContacts(c){
+  if(c.status!=='자문중'||/메일\s*x/i.test((c.note||'')+' '+(c.memo||'')))return [];
+  var ps=(c.contacts||[]).filter(function(p){return activeContact(p)&&!noMail(p)&&emailsOf(p).length});
+  var only=ps.filter(function(p){return /메일만\s*발송/.test(p.emailNote||'')});
+  return only.length?only:ps;
+}
 function companies(){return data.companies.slice().sort(function(a,b){return normCo(a.name).localeCompare(normCo(b.name),'ko')})}
 function statusChip(c){return c.status==='자문중'?'<span class="chip ok">자문중</span>':'<span class="chip end">'+esc(c.status||'-')+'</span>'}
 
@@ -673,7 +682,8 @@ function renderAll(){
   sel.value=counts[cur]?cur:'';
   var list=scope.filter(function(c){
     if(sel.value&&ownerKey(c.owner)!==sel.value)return false;
-    if(gr==='-'?c.mailGroup:gr&&c.mailGroup!==gr)return false;
+    if(gr==='send'){if(!sendContacts(c).length)return false}
+    else if(gr==='-'?c.mailGroup:gr&&c.mailGroup!==gr)return false;
     if(ind==='건설'&&!isConstruction(c))return false;
     if(ind==='비건설'&&isConstruction(c))return false;
     if(qv){
@@ -698,9 +708,10 @@ function renderAll(){
     list.map(function(c,ix){
       var cs=c.contacts||[];var ps=cs.filter(activeContact).concat(cs.filter(function(p){return !activeContact(p)}));
       var cls=function(p){return activeContact(p)?'':' class="gone"'};
+      var okSend=gr==='send'?sendContacts(c):null;var cut=function(p){return okSend&&activeContact(p)&&emailsOf(p).length&&okSend.indexOf(p)<0?' <span class="chip end" title="통합발송에서 빠지는 주소">발송 제외</span>':''};
       return '<tr class="click" data-edit="'+esc(c.id)+'"><td class="no mono">'+(ix+1)+'</td><td class="c">'+statusChip(c)+'</td><td class="nowrap"><b>'+esc(c.name)+'</b>'+recentChip(c.id)+editChip(c.id)+'</td><td class="nowrap mono">'+esc(c.bizno||'')+'</td><td>'+(isConstruction(c)?'<span class="chip line">건설</span>':'<span class="chip info">비건설</span>')+'</td><td class="nowrap">'+esc(ownerKey(c.owner))+'</td><td class="note">'+esc(c.note)+'</td>'+
         '<td class="stack">'+ps.map(function(p){return '<div'+cls(p)+'><span class="nm">'+esc(p.name||'-')+'</span> <span style="color:var(--muted)">'+esc((p.title||'').replace(/\n/g,' '))+'</span>'+(activeContact(p)?'':' <span class="chip '+(p.status==='퇴사'?'end':'warn')+'">'+esc(p.status)+'</span>')+'</div>'}).join('')+'</td>'+
-        '<td class="stack">'+ps.map(function(p){return '<div'+cls(p)+'>'+esc(emailsOf(p).join(', '))+'</div>'}).join('')+'</td>'+
+        '<td class="stack">'+ps.map(function(p){return '<div'+cls(p)+'>'+esc(emailsOf(p).join(', '))+cut(p)+'</div>'}).join('')+'</td>'+
         '<td class="stack ref'+(REF_OPEN?'':' shut')+'">'+ps.map(function(p){var n=(p.emailNote||'').replace(/\s*\n\s*/g,' ').trim();return '<div'+cls(p)+(n?' title="'+esc(n)+'"':'')+'>'+(REF_OPEN?esc(n):(n?'●':''))+'</div>'}).join('')+'</td>'+
         '<td class="stack mono">'+ps.map(function(p){return '<div'+cls(p)+'>'+esc((p.phone||'').replace(/\s*\n\s*/g,' '))+'</div>'}).join('')+'</td>'+
         '<td class="nowrap mono">'+esc(c.tel)+'</td><td style="min-width:200px">'+esc(c.address)+'</td></tr>';
@@ -1025,19 +1036,19 @@ $('#btn-xlsx').onclick=function(){
 
 /* ---------- 안내메일 주소 복사 ---------- */
 $('#btn-mail').onclick=function(){
-  var groups=['유','다애','비건설','지금 보이는 목록'];
+  var groups=['통합발송 대상','유','다애','비건설','지금 보이는 목록'];
   var ov=modal('<h2>안내메일 받는 사람 복사</h2>'+
-    '<p class="note-p">자문중인 회사의 재직 담당자 이메일만 모읍니다. 퇴사·휴직자와 ‘안내메일 수신x’로 적힌 주소는 빠집니다. 네이버 메일 <b>받는 사람</b> 또는 <b>숨은참조</b> 칸에 붙여넣으세요.</p>'+
+    '<p class="note-p">자문중인 회사의 재직 담당자 이메일만 모읍니다. 퇴사·휴직자와 보내지 않기로 적힌 주소(수신x·수신거부, 안내자료x, 휴면메일, 카톡으로만, 급여 전용, 회사 메모 ‘메일X’)는 빠집니다. <b>통합발송 대상</b>은 메일 그룹과 상관없이 자문중인 회사 전체입니다. 네이버 메일 <b>받는 사람</b> 또는 <b>숨은참조</b> 칸에 붙여넣으세요.</p>'+
     '<div class="seg" role="group" aria-label="대상" id="mg-seg">'+groups.map(function(g,i){return '<button data-g="'+g+'" aria-pressed="'+(i===0)+'">'+g+'</button>'}).join('')+'</div>'+
     '<div id="mg-info" style="font-size:15px;color:var(--muted)"></div>'+
     '<textarea id="mg-out" class="out" readonly aria-label="이메일 주소"></textarea>'+
     '<div class="act"><button class="btn" id="mg-close">닫기</button><button class="btn primary" id="mg-copy">복사</button></div>');
-  var g='유';
+  var g='통합발송 대상';
   function visible(){var ids={};document.querySelectorAll('#list [data-edit]').forEach(function(x){ids[x.dataset.edit]=1});return data.companies.filter(function(c){return ids[c.id]})}
   function calc(){
-    var cos=g==='지금 보이는 목록'?visible():data.companies.filter(function(c){return c.status==='자문중'&&c.mailGroup===g});
+    var cos=g==='지금 보이는 목록'?visible():data.companies.filter(function(c){return c.status==='자문중'&&(g==='통합발송 대상'||c.mailGroup===g)});
     var set={},n=0,nco=0;
-    cos.forEach(function(c){var hit=false;(c.contacts||[]).filter(function(p){return activeContact(p)&&!noMail(p)}).forEach(function(p){emailsOf(p).forEach(function(m){m=m.toLowerCase();if(!set[m]){set[m]=1;n++}hit=true})});if(hit)nco++});
+    cos.forEach(function(c){var hit=false;sendContacts(c).forEach(function(p){emailsOf(p).forEach(function(m){m=m.toLowerCase();if(!set[m]){set[m]=1;n++}hit=true})});if(hit)nco++});
     ov.querySelector('#mg-out').value=Object.keys(set).join(', ');
     ov.querySelector('#mg-info').textContent=cos.length+'곳 중 '+nco+'곳 · 이메일 '+n+'개'+(cos.length-nco?' · 이메일 없는 회사 '+(cos.length-nco)+'곳':'');
   }
