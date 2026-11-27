@@ -1555,6 +1555,13 @@ function renderModule2() {
 // 서버 기록 한 건 = 현장·일자 하나.  data = { time(시작), timeEnd(종료), people, presenter, checks[6], note, photos:[{ path, caption }] }
 const TBM_LABELS = ['보호구 착용 상태(안전모·안전화 등)', '작업자 건강 상태(음주·피로)', '사용 장비·공구 이상 유무', '작업 순서·신호방법 공유', '비상대피로·소화기 위치 확인', '위험 시 작업중지 가능함 안내'];
 const TBM_WEEK = ['일', '월', '화', '수', '목', '금', '토'];
+// 특이사항 칸의 고정 문구: 새 일지를 만들면 먼저 들어가고, 그 아래에 당일 공종별 내용을 이어 적음 (TBM 단계별 활동 내용 요약 기준)
+const TBM_NOTE_DEFAULT = [
+    '1. 작업 전 작업자 건강 상태(음주·체온·약물 복용 등) 확인 후, 금일 작업내용·위험요인·안전작업절차·대책을 공유',
+    '2. 중점 위험요인과 대책을 작업자가 복창하여 숙지 여부를 확인',
+    '3. 위험요인·불안전한 상태 발견 시 "멈춘다 → 확인한다 → 평가한다 → 관리한다" 행동요령을 안내하고, 작업자 질문·제안사항을 청취'
+].join('\n');
+const TBM_DUR_CHOICES = [10, 15, 20, 30];   // 소요 시간 버튼 (분)
 
 // 서버에서 불러온 일지 보관: { 현장ID: { records: { 'YYYY-MM-DD': 일지 }, months: { 'YYYY-MM': 'loading' | 'ready' | 'error' } } }
 let tbmDataBySite = {};
@@ -1667,7 +1674,78 @@ function tbmDurHtml(rec) {
     if (min <= 0) return '<span style="color:var(--red-700);">종료 시각이 시작 시각보다 빠릅니다</span>';
     return '<span style="color:var(--emerald-700);">소요 시간 ' + min + '분</span>';
 }
-function tbmRefreshDur() { const el = document.getElementById('tbmDurText'), rec = tbmRec(); if (el && rec) el.innerHTML = tbmDurHtml(rec); }
+// 실시 시간 입력: 시·분을 목록에서 고르고, [지금]은 누른 순간의 시각을, [10분] 등은 시작 시각에 더한 종료 시각을 넣음
+function tbmPad2(n) { return String(n).padStart(2, '0'); }
+function tbmTimeParts(t) { const x = /^(\d{1,2}):(\d{2})$/.exec(t || ''); return x ? [Number(x[1]), Number(x[2])] : null; }
+function tbmTimeSelects(field, value, label) {
+    const p = tbmTimeParts(value);
+    const mins = [];
+    for (let m = 0; m < 60; m += 5) mins.push(m);
+    if (p && mins.indexOf(p[1]) < 0) { mins.push(p[1]); mins.sort((a, b) => a - b); }   // 5분 단위가 아닌 시각([지금], 예전 입력)도 그대로 보여 줌
+    let hOpt = '<option value="">시</option>', mOpt = '<option value="">분</option>';
+    for (let h = 0; h < 24; h++) hOpt += `<option value="${h}" ${p && p[0] === h ? 'selected' : ''}>${tbmPad2(h)}시</option>`;
+    mins.forEach(m => { mOpt += `<option value="${m}" ${p && p[1] === m ? 'selected' : ''}>${tbmPad2(m)}분</option>`; });
+    const st = 'width:auto; min-width:0; flex:1 1 0; padding:7px 4px;';
+    return `<select class="form-select" data-tbm-time="${field}-h" aria-label="${label} 시" style="${st}" onchange="tbmSetTimePart('${field}', 'h', this.value)">${hOpt}</select>
+            <select class="form-select" data-tbm-time="${field}-m" aria-label="${label} 분" style="${st}" onchange="tbmSetTimePart('${field}', 'm', this.value)">${mOpt}</select>`;
+}
+function tbmTimeBoxInner(rec) {
+    const min = tbmMinutes(rec);
+    const lab = 'font-size:11.5px; font-weight:800; color:var(--slate-600); flex:0 0 auto; width:30px;';
+    return `
+        <div style="display:flex; align-items:center; gap:5px; margin-bottom:5px;">
+            <span style="${lab}">시작</span>${tbmTimeSelects('time', rec.time, '시작')}
+            <button type="button" class="btn btn-blue btn-sm" style="flex:0 0 auto;" onclick="tbmSetNow()">지금</button>
+        </div>
+        <div style="display:flex; align-items:center; gap:5px; margin-bottom:5px;">
+            <span style="${lab}">종료</span>${tbmTimeSelects('timeEnd', rec.timeEnd, '종료')}
+        </div>
+        <div style="display:flex; align-items:center; gap:5px; flex-wrap:wrap;">
+            <span style="${lab}">소요</span>
+            ${TBM_DUR_CHOICES.map(d => `<button type="button" class="btn ${min === d ? 'btn-emerald' : 'btn-outline'} btn-sm" data-tbm-dur="${d}" onclick="tbmSetDuration(${d})">${d}분</button>`).join('')}
+        </div>
+        <div id="tbmDurText" style="font-size:11.5px; font-weight:700; margin-top:4px;">${tbmDurHtml(rec)}</div>`;
+}
+function tbmRefreshTime() { const el = document.getElementById('tbmTimeBox'), rec = tbmRec(); if (el && rec) el.innerHTML = tbmTimeBoxInner(rec); }
+function tbmSetTimePart(field, part, value) {
+    const rec = tbmRec();
+    if (!rec) return;
+    const p = tbmTimeParts(rec[field]);
+    let h = p ? p[0] : null, m = p ? p[1] : null;
+    if (value === '') {
+        if (part === 'm') { tbmRefreshTime(); return; }   // '분'만 비울 수는 없음
+        rec[field] = '';                                  // '시'를 비우면 그 시각을 지움
+    } else if (part === 'h') {
+        h = Number(value); if (m === null) m = 0;
+        rec[field] = tbmPad2(h) + ':' + tbmPad2(m);
+    } else {
+        m = Number(value);
+        if (h === null) { const s = tbmTimeParts(rec.time); h = field === 'timeEnd' && s ? s[0] : null; }   // 종료 '분'만 고르면 시작과 같은 '시'로
+        if (h === null) { tbmRefreshTime(); return; }
+        rec[field] = tbmPad2(h) + ':' + tbmPad2(m);
+    }
+    tbmMarkDirty();
+    tbmRefreshTime();
+}
+function tbmSetNow() {
+    const rec = tbmRec();
+    if (!rec) return;
+    const d = new Date();
+    rec.time = tbmPad2(d.getHours()) + ':' + tbmPad2(d.getMinutes());
+    tbmMarkDirty();
+    tbmRefreshTime();
+}
+function tbmSetDuration(min) {
+    const rec = tbmRec();
+    if (!rec) return;
+    const s = tbmTimeParts(rec.time);
+    if (!s) return alert('시작 시각을 먼저 선택해 주세요.');
+    const t = s[0] * 60 + s[1] + min;
+    if (t >= 24 * 60) return alert('종료 시각이 자정을 넘습니다. 종료 시각을 직접 선택해 주세요.');
+    rec.timeEnd = tbmPad2(Math.floor(t / 60)) + ':' + tbmPad2(t % 60);
+    tbmMarkDirty();
+    tbmRefreshTime();
+}
 function tbmSet(field, value) { const rec = tbmRec(); if (!rec) return; rec[field] = value; tbmMarkDirty(); }
 function tbmSetCheck(i, value) { const rec = tbmRec(); if (!rec) return; rec.checks[i] = !!value; tbmMarkDirty(); tbmRefreshCheckCount(); }
 // 작업 전 확인사항 전체 체크 / 전체 해제
@@ -1748,7 +1826,7 @@ function tbmCreateRecord() {
     recs[tbmSelectedDate] = {
         time: last ? last.time : '08:00', timeEnd: last ? (last.timeEnd || '') : '', people: '',
         presenter: last ? last.presenter : sObj.boss,
-        checks: [false, false, false, false, false, false], note: '', photos: []
+        checks: [false, false, false, false, false, false], note: TBM_NOTE_DEFAULT + '\n', photos: []
     };
     tbmSave(id, tbmSelectedDate);
     renderActiveModule();
@@ -1997,12 +2075,7 @@ function renderModule3() {
                 <div class="grid-3">
                     <div>
                         <div class="form-label">실시 시간 (시작 ~ 종료)</div>
-                        <div style="display:flex; align-items:center; gap:6px;">
-                            <input type="time" class="form-input" style="min-width:0;" value="${tbmEsc(rec.time)}" onchange="tbmSet('time', this.value); tbmRefreshDur()">
-                            <span style="font-weight:800;">~</span>
-                            <input type="time" class="form-input" style="min-width:0;" value="${tbmEsc(rec.timeEnd)}" onchange="tbmSet('timeEnd', this.value); tbmRefreshDur()">
-                        </div>
-                        <div id="tbmDurText" style="font-size:11.5px; font-weight:700; margin-top:3px;">${tbmDurHtml(rec)}</div>
+                        <div id="tbmTimeBox">${tbmTimeBoxInner(rec)}</div>
                     </div>
                     <div><div class="form-label">참석 인원</div><input type="text" class="form-input" placeholder="예: 총 14명" value="${tbmEsc(rec.people)}" onchange="tbmSet('people', this.value)"></div>
                     <div><div class="form-label">진행자</div><input type="text" class="form-input" value="${tbmEsc(rec.presenter)}" onchange="tbmSet('presenter', this.value)"></div>
@@ -2024,7 +2097,7 @@ function renderModule3() {
             </div>
             <div class="section-box" style="border-left:4px solid var(--amber-500);">
                 <div class="section-title">특이사항 및 공종별 전달사항</div>
-                <textarea class="form-textarea" onchange="tbmSet('note', this.value)">${tbmEsc(rec.note)}</textarea>
+                <textarea class="form-textarea" style="min-height:132px;" onchange="tbmSet('note', this.value)">${tbmEsc(rec.note)}</textarea>
             </div>
             <div id="tbmDropZone" class="section-box" style="border-left:4px solid var(--purple-600);" data-paste="tbm" data-paste-label="TBM 현장 실사진" ondragover="tbmDragOver(event)" ondragleave="tbmDragLeave(event)" ondrop="tbmDrop(event, '${siteId}')">
                 <div class="section-title">
